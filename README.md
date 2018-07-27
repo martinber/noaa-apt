@@ -22,7 +22,8 @@ as of July 2018:
   simple. Doesn't align the image to the sync stripes.
 
 - [martinber/apt-decoder], bad hack made by me on top of
-  [zacstewart/apt-decoder] trying to align the image to the sync stripes.
+  [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
+  slow and minor artifacts on the image if you look at the vertical stripes.
 
 
 [wxtoimg]: http://wxtoimg.com/

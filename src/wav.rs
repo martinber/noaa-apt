@@ -12,21 +12,25 @@ pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
     // sample size in bits
     const SAMPLE_BITS: u32 = (std::mem::size_of::<Sample>() * 8) as u32;
 
-    let input_samples: Signal;
-
-    match reader_spec.sample_format {
-        hound::SampleFormat::Int => {
-            input_samples = reader.samples::<Sample>()
-                .map(|x| x.unwrap())
+    let input_samples = reader.samples::<i16>().map(|x| x.unwrap() as Sample)
                 .collect();
-        }
-        // TODO: Probar
-        hound::SampleFormat::Float => {
-            input_samples = reader.samples::<Sample>()
-                .map(|x| x.unwrap() * Sample::pow(2, SAMPLE_BITS))
-                .collect();
-        }
-    }
+    // let input_samples: Signal = match reader_spec.sample_format {
+        // hound::SampleFormat::Int => {
+            // let raw = reader.samples::<()
+                // .map(|x| x.unwrap())
+                // .collect();
+//
+            // vec![0_f32; 10]
+        // }
+        // // TODO: Probar
+        // hound::SampleFormat::Float => {
+            // let raw = reader.samples::<Sample>()
+                // .map(|x| x.unwrap() * Sample::powf(2_f32, SAMPLE_BITS as Sample))
+                // .collect();
+//
+            // vec![0_f32; 10]
+        // }
+    // }
 
     (input_samples, reader_spec)
 }
