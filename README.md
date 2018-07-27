@@ -25,10 +25,42 @@ as of July 2018:
   [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
   slow and minor artifacts on the image if you look at the vertical stripes.
 
-
 [wxtoimg]: http://wxtoimg.com/
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
 [1.7 release]: https://github.com/csete/aptdec/releases
 [repo's master branch]: https://github.com/csete/aptdec
 [zacstewart/apt-decoder]: https://github.com/zacstewart/apt-decoder
 [martinber/apt-decoder]: https://github.com/martinber/apt-decoder
+
+## Algorithms
+
+AM resampling and demodulation using FFT (maybe too slow?):
+
+- Load samples from WAV.
+- Resample and get [analytic signal].
+  - Get L (interpolation factor) and M (decimation factor).
+  - Insert L-1 zeros between samples,
+  - Calculate FFT.
+    - Remove negative half of spectrum to get analytic signal.
+    - Filter spectrum images on the right to interpolate.
+    - Calculate IFFT.
+  - Decimate removing M-1 samples.
+- Get absolute value of analytic signal to finish AM demodulation.
+
+AM resampling and demodulation using FIR filter, following method 4 or 5 in
+reference [1]:
+
+- TODO
+
+[analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
+
+## References
+
+- [Digital Envelope Detection: The Good, the Bad, and the Ugly][1]: Lists some
+  AM demodulation methods.
+
+- [Hilbert Transform Design Example][2]: How to get the analytic signal.
+
+[1]: https://www.dsprelated.com/showarticle/938.php
+[2]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
+
