@@ -1,13 +1,8 @@
 use std::f32::consts::PI;
 
-// use rustfft::FFTplanner;
-// use rustfft::num_complex::Complex;
-// use rustfft::num_traits::Zero;
-
 // TODO: Optimizar cosas simétricas
 
 pub type Signal = Vec<f32>;
-// pub type ComplexSignal = Vec<Complex<f32>>;
 
 /// Get biggest sample.
 pub fn get_max(vector: &Signal) -> &f32 {
@@ -161,38 +156,3 @@ pub fn kaiser(atten: &f32, delta_w: &f32) -> Signal {
 
     window
 }
-
-
-/*
-/// Hacer todo
-pub fn process(signal: &Signal, sample_rate: &u32) -> Signal {
-    let l = 7;
-    let m = 2;
-    let mut upsampled: Signal = vec![0_f32; signal.len() * l];
-
-    for (i, sample) in signal.iter().enumerate() {
-        upsampled[i * l] = *sample;
-    }
-
-    let mut input: ComplexSignal = vec![
-            Complex::new(1_f32, 0_f32),
-            Complex::new(2_f32, 0_f32),
-            Complex::new(3_f32, 0_f32),
-            Complex::new(4_f32, 0_f32),
-            Complex::new(5_f32, 0_f32)];
-    let mut output: ComplexSignal = vec![Complex::zero(); 5];
-    let mut output2: ComplexSignal = vec![Complex::zero(); 5];
-
-    let mut planner = FFTplanner::new(false);
-    let fft = planner.plan_fft(5);
-    fft.process(&mut input, &mut output);
-    println!("{:?}", output);
-
-    let mut iplanner = FFTplanner::new(true);
-    let ifft = iplanner.plan_fft(5);
-    ifft.process(&mut output, &mut output2);
-    println!("{:?}", output2);
-
-    signal.clone()
-}
-*/
