@@ -32,6 +32,17 @@ as of July 2018:
 [zacstewart/apt-decoder]: https://github.com/zacstewart/apt-decoder
 [martinber/apt-decoder]: https://github.com/martinber/apt-decoder
 
+## Dependencies
+
+- GNU Scientific Library:
+
+  - `sudo apt install libgsl0-dev`.
+
+- GNUPlot:
+
+  - TODO
+
+
 ## Algorithms
 
 AM resampling and demodulation using FFT (maybe too slow?):

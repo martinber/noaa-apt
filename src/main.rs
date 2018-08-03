@@ -1,5 +1,6 @@
 extern crate hound;
 extern crate rgsl;
+extern crate gnuplot;
 
 mod dsp;
 mod wav;
@@ -52,6 +53,11 @@ fn main() -> hound::Result<()> {
 
     lowpass = dsp::product(window, &lowpass);
     println!("filter: {:?}", lowpass);
+
+    let x: Vec<usize> = (0 .. lowpass.len()).collect();
+    let mut fg = gnuplot::Figure::new();
+    fg.axes2d().lines(&x, lowpass, &[gnuplot::Caption("A line"), gnuplot::Color("black")]);
+    fg.show();
 
     Ok(())
 }
