@@ -50,9 +50,38 @@ AM resampling and demodulation using FFT (maybe too slow?):
 AM resampling and demodulation using FIR filter, following method 4 or 5 in
 reference [1]:
 
-- TODO
+- Load samples from WAV.
+- Resample and get [analytical signal].
+  - Get L (interpolation factor) and M (decimation factor).
+  - Insert L-1 zeros between samples,
+  - Get filter from a common sample rate or generate a new one:
+    - Calculate impulse response of hilbert filter and lowpass filter.
+    - Calculate kaiser window from parameters or use a predefined one.
+    - Multiply window with impoulse response for both filters.
+  - Filter with lowpass to finish interpolation.
+  - Decimate removing M-1 samples.
+  - Get [analytic sygnal]:
+    - Filter the signal.
+    - Add the original signal.
+- Get absolute value of analytic signal to finish AM demodulation.
 
-[analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
+
+## Analytical signal
+
+For AM demodulation we use the [analytic signal].
+
+### Hilbert filter
+
+Frequency response: j for w < 0 and -j for w > 0.
+
+Impulse response: `fs/(pi*n) * (1-cos(pi*n))`
+
+For n=0, should be 0.
+
+## Notes
+
+- Looks like there are several definitions for Kaiser window values, I get
+  different results compared to Matlab.
 
 ## References
 
@@ -61,6 +90,16 @@ reference [1]:
 
 - [Hilbert Transform Design Example][2]: How to get the analytic signal.
 
+- [Spectral Audio Signal Processing: Digital Audio Resampling][3]
+
+- [Impulse Response of a Hilbert Transformer][4]
+
+- [Spectral Audio Signal Processing: Kaiser Window][5]
+
 [1]: https://www.dsprelated.com/showarticle/938.php
 [2]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
+[3]: https://ccrma.stanford.edu/~jos/resample/
+[4]: https://flylib.com/books/en/2.729.1/impulse_response_of_a_hilbert_transformer.html
+[5]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
 
+[analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal

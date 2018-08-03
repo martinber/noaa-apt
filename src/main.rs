@@ -1,5 +1,5 @@
 extern crate hound;
-extern crate rustfft;
+extern crate rgsl;
 
 mod dsp;
 mod wav;
@@ -46,7 +46,8 @@ fn main() -> hound::Result<()> {
 
     */
 
-    let a = dsp::process(&input_signal, &100);
+    //let a = dsp::process(&input_signal, &100);
+    println!("{:?}", dsp::kaiser());
 
     Ok(())
 }

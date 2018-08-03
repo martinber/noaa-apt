@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
 [dependencies]
-hound = "3.4.0"
-rustfft = "2.0.0"
+hound = "*"
+GSL = "*"
