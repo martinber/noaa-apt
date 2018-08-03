@@ -1,6 +1,6 @@
 use std;
 use hound;
-use dsp::{Sample, Signal};
+use dsp::Signal;
 
 /// Load wav file and return signal and specs.
 pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
@@ -9,10 +9,7 @@ pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
             .expect("Failed to open WAV file");
     let reader_spec = reader.spec();
 
-    // sample size in bits
-    const SAMPLE_BITS: u32 = (std::mem::size_of::<Sample>() * 8) as u32;
-
-    let input_samples = reader.samples::<i16>().map(|x| x.unwrap() as Sample)
+    let input_samples = reader.samples::<i16>().map(|x| x.unwrap() as f32)
                 .collect();
     // let input_samples: Signal = match reader_spec.sample_format {
         // hound::SampleFormat::Int => {

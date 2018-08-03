@@ -78,10 +78,16 @@ Impulse response: `fs/(pi*n) * (1-cos(pi*n))`
 
 For n=0, should be 0.
 
+## Lowpass filter
+
+Impulse response: `sin(n*wc)/(n*pi)`.
+
 ## Notes
 
 - Looks like there are several definitions for Kaiser window values, I get
   different results compared to Matlab.
+
+- I use 32 bit float and integers because it's enough?.
 
 ## References
 

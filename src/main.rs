@@ -6,7 +6,8 @@ mod wav;
 
 // use wav;
 // use dsp;
-use dsp::{Sample, Signal};
+use dsp::Signal;
+use std::f32::consts::PI;
 
 fn main() -> hound::Result<()> {
     println!("Hello, world!");
@@ -19,7 +20,7 @@ fn main() -> hound::Result<()> {
     println!("Cargado WAV en Vec");
     println!("reader_spec: {:?}", input_spec);
 
-    let max: &Sample = dsp::get_max(&input_signal);
+    let max: &f32 = dsp::get_max(&input_signal);
     println!("Maximo: {}", max);
 
     /*
@@ -46,8 +47,11 @@ fn main() -> hound::Result<()> {
 
     */
 
-    //let a = dsp::process(&input_signal, &100);
-    println!("{:?}", dsp::kaiser());
+    let window = dsp::kaiser(&100., &(PI/20.));
+    let mut lowpass = dsp::lowpass(&(window.len() as u32), &(PI/2.));
+
+    lowpass = dsp::product(window, &lowpass);
+    println!("filter: {:?}", lowpass);
 
     Ok(())
 }
