@@ -1,4 +1,3 @@
-use std;
 use hound;
 use dsp::Signal;
 

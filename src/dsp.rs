@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 // TODO: Optimizar cosas simétricas
+// TODO: Pedir valores en fracciones de PI
 
 pub type Signal = Vec<f32>;
 
@@ -108,13 +109,9 @@ pub fn lowpass(length: &u32, cutout: &f32) -> Signal {
             // filter.push(1.);
             filter.push(*cutout / PI);
         } else {
-            if n % 2 == 0 {
-                filter.push(0.);
-            } else {
-                let n = n as f32;
-                // filter.push((n*cutout).sin()/(n*cutout));
-                filter.push((n*cutout).sin()/(n*PI));
-            }
+            let n = n as f32;
+            // filter.push((n*cutout).sin()/(n*cutout));
+            filter.push((n*cutout).sin()/(n*PI));
         }
     }
 
@@ -145,7 +142,6 @@ pub fn kaiser(atten: &f32, delta_w: &f32) -> Signal {
 
     use rgsl::bessel::I0 as bessel;
     for n in -(length-1)/2 ..= (length-1)/2 {
-        println!("n: {}", n);
         let n = n as f32;
         let M = length as f32;
         window.push((bessel((beta * (1. - (n / (M/2.)).powi(2)).sqrt()) as f64) /
@@ -155,4 +151,91 @@ pub fn kaiser(atten: &f32, delta_w: &f32) -> Signal {
     println!("beta: {}, length: {}", beta, length);
 
     window
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    /// Calculate absolute value of fft and divide each sample by n
+    fn abs_fft(signal: &Signal) -> Signal {
+        use rgsl;
+        use rgsl::types::fast_fourier_transforms::FftComplexWaveTable;
+        use rgsl::types::fast_fourier_transforms::FftComplexWorkspace;
+
+        let mut data: Vec<f64> = Vec::with_capacity(signal.len() * 2);
+
+        for s in signal.iter() {
+            data.push(*s as f64);
+            data.push(0.);
+        }
+
+        let wavetable = FftComplexWaveTable::new(signal.len()).unwrap();
+        let mut workspace = FftComplexWorkspace::new(signal.len()).unwrap();
+
+        rgsl::fft::mixed_radix::forward(
+                &mut data, 1, signal.len(), &wavetable, &mut workspace);
+
+        let mut result: Signal = Vec::with_capacity(signal.len());
+
+        for i in 0 .. signal.len() {
+            result.push(f64::sqrt(data[2*i].powi(2) + data[2*i+1].powi(2)) as f32);
+        }
+
+        result
+    }
+
+    #[test]
+    fn test_lowpass_odd() {
+        assert_eq!(lowpass(&5, &(PI/4.)).len(), 5);
+        assert_eq!(lowpass(&21, &(PI/4.)).len(), 21);
+        assert_eq!(lowpass(&71, &(PI/4.)).len(), 71);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_lowpass_even() {
+        lowpass(&30, &(PI/4.));
+    }
+
+    /*
+    /// Check if the window meets the required parameters.
+    #[test]
+    fn test_kaiser() {
+        // Pairs of atten and delta_w values
+        let test_parameters: Vec<(f32, f32)> = vec![
+                (20., PI/4.), (35., PI/10.), (60., PI/6.)];
+
+        for parameters in test_parameters.iter() {
+            let (atten, delta_w) = parameters;
+            let window = kaiser(atten, delta_w);
+            let mut fft = abs_fft(&window);
+
+            println!("{:?}", window);
+
+            // Normalizar para que quede 0dB en la parte más alta
+            let max = *get_max(&fft);
+            for v in fft.iter_mut() {
+                *v = *v/max;
+            }
+
+            // Ver si fuera del lóbulo principal hay menos de 'atten' dB
+            for (i, v) in fft.iter().enumerate() {
+                let w = 2.*PI * (i as f32) / (fft.len() as f32);
+                println!("atten: {}, v: {}, i: {}, w: {}", atten, 20.*v.log10(), i, w);
+                if w > *delta_w && w < 2.*PI - *delta_w {
+                    println!("Si");
+                }
+            }
+
+            // use gnuplot;
+            // let x: Vec<usize> = (0 .. fft.len()).collect();
+            // let mut fg = gnuplot::Figure::new();
+            // fg.axes2d().lines(&x, fft, &[gnuplot::Caption("A line"), gnuplot::Color("black")]);
+            // fg.show();
+
+        }
+    }
+    */
 }

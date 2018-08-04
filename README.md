@@ -107,16 +107,19 @@ Impulse response: `sin(n*wc)/(n*pi)`.
 
 - [Hilbert Transform Design Example][2]: How to get the analytic signal.
 
-- [Spectral Audio Signal Processing: Digital Audio Resampling][3]
+- [Spectral Audio Signal Processing: Digital Audio Resampling][3].
 
-- [Impulse Response of a Hilbert Transformer][4]
+- [Impulse Response of a Hilbert Transformer][4].
 
-- [Spectral Audio Signal Processing: Kaiser Window][5]
+- [Spectral Audio Signal Processing: Kaiser Window][5].
+
+- [How to Create a Configurable Filter Using a Kaiser Window][6],
 
 [1]: https://www.dsprelated.com/showarticle/938.php
 [2]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
 [3]: https://ccrma.stanford.edu/~jos/resample/
 [4]: https://flylib.com/books/en/2.729.1/impulse_response_of_a_hilbert_transformer.html
 [5]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
+[6]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
