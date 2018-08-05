@@ -93,7 +93,7 @@ pub fn hilbert(length: u32, sample_rate: u32) -> Signal {
 
 /// Get lowpass FIR filter, windowed by a rectangular window.
 ///
-/// Length must be odd. Cutout frequency in radians per second
+/// Length must be odd. Cutout frequency in fractions of pi radians per second.
 pub fn lowpass(length: u32, cutout: f32) -> Signal {
 
     if length % 2 == 0 {
@@ -106,10 +106,10 @@ pub fn lowpass(length: u32, cutout: f32) -> Signal {
 
     for n in -(m-1)/2 ..= (m-1)/2 {
         if n == 0 {
-            filter.push(cutout / PI);
+            filter.push(cutout);
         } else {
             let n = n as f32;
-            filter.push((n*cutout).sin()/(n*PI));
+            filter.push((n*PI*cutout).sin()/(n*PI));
         }
     }
 
@@ -119,6 +119,7 @@ pub fn lowpass(length: u32, cutout: f32) -> Signal {
 /// Design Kaiser window from parameters.
 ///
 /// The length depends on the parameters given, and it's always odd.
+/// Frequency in fractions of pi radians per second.
 pub fn kaiser(atten: f32, delta_w: f32) -> Signal {
 
     let beta: f32;
@@ -131,7 +132,7 @@ pub fn kaiser(atten: f32, delta_w: f32) -> Signal {
     }
 
     // Filter length, we want an odd length
-    let mut length: i32 = ((atten - 8.) / (2.285 * delta_w)).ceil() as i32 + 1;
+    let mut length: i32 = ((atten - 8.) / (2.285 * PI*delta_w)).ceil() as i32 + 1;
     if length % 2 == 0 {
         length += 1;
     }
@@ -186,15 +187,15 @@ mod tests {
 
     #[test]
     fn test_lowpass_odd() {
-        assert_eq!(lowpass(5, PI/4.).len(), 5);
-        assert_eq!(lowpass(21, PI/4.).len(), 21);
-        assert_eq!(lowpass(71, PI/4.).len(), 71);
+        assert_eq!(lowpass(5, 1./4.).len(), 5);
+        assert_eq!(lowpass(21, 1./4.).len(), 21);
+        assert_eq!(lowpass(71, 1./4.).len(), 71);
     }
 
     #[test]
     #[should_panic]
     fn test_lowpass_even() {
-        lowpass(30, PI/4.);
+        lowpass(30, 1./4.);
     }
 
     /*
