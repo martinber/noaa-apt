@@ -48,11 +48,13 @@ fn main() -> hound::Result<()> {
 
     */
 
-    let window = dsp::kaiser(40., 1./10.);
-    let mut lowpass = dsp::lowpass(window.len() as u32, 1./4.);
+    // let window = dsp::kaiser(40., 1./10.);
+    // let mut lowpass = dsp::lowpass(window.len() as u32, 1./4.);
 
-    println!("window: {:?}", window);
-    lowpass = dsp::product(window, &lowpass);
+    let lowpass = dsp::lowpass(1./4., 40., 1./10.);
+
+    // println!("window: {:?}", window);
+    // lowpass = dsp::product(window, &lowpass);
     println!("filter: {:?}", lowpass);
 
     let x: Vec<usize> = (0 .. lowpass.len()).collect();

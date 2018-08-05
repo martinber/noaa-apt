@@ -93,16 +93,19 @@ pub fn hilbert(length: u32, sample_rate: u32) -> Signal {
 
 /// Get lowpass FIR filter, windowed by a rectangular window.
 ///
-/// Length must be odd. Cutout frequency in fractions of pi radians per second.
-pub fn lowpass(length: u32, cutout: f32) -> Signal {
+/// Frequency in fractions of pi radians per second.
+/// Attenuation in positive decibels.
+pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 
-    if length % 2 == 0 {
-        panic!("Lowpass filter length must be odd");
+    let window = kaiser(atten, delta_w);
+
+    if window.len() % 2 == 0 {
+        panic!("Lowpass filter should be odd");
     }
 
-    let mut filter: Signal = Vec::with_capacity(length as usize);
+    let mut filter: Signal = Vec::with_capacity(window.len());
 
-    let m = length as i32;
+    let m = window.len() as i32;
 
     for n in -(m-1)/2 ..= (m-1)/2 {
         if n == 0 {
@@ -113,14 +116,14 @@ pub fn lowpass(length: u32, cutout: f32) -> Signal {
         }
     }
 
-    filter
+    product(filter, &window)
 }
 
 /// Design Kaiser window from parameters.
 ///
 /// The length depends on the parameters given, and it's always odd.
 /// Frequency in fractions of pi radians per second.
-pub fn kaiser(atten: f32, delta_w: f32) -> Signal {
+fn kaiser(atten: f32, delta_w: f32) -> Signal {
 
     let beta: f32;
     if atten > 50. {
@@ -185,46 +188,40 @@ mod tests {
         result
     }
 
+    /// Check if the filter meets the required parameters in the positive half
+    /// of the spectrum.
     #[test]
-    fn test_lowpass_odd() {
-        assert_eq!(lowpass(5, 1./4.).len(), 5);
-        assert_eq!(lowpass(21, 1./4.).len(), 21);
-        assert_eq!(lowpass(71, 1./4.).len(), 71);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_lowpass_even() {
-        lowpass(30, 1./4.);
-    }
-
-    /*
-    /// Check if the window meets the required parameters.
-    #[test]
-    fn test_kaiser() {
-        // Pairs of atten and delta_w values
-        let test_parameters: Vec<(f32, f32)> = vec![
-                (20., PI/4.), (35., PI/10.), (60., PI/6.)];
+    fn test_lowpass() {
+        // cutout, atten and delta_w values
+        let test_parameters: Vec<(f32, f32, f32)> = vec![
+                /*(1./4., 20., 1./10.),*/ (1./3., 35., 1./30.), (2./5., 60., 1./20.)];
 
         for parameters in test_parameters.iter() {
-            let (atten, delta_w) = parameters;
-            let window = kaiser(atten, delta_w);
-            let mut fft = abs_fft(&window);
+            let (cutout, atten, delta_w) = *parameters;
+            let cutout = cutout * PI;
+            let delta_w = delta_w * PI;
 
-            println!("{:?}", window);
+            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
-            // Normalizar para que quede 0dB en la parte más alta
-            let max = *get_max(&fft);
-            for v in fft.iter_mut() {
-                *v = *v/max;
-            }
+            let filter = lowpass(cutout, atten, delta_w);
+            let mut fft = abs_fft(&filter);
 
-            // Ver si fuera del lóbulo principal hay menos de 'atten' dB
+            println!("filter: {:?}", filter);
+
+            // Max should be close to 1
+            // println!("max: {}", get_max(&fft));
+            // assert!(*get_max(&fft) < 1 + ripple)
+
             for (i, v) in fft.iter().enumerate() {
                 let w = 2.*PI * (i as f32) / (fft.len() as f32);
-                println!("atten: {}, v: {}, i: {}, w: {}", atten, 20.*v.log10(), i, w);
-                if w > *delta_w && w < 2.*PI - *delta_w {
-                    println!("Si");
+
+                if w < cutout - delta_w/2. {
+                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
+                    assert!(*v < 1. + ripple && *v > 1. - ripple);
+                }
+                else if w > cutout + delta_w/2. && w < PI {
+                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
+                    assert!(*v < ripple);
                 }
             }
 
@@ -236,5 +233,4 @@ mod tests {
 
         }
     }
-    */
 }
