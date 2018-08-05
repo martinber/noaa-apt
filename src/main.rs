@@ -48,8 +48,8 @@ fn main() -> hound::Result<()> {
 
     */
 
-    let window = dsp::kaiser(&40., &(PI/10.));
-    let mut lowpass = dsp::lowpass(&(window.len() as u32), &(PI/4.));
+    let window = dsp::kaiser(40., PI/10.);
+    let mut lowpass = dsp::lowpass(window.len() as u32, PI/4.);
 
     println!("window: {:?}", window);
     lowpass = dsp::product(window, &lowpass);

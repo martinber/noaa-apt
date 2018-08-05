@@ -20,7 +20,7 @@ pub fn get_max(vector: &Signal) -> &f32 {
 /// Resample signal by upsampling, filtering and downsampling.
 ///
 /// L is the interpolation factor and M the decimation one.
-pub fn resample(signal: &Signal, l: u8, m: u8) -> Signal {
+pub fn resample(signal: &Signal, l: u32, m: u32) -> Signal {
     let l = l as usize;
     let m = m as usize;
     let mut upsampled: Signal = vec![0_f32; signal.len() * l];
@@ -68,23 +68,23 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
 /// Get hilbert FIR filter, windowed by a rectangular window.
 ///
 /// Length must be odd.
-pub fn hilbert(length: &u32, sample_rate: &u32) -> Signal {
+pub fn hilbert(length: u32, sample_rate: u32) -> Signal {
 
     if length % 2 == 0 {
         panic!("Hilbert filter length must be odd");
     }
 
-    let mut filter: Signal = Vec::with_capacity(*length as usize);
+    let mut filter: Signal = Vec::with_capacity(length as usize);
 
-    let M = *length as i32;
+    let m = length as i32;
 
-    for n in -(M-1)/2 ..= (M-1)/2 {
+    for n in -(m-1)/2 ..= (m-1)/2 {
         if n % 2 == 1 {
-            let sample_rate = *sample_rate as f32;
+            let sample_rate = sample_rate as f32;
             let n = n as f32;
             filter.push(sample_rate/(PI*n));
         } else {
-            filter.push(0 as f32);
+            filter.push(0.);
         }
     }
 
@@ -94,23 +94,21 @@ pub fn hilbert(length: &u32, sample_rate: &u32) -> Signal {
 /// Get lowpass FIR filter, windowed by a rectangular window.
 ///
 /// Length must be odd. Cutout frequency in radians per second
-pub fn lowpass(length: &u32, cutout: &f32) -> Signal {
+pub fn lowpass(length: u32, cutout: f32) -> Signal {
 
     if length % 2 == 0 {
         panic!("Lowpass filter length must be odd");
     }
 
-    let mut filter: Signal = Vec::with_capacity(*length as usize);
+    let mut filter: Signal = Vec::with_capacity(length as usize);
 
-    let M = *length as i32;
+    let m = length as i32;
 
-    for n in -(M-1)/2 ..= (M-1)/2 {
+    for n in -(m-1)/2 ..= (m-1)/2 {
         if n == 0 {
-            // filter.push(1.);
-            filter.push(*cutout / PI);
+            filter.push(cutout / PI);
         } else {
             let n = n as f32;
-            // filter.push((n*cutout).sin()/(n*cutout));
             filter.push((n*cutout).sin()/(n*PI));
         }
     }
@@ -121,15 +119,15 @@ pub fn lowpass(length: &u32, cutout: &f32) -> Signal {
 /// Design Kaiser window from parameters.
 ///
 /// The length depends on the parameters given, and it's always odd.
-pub fn kaiser(atten: &f32, delta_w: &f32) -> Signal {
+pub fn kaiser(atten: f32, delta_w: f32) -> Signal {
 
     let beta: f32;
-    if *atten > 50. {
-        beta = 0.1102 * (*atten - 8.7);
-    } else if *atten < 21. {
+    if atten > 50. {
+        beta = 0.1102 * (atten - 8.7);
+    } else if atten < 21. {
         beta = 0.;
     } else {
-        beta = 0.5842 * (*atten - 21.).powf(0.4) + 0.07886 * (*atten - 21.);
+        beta = 0.5842 * (atten - 21.).powf(0.4) + 0.07886 * (atten - 21.);
     }
 
     // Filter length, we want an odd length
@@ -143,8 +141,8 @@ pub fn kaiser(atten: &f32, delta_w: &f32) -> Signal {
     use rgsl::bessel::I0 as bessel;
     for n in -(length-1)/2 ..= (length-1)/2 {
         let n = n as f32;
-        let M = length as f32;
-        window.push((bessel((beta * (1. - (n / (M/2.)).powi(2)).sqrt()) as f64) /
+        let m = length as f32;
+        window.push((bessel((beta * (1. - (n / (m/2.)).powi(2)).sqrt()) as f64) /
                     bessel(beta as f64)) as f32)
     }
 
@@ -188,15 +186,15 @@ mod tests {
 
     #[test]
     fn test_lowpass_odd() {
-        assert_eq!(lowpass(&5, &(PI/4.)).len(), 5);
-        assert_eq!(lowpass(&21, &(PI/4.)).len(), 21);
-        assert_eq!(lowpass(&71, &(PI/4.)).len(), 71);
+        assert_eq!(lowpass(5, PI/4.).len(), 5);
+        assert_eq!(lowpass(21, PI/4.).len(), 21);
+        assert_eq!(lowpass(71, PI/4.).len(), 71);
     }
 
     #[test]
     #[should_panic]
     fn test_lowpass_even() {
-        lowpass(&30, &(PI/4.));
+        lowpass(30, PI/4.);
     }
 
     /*
