@@ -4,6 +4,8 @@ use dsp::Signal;
 /// Load wav file and return signal and specs.
 pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
 
+    debug!("Loading WAV: {}", filename);
+
     let mut reader = hound::WavReader::open(filename)
             .expect("Failed to open WAV file");
     let reader_spec = reader.spec();

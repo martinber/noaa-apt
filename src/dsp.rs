@@ -20,7 +20,10 @@ pub fn get_max(vector: &Signal) -> &f32 {
 /// Resample signal by upsampling, filtering and downsampling.
 ///
 /// L is the interpolation factor and M the decimation one.
-pub fn resample(signal: &Signal, l: u32, m: u32) -> Signal {
+pub fn resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
+
+    debug!("Upsampling by {}", l);
+
     let l = l as usize;
     let m = m as usize;
     let mut upsampled: Signal = vec![0_f32; signal.len() * l];
@@ -29,11 +32,41 @@ pub fn resample(signal: &Signal, l: u32, m: u32) -> Signal {
         upsampled[i * l] = *sample;
     }
 
-    // filter(&upsampled, &vec![0.3, 0.6, 0.3])
-    signal.clone()
+    debug!("Filtering");
+
+    let f = lowpass(1./(l as f32), atten, delta_w);
+
+    let filtered = filter(&upsampled, &f);
+
+    debug!("Decimating");
+
+    let mut decimated: Signal = Vec::with_capacity(filtered.len() / m);
+
+    for i in 0..filtered.len()/m {
+        decimated.push(filtered[i*m]);
+    }
+
+    decimated
 }
 
-/*
+/// Demodulate AM signal.
+pub fn demodulate(signal: &Signal, atten: f32, delta_w: f32) -> Signal {
+    let h_filter = hilbert(atten, delta_w);
+    let imag = filter(signal, &h_filter);
+    let delay: usize = h_filter.len() / 2;
+
+    let mut output: Signal = vec![0_f32; signal.len()];
+
+    for i in 0..signal.len() {
+        if i >= delay {
+            output[i] = (imag[i].powi(2) + signal[i-delay].powi(2)).sqrt();
+        }
+    }
+
+    output
+}
+
+/// Filter a signal,
 pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
 
     let mut output: Signal = vec![0_f32; signal.len()];
@@ -50,8 +83,6 @@ pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
     output
 }
 
-*/
-
 /// Product of two vectors, element by element.
 pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
     if v1.len() != v2.len() {
@@ -65,33 +96,35 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
     v1
 }
 
-/// Get hilbert FIR filter, windowed by a rectangular window.
+/// Get hilbert FIR filter, windowed by a kaiser window.
 ///
-/// Length must be odd.
-pub fn hilbert(length: u32, sample_rate: u32) -> Signal {
+/// Frequency in fractions of pi radians per second.
+/// Attenuation in positive decibels.
+pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
 
-    if length % 2 == 0 {
-        panic!("Hilbert filter length must be odd");
+    let window = kaiser(atten, delta_w);
+
+    if window.len() % 2 == 0 {
+        panic!("Hilbert filter length should be odd");
     }
 
-    let mut filter: Signal = Vec::with_capacity(length as usize);
+    let mut filter: Signal = Vec::with_capacity(window.len());
 
-    let m = length as i32;
+    let m = window.len() as i32;
 
     for n in -(m-1)/2 ..= (m-1)/2 {
-        if n % 2 == 1 {
-            let sample_rate = sample_rate as f32;
+        if n % 2 != 0 {
             let n = n as f32;
-            filter.push(sample_rate/(PI*n));
+            filter.push(2./(PI*n));
         } else {
             filter.push(0.);
         }
     }
 
-    filter
+    product(filter, &window)
 }
 
-/// Get lowpass FIR filter, windowed by a rectangular window.
+/// Get lowpass FIR filter, windowed by a kaiser window.
 ///
 /// Frequency in fractions of pi radians per second.
 /// Attenuation in positive decibels.
@@ -100,7 +133,7 @@ pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
     let window = kaiser(atten, delta_w);
 
     if window.len() % 2 == 0 {
-        panic!("Lowpass filter should be odd");
+        panic!("Lowpass filter length should be odd");
     }
 
     let mut filter: Signal = Vec::with_capacity(window.len());
@@ -150,7 +183,7 @@ fn kaiser(atten: f32, delta_w: f32) -> Signal {
                     bessel(beta as f64)) as f32)
     }
 
-    println!("beta: {}, length: {}", beta, length);
+    debug!("beta: {}, length: {}", beta, length);
 
     window
 }
@@ -219,13 +252,38 @@ mod tests {
                     assert!(*v < ripple);
                 }
             }
-
-            // use gnuplot;
-            // let x: Vec<usize> = (0 .. fft.len()).collect();
-            // let mut fg = gnuplot::Figure::new();
-            // fg.axes2d().lines(&x, fft, &[gnuplot::Caption("A line"), gnuplot::Color("black")]);
-            // fg.show();
-
         }
     }
+
+    /*
+    /// Check if the filter meets the required parameters in the positive half
+    /// of the spectrum.
+    #[test]
+    fn test_hilbert() {
+        // atten and delta_w values
+        let test_parameters: Vec<(f32, f32)> = vec![
+                /*(20., 1./10.),*/ (35., 1./30.), (60., 1./20.)];
+
+        for parameters in test_parameters.iter() {
+            let (atten, delta_w) = *parameters;
+
+            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
+
+            let filter = hilbert(atten, delta_w);
+            let mut fft = abs_fft(&filter);
+
+            println!("atten: {}, delta_w: {}", atten, delta_w);
+            println!("filter: {:?}", filter);
+
+            for (i, v) in fft.iter().enumerate() {
+                let w = 2. * (i as f32) / (fft.len() as f32);
+
+                if w > delta_w/2. && w < 1. - delta_w/2. {
+                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
+                    assert!(*v < 1. + ripple && *v > 1. - ripple);
+                }
+            }
+        }
+    }
+    */
 }

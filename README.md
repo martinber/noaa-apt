@@ -85,7 +85,7 @@ For AM demodulation we use the [analytic signal].
 
 Frequency response: j for w < 0 and -j for w > 0.
 
-Impulse response: `fs/(pi*n) * (1-cos(pi*n))`
+Impulse response: `1/(pi*n) * (1-cos(pi*n))`
 
 For n=0, should be 0.
 
@@ -99,6 +99,41 @@ Impulse response: `sin(n*wc)/(n*pi)`.
   different results compared to Matlab.
 
 - I use 32 bit float and integers because it's enough?.
+
+  NOAA 15:
+  NOAA 
+  NOAA 18: 137.9125MHz
+
+  Portadora AM: 2400Hz
+  Amplitud: Escala de grises
+
+  Cada palabra es 8 bits/pixel
+  Dos lineas por segundo.
+  4160 words/segundo.
+  909 words utiles por linea
+  Cada linea contiene las dos imagenes
+  2080 pixeles/linea
+
+  Cosas por línea:
+
+  - Sync A: Onda cuadrada de 7 ciclos a 1040Hz
+  - Space A:
+  - Image A:
+  - Telemetry A:
+  - Sync B: Tren de pulsos de 842 de 7 ciclos????
+  - Space B:
+  - Image B:
+  - Telemetry B:
+
+  Procedimiento:
+
+  - WAV a 11025Hz
+  - Filtro pasa bajos
+  - Resampleo a 9600Hz (4 veces más que la AM a 2400Hz)
+  - Quedan 4 muestras por word de la AM de 2400Hz, cada muestra a 90 grados de
+    diferencia de fase
+  - Convierte a complejo y toma el módulo
+  - Resampleo a 4160
 
 ## References
 
