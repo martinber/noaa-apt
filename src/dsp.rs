@@ -194,32 +194,27 @@ mod tests {
     fn test_lowpass() {
         // cutout, atten and delta_w values
         let test_parameters: Vec<(f32, f32, f32)> = vec![
-                /*(1./4., 20., 1./10.),*/ (1./3., 35., 1./30.), (2./5., 60., 1./20.)];
+                (1./4., 20., 1./10.), (1./3., 35., 1./30.), (2./5., 60., 1./20.)];
 
         for parameters in test_parameters.iter() {
             let (cutout, atten, delta_w) = *parameters;
-            let cutout = cutout * PI;
-            let delta_w = delta_w * PI;
 
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
             let filter = lowpass(cutout, atten, delta_w);
             let mut fft = abs_fft(&filter);
 
+            println!("cutout: {}, atten: {}, delta_w: {}", cutout, atten, delta_w);
             println!("filter: {:?}", filter);
 
-            // Max should be close to 1
-            // println!("max: {}", get_max(&fft));
-            // assert!(*get_max(&fft) < 1 + ripple)
-
             for (i, v) in fft.iter().enumerate() {
-                let w = 2.*PI * (i as f32) / (fft.len() as f32);
+                let w = 2. * (i as f32) / (fft.len() as f32);
 
                 if w < cutout - delta_w/2. {
                     println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
                     assert!(*v < 1. + ripple && *v > 1. - ripple);
                 }
-                else if w > cutout + delta_w/2. && w < PI {
+                else if w > cutout + delta_w/2. && w < 1. {
                     println!("Stopband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
                     assert!(*v < ripple);
                 }
