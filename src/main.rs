@@ -14,9 +14,44 @@ mod wav;
 use dsp::Signal;
 use std::f32::consts::PI;
 
-fn main() -> hound::Result<()> {
+fn main() {
 
     simple_logger::init().unwrap();
+
+    resample_test();
+
+}
+
+fn resample_test() {
+    debug!("Leyendo WAV:");
+    let (input_signal, input_spec) = wav::load_wav("./11025.wav");
+    debug!("Cargado WAV en Vec");
+    debug!("reader_spec: {:?}", input_spec);
+
+    let atten = 50.;
+    let delta_w = 1./20.;
+    let l = 21; // interpolation
+    let m = 5; // decimation
+    let resampled = dsp::new_resample(&input_signal, l, m, atten, delta_w);
+
+    let writer_spec = hound::WavSpec {
+        channels: 1,
+        sample_rate: input_spec.sample_rate * l/m as u32,
+        bits_per_sample: 32,
+        sample_format: hound::SampleFormat::Float,
+    };
+
+    println!("Resampleado");
+    let max = dsp::get_max(&resampled);
+    println!("Maximo: {}", max);
+    let normalized = resampled.iter().map(|x| x/max).collect();
+
+    println!("Escribiendo WAV:");
+    wav::write_wav("./salida.wav", &normalized, writer_spec);
+}
+
+
+fn demodulation_test() {
 
     debug!("Leyendo WAV:");
     let (input_signal, input_spec) = wav::load_wav("./20800.wav");
@@ -88,10 +123,9 @@ fn main() -> hound::Result<()> {
 
 
 
-    let r = 7/3; // resampling factor
-    let l = 1; // interpolation
+    let l = 21; // interpolation
     let m = 5;
-    let resampled = dsp::resample(&demodulated, l, m, atten, delta_w);
+    let resampled = dsp::new_resample(&demodulated, l, m, atten, delta_w);
 
     let writer_spec = hound::WavSpec {
         channels: 1,
@@ -143,5 +177,4 @@ fn main() -> hound::Result<()> {
     fg.show();
     */
 
-    Ok(())
 }

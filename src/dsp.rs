@@ -58,6 +58,61 @@ pub fn resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Si
     decimated
 }
 
+pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
+
+    let l = l as usize;
+    let m = m as usize;
+
+    // Si hay interpolacion
+    if l > 1 {
+
+        debug!("Resampling by L/M: {}/{}", l, m);
+
+        let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+        let f = lowpass(1./(l as f32), atten, delta_w);
+        let offset = (f.len()-1)/2;
+
+        // Iterar sobre cada muestra de la salida
+        for i in 0 .. signal.len()*l/m {
+
+            let mut sum: f32 = 0.;
+            let x = i*m-offset;
+            // Iterar sobre cada coeficiente del filtro
+            for (j, coeff) in f.iter().enumerate() {
+                // let jn = j - (f.len()-1)/2;
+                // let n = i * m + jn;
+                let n = j+x;
+
+                if n % l == 0 { // Significa que en este n hay una muestra original
+                    match signal.get(n/l) { // Salvo que estemos afuera de los limites
+                        Some(sample) => sum += coeff * sample,
+                        None => (),
+                    }
+                }
+            }
+            output.push(sum);
+        }
+
+        debug!("Resampling finished");
+        output
+
+    } else {
+
+        debug!("Resampling by decimation, L/M: {}/{}", l, m);
+
+        let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
+
+        for i in 0..signal.len()/m {
+            decimated.push(signal[i*m]);
+        }
+
+        debug!("Resampling finished");
+        decimated
+
+    }
+
+}
+
 /// Demodulate AM signal.
 pub fn demodulate(signal: &Signal, atten: f32, delta_w: f32) -> Signal {
     let h_filter = hilbert(atten, delta_w);
