@@ -23,12 +23,70 @@ fn main() -> hound::Result<()> {
     debug!("Cargado WAV en Vec");
     debug!("reader_spec: {:?}", input_spec);
 
-    let max: &f32 = dsp::get_max(&input_signal);
-    debug!("Maximo: {}", max);
-
     let atten = 50.;
     let delta_w = 1./20.;
     let demodulated = dsp::demodulate(&input_signal, atten, delta_w);
+
+
+    let max: &f32 = dsp::get_max(&input_signal);
+    debug!("Maximo: {}", max);
+
+
+
+    // sync frame to find: seven impulses and some black pixels (some lines
+    // have something like 8 black pixels and then white ones)
+    let mut syncA: Signal = Vec::with_capacity(20*7 + 35);
+    for _i in 0..7 {
+        syncA.extend_from_slice(&[-1., -1., -1., -1., -1., -1., -1., -1., -1., -1.,
+                                 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]);
+    }
+    for _i in 0..35 {
+        syncA.push(-1.);
+    }
+
+    // list of maximum correlations found: (index, value)
+    let mut peaks: Vec<(usize, f32)> = Vec::new();
+    peaks.push((0, 0.));
+
+    // minimum distance between peaks
+    let mindistance: usize = 2000*5;
+
+    // need to shift the values down to get meaningful correlation values
+    // signalshifted = [x-128 for x in signal]
+    // syncA = [x-128 for x in syncA]
+    for i in 0 .. demodulated.len() - syncA.len() {
+        let mut corr: f32 = 0.;
+        for j in 0..syncA.len() {
+            corr += syncA[j] * (demodulated[i+j] - *max/2.);
+        }
+
+        // if previous peak is too far, keep it and add this value to the
+        // list as a new peak
+        if i - peaks.last().unwrap().0 > mindistance {
+            peaks.push((i, corr));
+        }
+
+        // else if this value is bigger than the previous maximum, set this
+        // one
+        else if corr > peaks.last().unwrap().1 {
+            peaks.pop();
+            peaks.push((i, corr));
+        }
+    }
+
+
+    println!("peaks: {:?}", peaks);
+
+    let mut salida: Signal = Vec::new();
+
+    for i in 0..peaks.len()-1 {
+        salida.extend_from_slice(&demodulated[peaks[i].0 .. peaks[i].0+2080*5]);
+    }
+
+    let demodulated = salida;
+
+
+
 
     let r = 7/3; // resampling factor
     let l = 1; // interpolation

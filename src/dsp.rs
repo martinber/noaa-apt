@@ -22,28 +22,37 @@ pub fn get_max(vector: &Signal) -> &f32 {
 /// L is the interpolation factor and M the decimation one.
 pub fn resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
 
-    debug!("Upsampling by {}", l);
-
+    let upsampled: Signal;
     let l = l as usize;
     let m = m as usize;
-    let mut upsampled: Signal = vec![0_f32; signal.len() * l];
 
-    for (i, sample) in signal.iter().enumerate() {
-        upsampled[i * l] = *sample;
+    if l > 1 {
+        debug!("Upsampling by {}", l);
+
+        let mut padded: Signal = vec![0_f32; signal.len() * l];
+
+        for (i, sample) in signal.iter().enumerate() {
+            padded[i * l] = *sample;
+        }
+
+        debug!("Filtering");
+
+        let f = lowpass(1./(l as f32), atten, delta_w);
+
+        upsampled = filter(&padded, &f);
+
+    } else {
+
+        upsampled = signal.clone();
+
     }
-
-    debug!("Filtering");
-
-    let f = lowpass(1./(l as f32), atten, delta_w);
-
-    let filtered = filter(&upsampled, &f);
 
     debug!("Decimating");
 
-    let mut decimated: Signal = Vec::with_capacity(filtered.len() / m);
+    let mut decimated: Signal = Vec::with_capacity(upsampled.len() / m);
 
-    for i in 0..filtered.len()/m {
-        decimated.push(filtered[i*m]);
+    for i in 0..upsampled.len()/m {
+        decimated.push(upsampled[i*m]);
     }
 
     decimated
