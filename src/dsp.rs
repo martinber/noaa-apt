@@ -69,9 +69,11 @@ pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -
         debug!("Resampling by L/M: {}/{}", l, m);
 
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+        // let mut output: Signal = vec![0.; signal.len() * l / m];
         let f = lowpass(1./(l as f32), atten, delta_w);
         let offset = (f.len()-1)/2;
 
+        /*
         // Iterar sobre cada muestra de la salida
         for i in 0 .. signal.len()*l/m {
 
@@ -91,6 +93,40 @@ pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -
                 }
             }
             output.push(sum);
+        }
+        */
+
+        // Iterar sobre cada tiempo de salida
+        let mut t: usize = 0;
+        let mut n: usize;
+        let mut sum: f32 = 0.;
+        let offset = (f.len()-1)/2;
+        while t < signal.len()*l {
+
+            if t > offset {
+                // Find first n inside the window with a input sample
+                n = t - offset;
+                match n % l {
+                    0 => (),
+                    x => n += l - x,
+                }
+            } else {
+                n = 0;
+            }
+
+            // Loop over all n inside the window with input samples
+            sum = 0.;
+            while n <= t + offset {
+                match signal.get(n/l) { // Salvo que estemos afuera de los limites
+                    Some(sample) => sum += f[n-t+offset] * sample,
+                    None => (),
+                }
+                n += l;
+            }
+            // output[t/m] = sum;
+            output.push(sum);
+
+            t += m;
         }
 
         debug!("Resampling finished");
