@@ -29,10 +29,10 @@ fn resample_test() {
     debug!("reader_spec: {:?}", input_spec);
 
     let atten = 50.;
-    let delta_w = 1./20.;
-    let l = 21; // interpolation
-    let m = 5; // decimation
-    let resampled = dsp::new_resample(&input_signal, l, m, atten, delta_w);
+    let delta_w = 1./10000.;
+    let l = 1240; // interpolation
+    let m = 589; // decimation
+    let resampled = dsp::resample(&input_signal, l, m, atten, delta_w);
 
     let writer_spec = hound::WavSpec {
         channels: 1,

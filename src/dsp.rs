@@ -1,7 +1,6 @@
 use std::f32::consts::PI;
 
 // TODO: Optimizar cosas simétricas
-// TODO: Pedir valores en fracciones de PI
 
 pub type Signal = Vec<f32>;
 
@@ -16,49 +15,7 @@ pub fn get_max(vector: &Signal) -> &f32 {
 
     max
 }
-
-/// Resample signal by upsampling, filtering and downsampling.
-///
-/// L is the interpolation factor and M the decimation one.
 pub fn resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
-
-    let upsampled: Signal;
-    let l = l as usize;
-    let m = m as usize;
-
-    if l > 1 {
-        debug!("Upsampling by {}", l);
-
-        let mut padded: Signal = vec![0_f32; signal.len() * l];
-
-        for (i, sample) in signal.iter().enumerate() {
-            padded[i * l] = *sample;
-        }
-
-        debug!("Filtering");
-
-        let f = lowpass(1./(l as f32), atten, delta_w);
-
-        upsampled = filter(&padded, &f);
-
-    } else {
-
-        upsampled = signal.clone();
-
-    }
-
-    debug!("Decimating");
-
-    let mut decimated: Signal = Vec::with_capacity(upsampled.len() / m);
-
-    for i in 0..upsampled.len()/m {
-        decimated.push(upsampled[i*m]);
-    }
-
-    decimated
-}
-
-pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
@@ -71,30 +28,6 @@ pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
         // let mut output: Signal = vec![0.; signal.len() * l / m];
         let f = lowpass(1./(l as f32), atten, delta_w);
-        let offset = (f.len()-1)/2;
-
-        /*
-        // Iterar sobre cada muestra de la salida
-        for i in 0 .. signal.len()*l/m {
-
-            let mut sum: f32 = 0.;
-            let x = i*m-offset;
-            // Iterar sobre cada coeficiente del filtro
-            for (j, coeff) in f.iter().enumerate() {
-                // let jn = j - (f.len()-1)/2;
-                // let n = i * m + jn;
-                let n = j+x;
-
-                if n % l == 0 { // Significa que en este n hay una muestra original
-                    match signal.get(n/l) { // Salvo que estemos afuera de los limites
-                        Some(sample) => sum += coeff * sample,
-                        None => (),
-                    }
-                }
-            }
-            output.push(sum);
-        }
-        */
 
         // Iterar sobre cada tiempo de salida
         let mut t: usize = 0;
@@ -151,6 +84,7 @@ pub fn new_resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -
 
 /// Demodulate AM signal.
 pub fn demodulate(signal: &Signal, atten: f32, delta_w: f32) -> Signal {
+    debug!("Demodulating signal");
     let h_filter = hilbert(atten, delta_w);
     let imag = filter(signal, &h_filter);
     let delay: usize = h_filter.len() / 2;
@@ -162,12 +96,15 @@ pub fn demodulate(signal: &Signal, atten: f32, delta_w: f32) -> Signal {
             output[i] = (imag[i].powi(2) + signal[i-delay].powi(2)).sqrt();
         }
     }
+    debug!("Demodulation finished");
 
     output
 }
 
 /// Filter a signal,
 pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
+
+    debug!("Filtering signal");
 
     let mut output: Signal = vec![0_f32; signal.len()];
 
@@ -180,6 +117,7 @@ pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
         }
         output[i] = sum;
     }
+    debug!("Filtering finished");
     output
 }
 
@@ -202,10 +140,14 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
 /// Attenuation in positive decibels.
 pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
 
+    debug!("Designing Hilbert filter,\
+           attenuation: {}dB, delta_w: 2*pi*{}rad/s",
+           atten, delta_w);
+
     let window = kaiser(atten, delta_w);
 
     if window.len() % 2 == 0 {
-        panic!("Hilbert filter length should be odd");
+        panic!("Kaiser window length should be odd");
     }
 
     let mut filter: Signal = Vec::with_capacity(window.len());
@@ -221,6 +163,8 @@ pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
         }
     }
 
+    debug!("Hilbert filter design finished");
+
     product(filter, &window)
 }
 
@@ -230,10 +174,14 @@ pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
 /// Attenuation in positive decibels.
 pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 
+    debug!("Designing Lowpass filter,\
+           cutout: 2*pi*{}rad/s, attenuation: {}dB, delta_w: 2*pi*{}rad/s",
+           cutout, atten, delta_w);
+
     let window = kaiser(atten, delta_w);
 
     if window.len() % 2 == 0 {
-        panic!("Lowpass filter length should be odd");
+        panic!("Kaiser window length should be odd");
     }
 
     let mut filter: Signal = Vec::with_capacity(window.len());
@@ -249,6 +197,8 @@ pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
         }
     }
 
+    debug!("Lowpass filter design finished");
+
     product(filter, &window)
 }
 
@@ -257,6 +207,10 @@ pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 /// The length depends on the parameters given, and it's always odd.
 /// Frequency in fractions of pi radians per second.
 fn kaiser(atten: f32, delta_w: f32) -> Signal {
+
+    debug!("Designing Kaiser window,\
+           attenuation: {}dB, delta_w: 2*pi*{}rad/s",
+           atten, delta_w);
 
     let beta: f32;
     if atten > 50. {
@@ -283,7 +237,7 @@ fn kaiser(atten: f32, delta_w: f32) -> Signal {
                     bessel(beta as f64)) as f32)
     }
 
-    debug!("beta: {}, length: {}", beta, length);
+    debug!("Kaiser window design finished, beta: {}, length: {}", beta, length);
 
     window
 }
