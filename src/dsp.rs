@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 
 pub type Signal = Vec<f32>;
 
-/// Get biggest sample.
+/// Get biggest sample in signal.
 pub fn get_max(vector: &Signal) -> &f32 {
     let mut max: &f32 = &0_f32;
     for sample in vector.iter() {
@@ -15,7 +15,18 @@ pub fn get_max(vector: &Signal) -> &f32 {
 
     max
 }
-pub fn resample(signal: &Signal, l: u32, m: u32, atten: f32, delta_w: f32) -> Signal {
+
+/// Resample signal.
+///
+/// `l` is the interpolation factor and `m` is the decimation one. The filter
+/// is designed by a Kaiser window method depending in the attenuation `atten`
+/// and the transition band width `delta_w`.
+///
+/// `atten` should be positive and specified in decibels. `delta_w` has units of
+/// fractions of pi radians per second, considering the signal after `l - 1`
+/// insertions of zeros.
+pub fn resample(signal: &Signal, l: u32, m: u32,
+                atten: f32, delta_w: f32) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
