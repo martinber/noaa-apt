@@ -43,20 +43,7 @@ as of July 2018:
   - TODO
 
 
-## Algorithms
-
-AM resampling and demodulation using FFT (maybe too slow?):
-
-- Load samples from WAV.
-- Resample and get [analytic signal].
-  - Get L (interpolation factor) and M (decimation factor).
-  - Insert L-1 zeros between samples,
-  - Calculate FFT.
-    - Remove negative half of spectrum to get analytic signal.
-    - Filter spectrum images on the right to interpolate.
-    - Calculate IFFT.
-  - Decimate removing M-1 samples.
-- Get absolute value of analytic signal to finish AM demodulation.
+## Algorithm
 
 AM resampling and demodulation using FIR filter, following method 4 or 5 in
 reference [1]:
@@ -64,16 +51,15 @@ reference [1]:
 - Load samples from WAV.
 - Resample and get [analytical signal].
   - Get L (interpolation factor) and M (decimation factor).
-  - Insert L-1 zeros between samples,
   - Get filter from a common sample rate or generate a new one:
     - Calculate impulse response of hilbert filter and lowpass filter.
     - Calculate kaiser window from parameters or use a predefined one.
-    - Multiply window with impoulse response for both filters.
-  - Filter with lowpass to finish interpolation.
+    - Multiply window with impulse response for both filters.
+  - Filter with lowpass only the output samples.
   - Decimate removing M-1 samples.
   - Get [analytic sygnal]:
-    - Filter the signal.
-    - Add the original signal.
+    - Filter the signal with a hilbert filter..
+    - Add the original signal, with the same delay as the filtered one.
 - Get absolute value of analytic signal to finish AM demodulation.
 
 

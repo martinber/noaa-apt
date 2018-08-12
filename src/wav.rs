@@ -27,18 +27,16 @@ pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
     (input_samples, spec)
 }
 
-/// Write signal to file, for testing purposes.
-///
-/// So you can see the samples in Audacity for example.
+/// Write signal to file.
 pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) {
 
-    println!("Normalizing samples");
+    debug!("Normalizing samples");
 
     let max = dsp::get_max(&signal);
-    println!("Max: {}", max);
+    debug!("Max: {}", max);
     let normalized: Signal = signal.iter().map(|x| x/max).collect();
 
-    debug!("Writing WAV: {}", filename);
+    debug!("Writing WAV to '{}'", filename);
 
     debug!("WAV specifications: {:?}", spec);
 

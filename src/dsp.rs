@@ -1,3 +1,5 @@
+use misc;
+
 use std::f32::consts::PI;
 
 // TODO: Optimizar cosas simétricas
@@ -16,7 +18,28 @@ pub fn get_max(vector: &Signal) -> &f32 {
     max
 }
 
-/// Resample signal.
+/// Resample signal to given rate some default filter.
+///
+/// The filter has a transition band equal to the 20% of the spectrum width of
+/// the input signal. Starts at 90% of the input signal spectrum, so it lets a
+/// little of aliasing go through.
+///
+/// The filter attenuation is 40dB.
+pub fn resample_to(signal: &Signal, input_rate: u32,
+                   output_rate: u32) -> Signal {
+
+    let gcd = misc::gcd(input_rate, output_rate);
+    let l = output_rate / gcd; // interpolation factor
+    let m = input_rate / gcd; // decimation factor
+
+    let atten = 40.;
+    let delta_w = 0.2 / l as f32;
+
+    resample(&signal, l, m, atten, delta_w)
+}
+
+
+/// Resample signal by L/M following specific parameters.
 ///
 /// `l` is the interpolation factor and `m` is the decimation one. The filter
 /// is designed by a Kaiser window method depending in the attenuation `atten`

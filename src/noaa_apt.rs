@@ -1,66 +1,48 @@
 use wav;
 use dsp;
 use dsp::Signal;
-use misc;
 
 use hound;
 use png;
 
-/// Resample wav file.
+/// Resample wav file
 ///
-/// The filter has a transition band equal to the 20% of the spectrum width of
-/// the input signal. Starts at 90% of the input signal spectrum, so it lets a
-/// little of aliasing go through.
-///
-/// The filter attenuation is 40dB.
-///
-/// If you want to choose these parameters you can use resample_wav_custom().
+/// The filter parameters are the default ones.
 pub fn resample_wav(input_filename: &str, output_filename: &str,
                     output_rate: u32) {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename);
 
-    let gcd = misc::gcd(input_spec.sample_rate, output_rate);
-    let l = output_rate / gcd; // interpolation factor
-    let m = input_spec.sample_rate / gcd; // decimation factor
-
-    let atten = 40.;
-    let delta_w = 0.2 / l as f32;
-
     info!("Resampling");
-
-    let resampled = dsp::resample(&input_signal, l, m, atten, delta_w);
+    let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
+                                     output_rate);
 
     let writer_spec = hound::WavSpec {
         channels: 1,
-        sample_rate: input_spec.sample_rate * l/m,
+        sample_rate: output_rate,
         bits_per_sample: 32,
         sample_format: hound::SampleFormat::Float,
     };
 
-    println!("Writing WAV");
+    info!("Writing WAV to '{}'", output_filename);
 
-    wav::write_wav("./salida.wav", &resampled, writer_spec);
+    wav::write_wav(output_filename, &resampled, writer_spec);
+
 }
 
+/// Decode APT image from WAV file.
+pub fn decode(input_filename: &str, output_filename: &str) {
 
-pub fn demodulation_test() {
+    info!("Reading WAV file");
+    let (input_signal, input_spec) = wav::load_wav(input_filename);
 
-    debug!("Leyendo WAV:");
-    let (input_signal, input_spec) = wav::load_wav("./20800.wav");
-    debug!("Cargado WAV en Vec");
-    debug!("reader_spec: {:?}", input_spec);
-
-    let atten = 50.;
+    let atten = 40.;
     let delta_w = 1./20.;
     let demodulated = dsp::demodulate(&input_signal, atten, delta_w);
 
-
     let max: &f32 = dsp::get_max(&input_signal);
     debug!("Maximo: {}", max);
-
-
 
     // sync frame to find: seven impulses and some black pixels (some lines
     // have something like 8 black pixels and then white ones)
@@ -114,9 +96,6 @@ pub fn demodulation_test() {
 
     let demodulated = salida;
 
-
-
-
     let l = 1; // interpolation
     let m = 5;
     let resampled = dsp::resample(&demodulated, l, m, atten, delta_w);
@@ -131,10 +110,8 @@ pub fn demodulation_test() {
     println!("Resampleado");
     let max = dsp::get_max(&resampled);
     println!("Maximo: {}", max);
-    let normalized = resampled.iter().map(|x| x/max).collect();
+    let normalized: Signal = resampled.iter().map(|x| x/max).collect();
 
-    println!("Escribiendo WAV:");
-    wav::write_wav("./salida.wav", &normalized, writer_spec);
 
     let acomodado: Vec<u8> = normalized.iter().map(|x| (x*255.) as u8).collect();
 
@@ -145,7 +122,9 @@ pub fn demodulation_test() {
     // To use encoder.set()
     use png::HasParameters;
 
-    let path = Path::new("./salida.png");
+    info!("Writing PNG to '{}'", output_filename);
+
+    let path = Path::new(output_filename);
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
 
