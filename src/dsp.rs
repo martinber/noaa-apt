@@ -66,7 +66,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
         // Iterar sobre cada tiempo de salida
         let mut t: usize = 0;
         let mut n: usize;
-        let mut sum: f32 = 0.;
+        let mut sum: f32;
         let offset = (f.len()-1)/2;
         while t < signal.len()*l {
 

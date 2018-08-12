@@ -35,24 +35,32 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 pub fn decode(input_filename: &str, output_filename: &str) {
 
     info!("Reading WAV file");
-    let (input_signal, input_spec) = wav::load_wav(input_filename);
+
+    let (signal, input_spec) = wav::load_wav(input_filename);
+
+    info!("Resampling");
+
+    let signal = dsp::resample_to(&signal, input_spec.sample_rate, 20800);
+
+    info!("Demodulating");
 
     let atten = 40.;
     let delta_w = 1./20.;
-    let demodulated = dsp::demodulate(&input_signal, atten, delta_w);
+    let signal = dsp::demodulate(&signal, atten, delta_w);
 
-    let max: &f32 = dsp::get_max(&input_signal);
-    debug!("Maximo: {}", max);
+    info!("Syncing");
+
+    let max: &f32 = dsp::get_max(&signal);
 
     // sync frame to find: seven impulses and some black pixels (some lines
     // have something like 8 black pixels and then white ones)
-    let mut syncA: Signal = Vec::with_capacity(20*7 + 35);
+    let mut guard: Signal = Vec::with_capacity(20*7 + 35);
     for _i in 0..7 {
-        syncA.extend_from_slice(&[-1., -1., -1., -1., -1., -1., -1., -1., -1., -1.,
+        guard.extend_from_slice(&[-1., -1., -1., -1., -1., -1., -1., -1., -1., -1.,
                                  1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]);
     }
     for _i in 0..35 {
-        syncA.push(-1.);
+        guard.push(-1.);
     }
 
     // list of maximum correlations found: (index, value)
@@ -63,12 +71,10 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     let mindistance: usize = 2000*5;
 
     // need to shift the values down to get meaningful correlation values
-    // signalshifted = [x-128 for x in signal]
-    // syncA = [x-128 for x in syncA]
-    for i in 0 .. demodulated.len() - syncA.len() {
+    for i in 0 .. signal.len() - guard.len() {
         let mut corr: f32 = 0.;
-        for j in 0..syncA.len() {
-            corr += syncA[j] * (demodulated[i+j] - *max/2.);
+        for j in 0..guard.len() {
+            corr += guard[j] * (signal[i+j] - *max/2.);
         }
 
         // if previous peak is too far, keep it and add this value to the
@@ -85,35 +91,23 @@ pub fn decode(input_filename: &str, output_filename: &str) {
         }
     }
 
-
-    println!("peaks: {:?}", peaks);
-
-    let mut salida: Signal = Vec::new();
+    let mut aligned: Signal = Vec::new();
 
     for i in 0..peaks.len()-1 {
-        salida.extend_from_slice(&demodulated[peaks[i].0 .. peaks[i].0+2080*5]);
+        aligned.extend_from_slice(&signal[peaks[i].0 .. peaks[i].0+2080*5]);
     }
-
-    let demodulated = salida;
 
     let l = 1; // interpolation
     let m = 5;
-    let resampled = dsp::resample(&demodulated, l, m, atten, delta_w);
-
-    let writer_spec = hound::WavSpec {
-        channels: 1,
-        sample_rate: input_spec.sample_rate * l/m as u32,
-        bits_per_sample: 32,
-        sample_format: hound::SampleFormat::Float,
-    };
+    let aligned = dsp::resample(&aligned, l, m, atten, delta_w);
 
     println!("Resampleado");
-    let max = dsp::get_max(&resampled);
+    let max = dsp::get_max(&aligned);
     println!("Maximo: {}", max);
-    let normalized: Signal = resampled.iter().map(|x| x/max).collect();
+    let aligned: Signal = aligned.iter().map(|x| x/max).collect();
 
 
-    let acomodado: Vec<u8> = normalized.iter().map(|x| (x*255.) as u8).collect();
+    let aligned: Vec<u8> = aligned.iter().map(|x| (x*255.) as u8).collect();
 
     // For reading and opening files
     use std::path::Path;
@@ -128,11 +122,14 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     let file = File::create(path).unwrap();
     let ref mut w = BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(w, 2080, 700);
+    println!("{}", aligned.len());
+    let height = aligned.len() as u32 / 2080;
+
+    let mut encoder = png::Encoder::new(w, 2080, height);
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
-    writer.write_image_data(&acomodado[0..(2080*700) as usize]).unwrap(); // Save
+    writer.write_image_data(&aligned[..]).unwrap(); // Save
 
     /*
     // let window = dsp::kaiser(40., 1./10.);
