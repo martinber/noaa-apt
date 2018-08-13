@@ -1,17 +1,54 @@
 # noaa-apt
 
-Work in progress decoder for NOAA APT images from a recorded WAV file.
+NOAA APT image decoder.
 
-Written in Rust, never tried to do signal processing or to use Rust before...
+Doesn't do anything special, takes a recorded WAV file (from GQRX, SDR#, etc.)
+and decodes the raw image. Later you can rotate the image and adjust the
+contrast with something like GIMP or Photoshop.
+
+Written in Rust, never tried to do signal processing or to use Rust before, but
+it works quite well. Works with WAV files of any sample rate.
+
+## Usage
+
+```
+$ ./noaa-apt --help
+
+Usage:
+    ./target/release/noaa-apt [OPTIONS] INPUT_FILENAME
+
+Decode NOAA APT images from WAV files.
+
+positional arguments:
+  input_filename        Input WAV file.
+
+optional arguments:
+  -h,--help             show this help message and exit
+  -d,--debug            Print debugging messages.
+  -q,--quiet            Don't print info messages.
+  -o,--output FILENAME  Set output path. When decoding images the default is
+                        './output.png', when resampling the default is
+                        './output.wav'.
+  -r,--resample SAMPLE_RATE
+                        Resample WAV file to a given sample rate, no APT image
+                        will be decoded.
+```
+
+## Example
+
+From a WAV file I found lying around:
+
+![Example image](./examples/example.png)
 
 ## Alternatives
 
 Just bought an RTL-SDR and tried to receive NOAA APT images, I'm new to this but
-as of July 2018:
+as of August 2018:
 
-- [wxtoimg], by far the most popular, lots of features but the site looks dead
-  forever, you can still get some binaries uploaded by some people if you are
-  lucky.
+- [WXtoImg], by far the most popular, lots of features but the site looks dead
+  forever.
+
+- [WXtoImg Restored], unofficial mirror with installers recovered by users.
 
 - [atp-dec/apt-dec], works really good. Keep in mind that the [1.7 release]
   looks newer than the [repo's master branch]. I tried several times to compile
@@ -25,7 +62,8 @@ as of July 2018:
   [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
   slow and minor artifacts on the image if you look at the vertical stripes.
 
-[wxtoimg]: http://wxtoimg.com/
+[WXtoImg]: http://wxtoimg.com/
+[WXtoImg Restored]: https://wxtoimgrestored.xyz/
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
 [1.7 release]: https://github.com/csete/aptdec/releases
 [repo's master branch]: https://github.com/csete/aptdec
@@ -36,12 +74,16 @@ as of July 2018:
 
 - GNU Scientific Library:
 
-  - `sudo apt install libgsl0-dev`.
+  - Compiling: `sudo apt install libgsl0-dev`.
+  - Running: `sudo apt install libgsl0`.
 
-- GNUPlot:
+## Things to do
 
-  - TODO
+- Support Windows and make some simple GUI.
 
+- Drop the GSL dependency because I guess that it's cumbersome to install in
+  Windows. I'm using only a Bessel function. Maybe compile a "no GSL" version
+  with some predefined filters, that works only with a few sample rates.
 
 ## Algorithm
 
@@ -49,37 +91,64 @@ AM resampling and demodulation using FIR filter, following method 4 or 5 in
 reference [1]:
 
 - Load samples from WAV.
-- Resample and get [analytical signal].
-  - Get L (interpolation factor) and M (decimation factor).
-  - Get filter from a common sample rate or generate a new one:
-    - Calculate impulse response of hilbert filter and lowpass filter.
-    - Calculate kaiser window from parameters or use a predefined one.
-    - Multiply window with impulse response for both filters.
-  - Filter with lowpass only the output samples.
-  - Decimate removing M-1 samples.
-  - Get [analytic sygnal]:
-    - Filter the signal with a hilbert filter..
-    - Add the original signal, with the same delay as the filtered one.
-- Get absolute value of analytic signal to finish AM demodulation.
 
+- Resample to a intermediate sample rate: 20800Hz.
 
-## Analytical signal
+  - Get L (interpolation factor) and M (decimation factor) by looking at the
+    greatest common divisor (GCD) between input and output sample rates.
 
-For AM demodulation we use the [analytic signal].
+  - Get interpolating lowpass filter inpulse response by window method.
 
-### Hilbert filter
+    - Get kaiser window.
 
-Frequency response: j for w < 0 and -j for w > 0.
+    - Sample and window the function `sin(n*cutout)/(n*pi)`.
 
-Impulse response: `1/(pi*n) * (1-cos(pi*n))`
+  - Do the equivalent of:
 
-For n=0, should be 0.
+    - Insertion of L-1 zeros between samples.
 
-## Lowpass filter
+    - Filter by doing the convolution with the impulse response.
 
-Impulse response: `sin(n*wc)/(n*pi)`.
+    - Decimate by M.
+
+- Demodulate AM signal yo get the APT signal.
+
+  - Get hilbert filter impulse response by window method.
+
+    - Get kaiser window.
+
+    - Sample and window the function `1/(pi*n) * (1-cos(pi*n))`.
+
+  - Get the imaginary part of the Analytical Signal by doing the convolution
+    with the hilbert impulse response. This part adds a delay (maybe I should
+    fix that).
+
+  - Get the real part of the Analytical Signal by adding the same delay to the
+    original AM signal.
+
+  - Calculate the absolute value of each sample: `sqrt(real^2 + imag^2)`.
+
+- Find the position of the sync frames of the APT signal (the white and black
+  stripes that you can see in the final image).
+
+  - Calculate the cross correlation between a hardcoded sync frame and the APT
+    signal.
+
+  - The peaks of that cross correlation show the locations of the sync frames in
+    the APT signal.
+
+- Map the values of the signal to numbers between 0 and 255.
+
+- Generate the final image starting a new line on every sync frame.
+
+## Resampling algorithm
+
+I did something like what you can see
+[here](https://ccrma.stanford.edu/~jos/resample/).
 
 ## Notes
+
+```
 
 - Looks like there are several definitions for Kaiser window values, I get
   different results compared to Matlab.
@@ -120,6 +189,8 @@ Impulse response: `sin(n*wc)/(n*pi)`.
     diferencia de fase
   - Convierte a complejo y toma el módulo
   - Resampleo a 4160
+
+```
 
 ## References
 
