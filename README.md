@@ -151,6 +151,9 @@ reference [1]:
 I did something like what you can see
 [here](https://ccrma.stanford.edu/~jos/resample/).
 
+![Resampling algorithm](./examples/resampling.png)
+
+
 ## Notes
 
 ```
