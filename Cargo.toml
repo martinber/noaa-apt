@@ -1,6 +1,6 @@
 [package]
 name = "noaa-apt"
-version = "0.1.0"
+version = "0.9.0"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
 [dependencies]

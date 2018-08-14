@@ -2,8 +2,6 @@ use misc;
 
 use std::f32::consts::PI;
 
-// TODO: Optimizar cosas simétricas
-
 pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
@@ -54,46 +52,49 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
     let l = l as usize;
     let m = m as usize;
 
-    // Si hay interpolacion
-    if l > 1 {
+    if l > 1 { // If we need interpolation
 
         debug!("Resampling by L/M: {}/{}", l, m);
 
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
-        // let mut output: Signal = vec![0.; signal.len() * l / m];
         let f = lowpass(1./(l as f32), atten, delta_w);
 
-        // Iterar sobre cada tiempo de salida
-        let mut t: usize = 0;
-        let mut n: usize;
+        // Iterate over each output sample
+        let mut n: usize; // Current working n, see image in README
+        let mut t: usize = 0; // Like n but fixed to the current output sample
+                              // to calculate
         let mut sum: f32;
-        let offset = (f.len()-1)/2;
+        let offset = (f.len()-1)/2; // Filter delay in the n axis, half of
+                                    // filter width
         while t < signal.len()*l {
 
+            // Find first n inside the window with a input sample to multiply
+            // with a filter coefficient
             if t > offset {
-                // Find first n inside the window with a input sample
-                n = t - offset;
-                match n % l {
+                n = t - offset; // Go to start of filter
+                match n % l { // Jump to first sample in window
                     0 => (),
                     x => n += l - x,
                 }
-            } else {
+            } else { // In this case the first sample in window is located at n=0
                 n = 0;
             }
 
-            // Loop over all n inside the window with input samples
+            // Loop over all n inside the window with input samples and
+            // calculate products
             sum = 0.;
             while n <= t + offset {
-                match signal.get(n/l) { // Salvo que estemos afuera de los limites
+                // Check if there is a sample in that index, in case that we
+                // use an index bigger that signal.len()
+                match signal.get(n/l) {
                     Some(sample) => sum += f[n+offset-t] * sample,
                     None => (),
                 }
                 n += l;
             }
-            // output[t/m] = sum;
-            output.push(sum);
+            output.push(sum); // Store output sample
 
-            t += m;
+            t += m; // Jump to next input sample
         }
 
         debug!("Resampling finished");
@@ -342,36 +343,4 @@ mod tests {
             }
         }
     }
-
-    /*
-    /// Check if the filter meets the required parameters in the positive half
-    /// of the spectrum.
-    #[test]
-    fn test_hilbert() {
-        // atten and delta_w values
-        let test_parameters: Vec<(f32, f32)> = vec![
-                /*(20., 1./10.),*/ (35., 1./30.), (60., 1./20.)];
-
-        for parameters in test_parameters.iter() {
-            let (atten, delta_w) = *parameters;
-
-            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
-
-            let filter = hilbert(atten, delta_w);
-            let mut fft = abs_fft(&filter);
-
-            println!("atten: {}, delta_w: {}", atten, delta_w);
-            println!("filter: {:?}", filter);
-
-            for (i, v) in fft.iter().enumerate() {
-                let w = 2. * (i as f32) / (fft.len() as f32);
-
-                if w > delta_w/2. && w < 1. - delta_w/2. {
-                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
-                    assert!(*v < 1. + ripple && *v > 1. - ripple);
-                }
-            }
-        }
-    }
-    */
 }

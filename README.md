@@ -7,7 +7,13 @@ and decodes the raw image. Later you can rotate the image and adjust the
 contrast with something like GIMP or Photoshop.
 
 Written in Rust, never tried to do signal processing or to use Rust before, but
-it works quite well. Works with WAV files of any sample rate.
+it works quite well.
+
+If you get some kind of error or bad result don't hesitate to open a Issue here
+or to send me an email (see my profile). You can try to run the program with the
+`--debug` option for more info.
+
+Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 
 ## Usage
 
@@ -37,7 +43,7 @@ optional arguments:
 ## Compile
 
 **Build with `--release`, Rust does some optimizations and it works MUCH
-faster.**
+faster. Really, otherwise it takes FOREVER.**
 
 ```
 cargo build --release
@@ -104,15 +110,15 @@ as of August 2018:
 
 ## Things I should do
 
-- Set version number when it's barely ready.
-
 - Support Windows and make some simple GUI.
 
 - Drop the GSL dependency because I guess that it's cumbersome to install in
   Windows. I'm using only a Bessel function. Maybe compile a "no GSL" version
   with some predefined filters, which works only with a few sample rates.
 
-- The parameters used for filter design are hardcoded
+- The parameters used for filter design are hardcoded.
+
+- Do tests.
 
 ## Algorithm
 

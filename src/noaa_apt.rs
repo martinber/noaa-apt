@@ -129,14 +129,17 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     use png::HasParameters;
 
     let path = std::path::Path::new(output_filename);
-    let file = std::fs::File::create(path).unwrap();
+    let file = std::fs::File::create(path)
+        .expect("Failed to create output file");
     let ref mut buffer = std::io::BufWriter::new(file);
 
     let height = aligned.len() as u32 / PX_PER_ROW;
 
     let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
-    let mut writer = encoder.write_header().unwrap();
+    let mut writer = encoder.write_header()
+        .expect("Failed to write PNG header");
 
-    writer.write_image_data(&aligned[..]).unwrap(); // Save
+    writer.write_image_data(&aligned[..])
+        .expect("Failed to write image data");
 }

@@ -18,9 +18,14 @@ pub fn load_wav(filename: &str) -> (Signal, hound::WavSpec) {
 
     debug!("WAV specifications: {:?}", spec);
 
-    // TODO: Read WAV files that aren't 16 bit integer encoded
-    let input_samples = reader.samples::<i16>().map(|x| x.unwrap() as f32)
-                .collect();
+    let input_samples = match spec.sample_format {
+        hound::SampleFormat::Int => {
+            reader.samples::<i32>().map(|x| x.unwrap() as f32).collect()
+        }
+        hound::SampleFormat::Float => {
+            reader.samples::<f32>().map(|x| x.unwrap()).collect()
+        }
+    };
 
     debug!("Finished reading WAV");
 
