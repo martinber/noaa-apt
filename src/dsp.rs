@@ -85,7 +85,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
             sum = 0.;
             while n <= t + offset {
                 match signal.get(n/l) { // Salvo que estemos afuera de los limites
-                    Some(sample) => sum += f[n-t+offset] * sample,
+                    Some(sample) => sum += f[n+offset-t] * sample,
                     None => (),
                 }
                 n += l;
@@ -174,7 +174,7 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
 /// Attenuation in positive decibels.
 pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
 
-    debug!("Designing Hilbert filter,\
+    debug!("Designing Hilbert filter, \
            attenuation: {}dB, delta_w: 2*pi*{}rad/s",
            atten, delta_w);
 
@@ -208,7 +208,7 @@ pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
 /// Attenuation in positive decibels.
 pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 
-    debug!("Designing Lowpass filter,\
+    debug!("Designing Lowpass filter, \
            cutout: 2*pi*{}rad/s, attenuation: {}dB, delta_w: 2*pi*{}rad/s",
            cutout, atten, delta_w);
 
