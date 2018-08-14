@@ -34,11 +34,36 @@ optional arguments:
                         will be decoded.
 ```
 
+## Compile
+
+**Build with `--release`, Rust does some optimizations and it works MUCH
+faster.**
+
+```
+cargo build --release
+```
+
+## Test
+
+```
+cargo test
+```
+
+If you get something like a wall of errors because linking with GSL fails, run
+with the ``GSLv2`` feature:
+
+```
+cargo test --features GSLv2
+```
+
 ## Example
 
-From a WAV file I found lying around:
+From a WAV file I found lying around, the US upside down:
 
 ![Example image](./examples/example.png)
+
+The output is upside down if the satellite went from south to north instead of
+north to south that day.
 
 ## Alternatives
 
@@ -88,7 +113,6 @@ as of August 2018:
   with some predefined filters, which works only with a few sample rates.
 
 - The parameters used for filter design are hardcoded
-
 
 ## Algorithm
 
@@ -149,77 +173,82 @@ reference [1]:
 ## Resampling algorithm
 
 I did something like what you can see
-[here](https://ccrma.stanford.edu/~jos/resample/).
+[here](https://ccrma.stanford.edu/~jos/resample/) but with a easier
+implementation.
 
 ![Resampling algorithm](./examples/resampling.png)
 
+For each output sample, we calculate the sum of the products between input
+samples and filter coefficients.
 
 ## Notes
 
-```
+- Modulation:
 
-- Looks like there are several definitions for Kaiser window values, I get
-  different results compared to Matlab.
+  - The signal is modulated first on AM and then on FM.
 
-- I use 32 bit float and integers because it's enough?.
+  - FM frequencies:
 
-  NOAA 15:
-  NOAA 
-  NOAA 18: 137.9125MHz
+    - NOAA 15: 137.62MHz.
 
-  Portadora AM: 2400Hz
-  Amplitud: Escala de grises
+    - NOAA 18: 137.9125MHz.
 
-  Cada palabra es 8 bits/pixel
-  Dos lineas por segundo.
-  4160 words/segundo.
-  909 words utiles por linea
-  Cada linea contiene las dos imagenes
-  2080 pixeles/linea
+    - NOAA 19: 137.1MHz.
 
-  Cosas por línea:
+  - AM carrier: 2400Hz.
 
-  - Sync A: Onda cuadrada de 7 ciclos a 1040Hz
-  - Space A:
-  - Image A:
-  - Telemetry A:
-  - Sync B: Tren de pulsos de 842 de 7 ciclos????
-  - Space B:
-  - Image B:
-  - Telemetry B:
+- APT signal:
 
-  Procedimiento:
+  - 8 bits/pixel.
 
-  - WAV a 11025Hz
-  - Filtro pasa bajos
-  - Resampleo a 9600Hz (4 veces más que la AM a 2400Hz)
-  - Quedan 4 muestras por word de la AM de 2400Hz, cada muestra a 90 grados de
-    diferencia de fase
-  - Convierte a complejo y toma el módulo
-  - Resampleo a 4160
+  - The signal amplitude represents the brightness of each pixel.
 
-```
+  - Two lines per second, 4160 pixels per second.
+
+  - 2080 pixels per line, 909 useful pixels per line.
+
+  - Each line has:
+
+    - Sync A: Seven black and seven white pixels.
+
+    - Space A: Some black pixels (periodically white ones too).
+
+    - Image A: Visible/Infrared.
+
+    - Telemetry A: For calibration I think?
+
+    - Sync B: Some white and black pixels but I don't know the frequency.
+
+    - Space B: Some white pixels (periodically black ones too).
+
+    - Image B: Infrared.
+
+    - Telemetry B: For calibration I think?
 
 ## References
 
-- [Digital Envelope Detection: The Good, the Bad, and the Ugly][1]: Lists some
+- [NOAA Signal Decoding And Image Processing Using GNU-Radio][1]: About the APT
+	image format.
+
+- [Digital Envelope Detection: The Good, the Bad, and the Ugly][2]: Lists some
   AM demodulation methods.
 
-- [Hilbert Transform Design Example][2]: How to get the analytic signal.
+- [Hilbert Transform Design Example][3]: How to get the analytic signal.
 
-- [Spectral Audio Signal Processing: Digital Audio Resampling][3].
+- [Spectral Audio Signal Processing: Digital Audio Resampling][4].
 
-- [Impulse Response of a Hilbert Transformer][4].
+- [Impulse Response of a Hilbert Transformer][5].
 
-- [Spectral Audio Signal Processing: Kaiser Window][5].
+- [Spectral Audio Signal Processing: Kaiser Window][6].
 
-- [How to Create a Configurable Filter Using a Kaiser Window][6],
+- [How to Create a Configurable Filter Using a Kaiser Window][7],
 
-[1]: https://www.dsprelated.com/showarticle/938.php
-[2]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
-[3]: https://ccrma.stanford.edu/~jos/resample/
-[4]: https://flylib.com/books/en/2.729.1/impulse_response_of_a_hilbert_transformer.html
-[5]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
-[6]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
+[1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
+[2]: https://www.dsprelated.com/showarticle/938.php
+[3]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
+[4]: https://ccrma.stanford.edu/~jos/resample/
+[5]: https://flylib.com/books/en/2.729.1/impulse_response_of_a_hilbert_transformer.html
+[6]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
+[7]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal

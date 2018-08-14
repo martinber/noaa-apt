@@ -10,3 +10,6 @@ png = "*"
 log = "*"
 simple_logger = "*"
 argparse = "*"
+
+[features]
+GSLv2 = ["GSL/v2"]

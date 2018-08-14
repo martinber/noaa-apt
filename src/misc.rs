@@ -18,6 +18,7 @@ mod tests {
 
     use super::*;
 
+    #[test]
     pub fn test_gcd() {
         assert_eq!(gcd(346, 1), 1);
         assert_eq!(gcd(123, 234), 3);
