@@ -2,6 +2,7 @@ use wav;
 use dsp;
 use dsp::Signal;
 
+use std;
 use hound;
 use png;
 
@@ -34,13 +35,24 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 /// Decode APT image from WAV file.
 pub fn decode(input_filename: &str, output_filename: &str) {
 
+    // Working sample rate, used during demodulation and syncing, better if
+    // multiple of the final sample rate, 4160
+    const WORK_RATE: u32 = 20800;
+
+    // Final signal (with has one sample per pixel) sample rate
+    const FINAL_RATE: u32 = 4160;
+
+    // Pixels per row
+    const PX_PER_ROW: u32 = 2080;
+
+
     info!("Reading WAV file");
 
     let (signal, input_spec) = wav::load_wav(input_filename);
 
-    info!("Resampling");
+    info!("Resampling to {}", WORK_RATE);
 
-    let signal = dsp::resample_to(&signal, input_spec.sample_rate, 20800);
+    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE);
 
     info!("Demodulating");
 
@@ -52,6 +64,7 @@ pub fn decode(input_filename: &str, output_filename: &str) {
 
     let max: &f32 = dsp::get_max(&signal);
 
+    // TODO define and resample to WORK_RATE
     // sync frame to find: seven impulses and some black pixels (some lines
     // have something like 8 black pixels and then white ones)
     let mut guard: Signal = Vec::with_capacity(20*7 + 35);
@@ -67,8 +80,9 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     let mut peaks: Vec<(usize, f32)> = Vec::new();
     peaks.push((0, 0.));
 
-    // minimum distance between peaks
-    let mindistance: usize = 2000*5;
+    // minimum distance between peaks, some arbitrary number smaller but close
+    // to the number of samples by line
+    let min_distance: usize = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize * 8/10;
 
     // need to shift the values down to get meaningful correlation values
     for i in 0 .. signal.len() - guard.len() {
@@ -79,7 +93,7 @@ pub fn decode(input_filename: &str, output_filename: &str) {
 
         // if previous peak is too far, keep it and add this value to the
         // list as a new peak
-        if i - peaks.last().unwrap().0 > mindistance {
+        if i - peaks.last().unwrap().0 > min_distance {
             peaks.push((i, corr));
         }
 
@@ -94,57 +108,35 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     let mut aligned: Signal = Vec::new();
 
     for i in 0..peaks.len()-1 {
-        aligned.extend_from_slice(&signal[peaks[i].0 .. peaks[i].0+2080*5]);
+        aligned.extend_from_slice(&signal[peaks[i].0 ..
+                peaks[i].0 + (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize]);
     }
 
-    let l = 1; // interpolation
-    let m = 5;
-    let aligned = dsp::resample(&aligned, l, m, atten, delta_w);
+    debug!("Resampling to 4160");
 
-    println!("Resampleado");
+    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE);
     let max = dsp::get_max(&aligned);
-    println!("Maximo: {}", max);
+
+    debug!("Mapping samples from 0-{} to 0-255", max);
+
+    // TODO simplify to one line
     let aligned: Signal = aligned.iter().map(|x| x/max).collect();
-
-
     let aligned: Vec<u8> = aligned.iter().map(|x| (x*255.) as u8).collect();
-
-    // For reading and opening files
-    use std::path::Path;
-    use std::fs::File;
-    use std::io::BufWriter;
-    // To use encoder.set()
-    use png::HasParameters;
 
     info!("Writing PNG to '{}'", output_filename);
 
-    let path = Path::new(output_filename);
-    let file = File::create(path).unwrap();
-    let ref mut w = BufWriter::new(file);
+    // To use encoder.set()
+    use png::HasParameters;
 
-    println!("{}", aligned.len());
-    let height = aligned.len() as u32 / 2080;
+    let path = std::path::Path::new(output_filename);
+    let file = std::fs::File::create(path).unwrap();
+    let ref mut buffer = std::io::BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(w, 2080, height);
+    let height = aligned.len() as u32 / PX_PER_ROW;
+
+    let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
     writer.write_image_data(&aligned[..]).unwrap(); // Save
-
-    /*
-    // let window = dsp::kaiser(40., 1./10.);
-    // let mut lowpass = dsp::lowpass(window.len() as u32, 1./4.);
-
-    let lowpass = dsp::lowpass(1./4., 40., 1./10.);
-
-    // println!("window: {:?}", window);
-    // lowpass = dsp::product(window, &lowpass);
-    println!("filter: {:?}", lowpass);
-
-    let x: Vec<usize> = (0 .. lowpass.len()).collect();
-    let mut fg = gnuplot::Figure::new();
-    fg.axes2d().lines(&x, lowpass, &[gnuplot::Caption("A line"), gnuplot::Color("black")]);
-    fg.show();
-    */
-
 }

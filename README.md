@@ -77,13 +77,18 @@ as of August 2018:
   - Compiling: `sudo apt install libgsl0-dev`.
   - Running: `sudo apt install libgsl0`.
 
-## Things to do
+## Things I should do
+
+- Set version number when it's barely ready.
 
 - Support Windows and make some simple GUI.
 
 - Drop the GSL dependency because I guess that it's cumbersome to install in
   Windows. I'm using only a Bessel function. Maybe compile a "no GSL" version
-  with some predefined filters, that works only with a few sample rates.
+  with some predefined filters, which works only with a few sample rates.
+
+- The parameters used for filter design are hardcoded
+
 
 ## Algorithm
 

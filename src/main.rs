@@ -1,6 +1,5 @@
 extern crate hound;
 extern crate rgsl;
-extern crate gnuplot;
 extern crate png;
 #[macro_use] extern crate log;
 extern crate simple_logger;
