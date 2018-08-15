@@ -103,18 +103,17 @@ as of August 2018:
 
 ## Dependencies
 
-- GNU Scientific Library:
+GNU Scientific Library, only for running the tests:
 
-  - Compiling: `sudo apt install libgsl0-dev`.
-  - Running: `sudo apt install libgsl0`.
+```
+sudo apt install libgsl0-dev libgsl0
+```
 
 ## Things I should do
 
-- Support Windows and make some simple GUI.
+- Add binaries.
 
-- Drop the GSL dependency because I guess that it's cumbersome to install in
-  Windows. I'm using only a Bessel function. Maybe compile a "no GSL" version
-  with some predefined filters, which works only with a few sample rates.
+- Support Windows and make some simple GUI.
 
 - The parameters used for filter design are hardcoded.
 
@@ -249,6 +248,9 @@ samples and filter coefficients.
 
 - [How to Create a Configurable Filter Using a Kaiser Window][7],
 
+- [Kaiser window approximation on StackOverflow][8]: I took the Bessel function
+  from there.
+
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php
 [3]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
@@ -256,5 +258,6 @@ samples and filter coefficients.
 [5]: https://flylib.com/books/en/2.729.1/impulse_response_of_a_hilbert_transformer.html
 [6]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
 [7]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
+[8]: https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal

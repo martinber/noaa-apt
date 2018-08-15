@@ -1,15 +1,17 @@
 [package]
 name = "noaa-apt"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
 [dependencies]
 hound = "*"
-GSL = "*"
 png = "*"
 log = "*"
 simple_logger = "*"
 argparse = "*"
+
+[dev-dependencies]
+GSL = "*"
 
 [features]
 GSLv2 = ["GSL/v2"]

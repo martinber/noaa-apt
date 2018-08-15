@@ -264,12 +264,12 @@ fn kaiser(atten: f32, delta_w: f32) -> Signal {
 
     let mut window: Signal = Vec::with_capacity(length as usize);
 
-    use rgsl::bessel::I0 as bessel;
+    use misc::bessel_i0 as bessel;
     for n in -(length-1)/2 ..= (length-1)/2 {
         let n = n as f32;
         let m = length as f32;
-        window.push((bessel((beta * (1. - (n / (m/2.)).powi(2)).sqrt()) as f64) /
-                    bessel(beta as f64)) as f32)
+        window.push(bessel(beta * (1. - (n / (m/2.)).powi(2)).sqrt()) /
+                    bessel(beta))
     }
 
     debug!("Kaiser window design finished, beta: {}, length: {}", beta, length);

@@ -75,7 +75,7 @@ dependencies = [
 
 [[package]]
 name = "noaa-apt"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "GSL 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "argparse 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",

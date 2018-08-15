@@ -1,9 +1,10 @@
 extern crate hound;
-extern crate rgsl;
 extern crate png;
 #[macro_use] extern crate log;
 extern crate simple_logger;
 extern crate argparse;
+
+#[cfg(test)] extern crate rgsl;
 
 mod noaa_apt;
 mod dsp;
