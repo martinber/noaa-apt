@@ -103,11 +103,19 @@ as of August 2018:
 
 ## Dependencies
 
-GNU Scientific Library, only for running the tests:
+- Development:
 
-```
-sudo apt install libgsl0-dev libgsl0
-```
+  - GNU Scientific Library, only for running the tests:
+
+    - Linux: `sudo apt install libgsl0-dev libgsl0`.
+
+    - In Windows: Never did test there.
+
+  - GTK:
+
+    - Linux: `sudo apt install libgtk-3-dev`.
+
+    - In Windows: TODO.
 
 ## Things I should do
 
@@ -118,6 +126,8 @@ sudo apt install libgsl0-dev libgsl0
 - The parameters used for filter design are hardcoded.
 
 - Do tests.
+
+- Separate GUI and no GUI builds.
 
 ## Algorithm
 
@@ -249,7 +259,12 @@ samples and filter coefficients.
 - [How to Create a Configurable Filter Using a Kaiser Window][7],
 
 - [Kaiser window approximation on StackOverflow][8]: I took the Bessel function
-  from there.
+  from there (see the infinite sum), but I think that it's slightly wrong,
+  according to [this][6] that minus sign should not be there. I'm comparing my
+  implementation (without the minus sign) in my tests with `rgsl::bessel::I0`
+  and everything works well, that's not the case when I add that minus sign. I
+  suggested an edit on the StackOverflow post and the author said me that I'm
+  wrong, so now I'm confused.
 
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php

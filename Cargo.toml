@@ -10,8 +10,18 @@ log = "*"
 simple_logger = "*"
 argparse = "*"
 
+[dependencies.gtk]
+version = "0.4.1"
+features = ["v3_10"]
+
+[dependencies.gdk]
+version = "0.8.0"
+
+[dependencies.gio]
+version = "0.4.1"
+
 [dev-dependencies]
 GSL = "*"
 
-[features]
+[dev-features]
 GSLv2 = ["GSL/v2"]
