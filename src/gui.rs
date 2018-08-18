@@ -1,3 +1,5 @@
+use noaa_apt;
+
 use gtk;
 use gdk;
 use gio;
@@ -120,7 +122,7 @@ fn build_ui(application: &gtk::Application) {
 
         // Check inputs
         let input_filename = match input_file_chooser.get_filename() {
-            Some(f) => f,
+            Some(f) => String::from(f.to_str().expect("Invalid character in input path")),
             None => {
                 status_label.set_markup("<b>Error: Select input file</b>");
                 info!("Input file not selected");
@@ -145,22 +147,36 @@ fn build_ui(application: &gtk::Application) {
                 // .expect("Couldn't get stack visible child");
         // match options_stack.child_get_property(visible_box, "position") {
         match options_stack.get_visible_child_name()
-                .expect("Stack has no visible child").as_ref() {
+                .expect("Stack has no visible child").as_str() {
 
             "decode_page" => {
-                let entry: gtk::Entry = builder.get_object("decode_output_entry")
+                let filename_entry: gtk::Entry = builder.get_object("decode_output_entry")
                         .expect("Couldn't get decode_output_entry");
-                let output_filename = entry.get_text()
+                let output_filename = filename_entry.get_text()
                         .expect("Couldn't get decode_output_entry text");
-                println!("Decode: {}", output_filename);
+
+                status_label.set_markup("Processing");
+                debug!("Decode {} to {}", input_filename, output_filename);
+
+                noaa_apt::decode(input_filename.as_str(), output_filename.as_str());
+                status_label.set_markup("Finished");
             },
 
             "resample_page" => {
-                let entry: gtk::Entry = builder.get_object("resample_output_entry")
+                let filename_entry: gtk::Entry = builder.get_object("resample_output_entry")
                         .expect("Couldn't get resample_output_entry");
-                let output_filename = entry.get_text()
+                let output_filename = filename_entry.get_text()
                         .expect("Couldn't get resample_output_entry text");
-                println!("Resample: {}", output_filename);
+
+                let rate_spinner: gtk::SpinButton = builder.get_object("resample_rate_spinner")
+                        .expect("Couldn't get resample_rate_entry");
+                let rate = rate_spinner.get_value_as_int() as u32;
+
+                status_label.set_markup("Processing");
+                debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
+
+                noaa_apt::resample_wav(input_filename.as_str(), output_filename.as_str(), rate);
+                status_label.set_markup("Finished");
             },
 
             x => panic!("Unexpected stack child name {}", x),
