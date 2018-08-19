@@ -6,24 +6,32 @@ Doesn't do anything special, takes a recorded WAV file (from GQRX, SDR#, etc.)
 and decodes the raw image. Later you can rotate the image and adjust the
 contrast with something like GIMP or Photoshop.
 
-Written in Rust, never tried to do signal processing or to use Rust before, but
-it works quite well.
-
-If you get some kind of error or bad result don't hesitate to open a Issue here
-or to send me an email (see my profile). You can try to run the program with the
-`--debug` option for more info.
-
 Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 
+Written in Rust as a learning exercise but could be useful to someone. Never
+used Rust or made a GUI before. If you get some kind of error or bad result
+don't hesitate to open a Issue here or to send me an email. You can try to run
+the program with the `--debug` option for more info.
+
 ## Usage
+
+### GUI
+
+Run by clicking the executable, or from terminal without arguments.
+
+You can decode to a PNG file or resample audio to WAV.
+
+![GUI](./extra/gui.png)
+
+### On terminal
 
 ```
 $ ./noaa-apt --help
 
 Usage:
-    ./target/release/noaa-apt [OPTIONS] INPUT_FILENAME
+    ./target/release/noaa-apt [OPTIONS] [INPUT_FILENAME]
 
-Decode NOAA APT images from WAV files.
+Decode NOAA APT images from WAV files. Run without arguments to launch the GUI
 
 positional arguments:
   input_filename        Input WAV file.
@@ -66,7 +74,7 @@ cargo test --features GSLv2
 
 From a WAV file I found lying around, the US upside down:
 
-![Example image](./examples/example.png)
+![Example image](./extra/example.png)
 
 The output is upside down if the satellite went from south to north instead of
 north to south that day.
@@ -194,7 +202,7 @@ I did something like what you can see
 [here](https://ccrma.stanford.edu/~jos/resample/) but with a easier
 implementation.
 
-![Resampling algorithm](./examples/resampling.png)
+![Resampling algorithm](./extra/resampling.png)
 
 For each output sample, we calculate the sum of the products between input
 samples and filter coefficients.
@@ -269,6 +277,10 @@ samples and filter coefficients.
   suggested an edit on the StackOverflow post and the author said me that I'm
   wrong, so now I'm confused.
 
+- [Error Handling in Rust][9].
+
+- [Python GTK+ 3 Tutorial][10]: For Python but I like the Widget Gallery.
+
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php
 [3]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
@@ -277,5 +289,7 @@ samples and filter coefficients.
 [6]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
 [7]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
 [8]: https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
+[9]: https://blog.burntsushi.net/rust-error-handling/
+[10]: https://python-gtk-3-tutorial.readthedocs.io/en/latest/index.html
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
