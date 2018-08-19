@@ -14,6 +14,7 @@ mod dsp;
 mod wav;
 mod misc;
 mod gui;
+mod err;
 
 fn main() {
 

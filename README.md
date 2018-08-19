@@ -72,7 +72,7 @@ cargo test --features GSLv2
 
 ## Example
 
-From a WAV file I found lying around, the US upside down:
+From a WAV file I found somewhere on Internet, the US upside down:
 
 ![Example image](./extra/example.png)
 
