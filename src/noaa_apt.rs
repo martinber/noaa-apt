@@ -1,6 +1,7 @@
 use wav;
 use dsp;
 use dsp::Signal;
+use err;
 
 use std;
 use hound;
@@ -10,10 +11,10 @@ use png;
 ///
 /// The filter parameters are the default ones.
 pub fn resample_wav(input_filename: &str, output_filename: &str,
-                    output_rate: u32) {
+                    output_rate: u32) -> err::Result<()> {
 
     info!("Reading WAV file");
-    let (input_signal, input_spec) = wav::load_wav(input_filename);
+    let (input_signal, input_spec) = wav::load_wav(input_filename)?;
 
     info!("Resampling");
     let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
@@ -28,12 +29,13 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
     info!("Writing WAV to '{}'", output_filename);
 
-    wav::write_wav(output_filename, &resampled, writer_spec);
+    wav::write_wav(output_filename, &resampled, writer_spec)?;
 
+   Ok(())
 }
 
 /// Decode APT image from WAV file.
-pub fn decode(input_filename: &str, output_filename: &str) {
+pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     // Working sample rate, used during demodulation and syncing, better if
     // multiple of the final sample rate, 4160
@@ -48,7 +50,7 @@ pub fn decode(input_filename: &str, output_filename: &str) {
 
     info!("Reading WAV file");
 
-    let (signal, input_spec) = wav::load_wav(input_filename);
+    let (signal, input_spec) = wav::load_wav(input_filename)?;
 
     info!("Resampling to {}", WORK_RATE);
 
@@ -129,17 +131,16 @@ pub fn decode(input_filename: &str, output_filename: &str) {
     use png::HasParameters;
 
     let path = std::path::Path::new(output_filename);
-    let file = std::fs::File::create(path)
-        .expect("Failed to create output file");
+    let file = std::fs::File::create(path)?;
     let ref mut buffer = std::io::BufWriter::new(file);
 
     let height = aligned.len() as u32 / PX_PER_ROW;
 
     let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
-    let mut writer = encoder.write_header()
-        .expect("Failed to write PNG header");
+    let mut writer = encoder.write_header()?;
 
-    writer.write_image_data(&aligned[..])
-        .expect("Failed to write image data");
+    writer.write_image_data(&aligned[..])?;
+
+    Ok(())
 }

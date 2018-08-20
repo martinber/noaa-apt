@@ -1,13 +1,16 @@
 use std;
 use hound;
+use png;
 use log;
 
 // So I can use std::error::Error::description(), but I don't want to shadow
 // Error in this scope
 use std::error::Error as StdError;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug)]
-enum Error {
+pub enum Error {
     Io(std::io::Error),
     WavOpen(String), // About WAV decoding/opening
     PngWrite(String), // About PNG encoding/writing
@@ -58,5 +61,14 @@ impl From<hound::Error> for Error {
 impl From<log::SetLoggerError> for Error {
     fn from(err: log::SetLoggerError) -> Error {
         Error::Internal(err.description().to_string())
+    }
+}
+
+impl From<png::EncodingError> for Error {
+    fn from(err: png::EncodingError) -> Error {
+        match err {
+            png::EncodingError::IoError(io_error) => Error::Io(io_error),
+            png::EncodingError::Format(_) => Error::PngWrite(err.description().to_string()),
+        }
     }
 }

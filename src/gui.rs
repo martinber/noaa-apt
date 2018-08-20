@@ -5,9 +5,6 @@ use gdk;
 use gio;
 
 use std::env::args;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -130,22 +127,11 @@ fn build_ui(application: &gtk::Application) {
             },
         };
 
-        let file = match File::open(&input_filename) {
-            Ok(f) => f,
-            Err(_) => {
-                status_label.set_markup("<b>Error: Couldn't open file</b>");
-                error!("Couldn't open file");
-                return
-            },
-        };
-
         // Check if we are decoding or resampling
 
         let options_stack: gtk::Stack = builder.get_object("options_stack")
                 .expect("Couldn't get options_stack");
-        // let visible_box = options_stack.get_visible_child()
-                // .expect("Couldn't get stack visible child");
-        // match options_stack.child_get_property(visible_box, "position") {
+
         match options_stack.get_visible_child_name()
                 .expect("Stack has no visible child").as_str() {
 
@@ -158,8 +144,18 @@ fn build_ui(application: &gtk::Application) {
                 status_label.set_markup("Processing");
                 debug!("Decode {} to {}", input_filename, output_filename);
 
-                noaa_apt::decode(input_filename.as_str(), output_filename.as_str());
-                status_label.set_markup("Finished");
+                // Hack to refresh the label
+                while gtk::events_pending() {
+                    gtk::main_iteration();
+                }
+                gdk::Window::process_all_updates();
+
+                match noaa_apt::decode(
+                        input_filename.as_str(), output_filename.as_str()) {
+                    Ok(_) => status_label.set_markup("Finished"),
+                    Err(e) => status_label.set_markup(
+                            format!("<b>Error: {}</b>", e).as_str()),
+                }
             },
 
             "resample_page" => {
@@ -175,8 +171,18 @@ fn build_ui(application: &gtk::Application) {
                 status_label.set_markup("Processing");
                 debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
-                noaa_apt::resample_wav(input_filename.as_str(), output_filename.as_str(), rate);
-                status_label.set_markup("Finished");
+                // Hack to refresh the label
+                while gtk::events_pending() {
+                    gtk::main_iteration();
+                }
+                gdk::Window::process_all_updates();
+
+                match noaa_apt::resample_wav(
+                        input_filename.as_str(), output_filename.as_str(), rate) {
+                    Ok(_) => status_label.set_markup("Finished"),
+                    Err(e) => status_label.set_markup(
+                            format!("<b>Error: {}</b>", e).as_str()),
+                }
             },
 
             x => panic!("Unexpected stack child name {}", x),

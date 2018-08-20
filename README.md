@@ -129,10 +129,7 @@ as of August 2018:
 
 - Add binaries.
 
-- Support Windows and make some simple GUI.
-
-- Better error handling, panics are OK when running from command line arguments
-  but not from GUI.
+- Support Windows.
 
 - The parameters used for filter design are hardcoded.
 

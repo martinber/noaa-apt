@@ -16,7 +16,7 @@ mod misc;
 mod gui;
 mod err;
 
-fn main() {
+fn main() -> err::Result<()> {
 
     let mut input_filename: Option<String> = None;
     let mut debug = false;
@@ -50,11 +50,11 @@ fn main() {
     }
 
     if debug {
-        simple_logger::init_with_level(log::Level::Debug).unwrap();
+        simple_logger::init_with_level(log::Level::Debug)?;
     } else if quiet {
-        simple_logger::init_with_level(log::Level::Warn).unwrap();
+        simple_logger::init_with_level(log::Level::Warn)?;
     } else {
-        simple_logger::init_with_level(log::Level::Info).unwrap();
+        simple_logger::init_with_level(log::Level::Info)?;
     }
 
     match input_filename {
@@ -69,7 +69,12 @@ fn main() {
                         Some(filename) => filename,
                         None => String::from("./output.wav"),
                     };
-                    noaa_apt::resample_wav(input_filename.as_str(), output.as_str(), rate);
+
+                    match noaa_apt::resample_wav(
+                            input_filename.as_str(), output.as_str(), rate) {
+                        Ok(_) => (),
+                        Err(e) => error!("{}", e),
+                    };
                 }
 
                 // Decode WAV file
@@ -78,7 +83,12 @@ fn main() {
                         Some(filename) => filename,
                         None => String::from("./output.png"),
                     };
-                    noaa_apt::decode(input_filename.as_str(), output.as_str());
+
+                    match noaa_apt::decode(
+                            input_filename.as_str(), output.as_str()) {
+                        Ok(_) => (),
+                        Err(e) => error!("{}", e),
+                    };
                 }
             }
         }
@@ -88,4 +98,6 @@ fn main() {
             gui::main();
         }
     }
+
+    Ok(())
 }
