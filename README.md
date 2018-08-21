@@ -2,9 +2,9 @@
 
 NOAA APT image decoder.
 
-Doesn't do anything special, takes a recorded WAV file (from GQRX, SDR#, etc.)
-and decodes the raw image. Later you can rotate the image and adjust the
-contrast with something like GIMP or Photoshop.
+Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
+Later you can rotate the image and adjust the contrast with something like GIMP
+or Photoshop.
 
 Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 
@@ -48,27 +48,11 @@ optional arguments:
                         will be decoded.
 ```
 
-## Compile
+## Download
 
-**Build with `--release`, Rust does some optimizations and it works MUCH
-faster. Really, otherwise it takes FOREVER.**
-
-```
-cargo build --release
-```
-
-## Test
-
-```
-cargo test
-```
-
-If you get something like a wall of errors because linking with GSL fails, run
-with the ``GSLv2`` feature:
-
-```
-cargo test --features GSLv2
-```
+You can download the binaries for Linux or Windows from the
+[releases page](https://github.com/martinber/noaa-apt/releases). I've only built
+binaries for 64 bits.
 
 ## Example
 
@@ -111,25 +95,87 @@ as of August 2018:
 
 ## Dependencies
 
-- Development:
+For running in Linux or Windows generally you don't have to install anything.
+I've built everything from Linux with:
 
-  - GNU Scientific Library, only for running the tests:
+- GNU Scientific Library, only for running the tests:
 
-    - Linux: `sudo apt install libgsl0-dev libgsl0`.
+  - Linux: `sudo apt install libgsl0-dev libgsl0`.
 
-    - In Windows: Never did test there.
+  - In Windows: Never did test there.
 
-  - GTK:
+- GTK:
 
-    - Linux: `sudo apt install libgtk-3-dev`.
+  - Linux: `sudo apt install libgtk-3-dev`.
 
-    - In Windows: TODO.
+- Docker, if you want to cross-compile to Windows
+
+## Compiling
+
+I never tried to compile from Windows, I cross-compile from Linux to Windows.
+
+### Linux
+
+**Build with `--release`, Rust does some optimizations and it works MUCH
+faster. Really, otherwise it takes FOREVER.**
+
+- Dynamically linked:
+
+  - `cargo build --release`.
+
+- Statically linked:
+
+  - `rustup target add x86_64-unknown-linux-musl`.
+
+  - `PKG_CONFIG_ALLOW_CROSS=1`.
+
+  - `cargo build --release --target x86_64-unknown-linux-musl`.
+
+### Cross-compile to Windows
+
+I tried to get a mingw64-gtk environment to work on Debian without success. So I
+use a Docker image I found
+[here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
+
+- Set up:
+
+  - Install Docker.
+
+  - Move to root folder.
+
+  - `docker build . -t noaa-apt-build-image`.
+
+  - `docker create -v $(pwd):/home/rustacean/src --name noaa-apt-build noaa-apt-build-image`.
+
+- Building the package:
+
+  - `docker start -ai noaa-apt-build`.
+
+  - The build is on `./target/x86_64-pc-windows-gnu/package/`.
+
+
+## Test
+
+```
+cargo test
+```
+
+If you get something like a wall of errors because linking with GSL fails, run
+with the ``GSLv2`` feature:
+
+```
+cargo test --features GSLv2
+```
 
 ## Things I should do
 
 - Add binaries.
 
 - Support Windows.
+
+- Separate thread for GUI.
+
+- Support stereo WAV files.
 
 - The parameters used for filter design are hardcoded.
 
@@ -197,7 +243,7 @@ reference [1]:
 
 I did something like what you can see
 [here](https://ccrma.stanford.edu/~jos/resample/) but with a easier
-implementation.
+(and slower) implementation.
 
 ![Resampling algorithm](./extra/resampling.png)
 
@@ -278,6 +324,13 @@ samples and filter coefficients.
 
 - [Python GTK+ 3 Tutorial][10]: For Python but I like the Widget Gallery.
 
+- [Cross-compiling from Ubuntu to Windows with Rustup][11].
+
+- [How to compile C GTK3+ program in Ubuntu for windows?][12].
+
+- [rust-mingw64-gtk Docker image]: I took the Dockerfile from there.
+
+
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php
 [3]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
@@ -288,5 +341,8 @@ samples and filter coefficients.
 [8]: https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
 [9]: https://blog.burntsushi.net/rust-error-handling/
 [10]: https://python-gtk-3-tutorial.readthedocs.io/en/latest/index.html
+[11]: https://www.reddit.com/r/rust/comments/5k8uab/crosscompiling_from_ubuntu_to_windows_with_rustup/
+[12]: https://askubuntu.com/questions/942010/how-to-compile-c-gtk3-program-in-ubuntu-for-windows
+[13]: https://github.com/LeoTindall/rust-mingw64-gtk-docker
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
