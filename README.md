@@ -23,7 +23,7 @@ You can decode to a PNG file or resample audio to WAV.
 
 ![GUI](./extra/gui.png)
 
-### On terminal
+### Terminal
 
 ```
 $ ./noaa-apt --help
@@ -53,6 +53,20 @@ optional arguments:
 You can download the binaries for Linux or Windows from the
 [releases page](https://github.com/martinber/noaa-apt/releases). I've only built
 binaries for 64 bits.
+
+I'm having problems building portable GUI binaries for Linux, so you can:
+
+- Linux:
+
+  - Download binary for version 0.9.1 (doesn't have GUI, only terminal).
+
+  - Build yourself version 0.9.3 (has GUI).
+
+- Linux:
+
+  - Download binary for version 0.9.3 (has GUI).
+
+  - Build yourself version 0.9.3 (has GUI).
 
 ## Example
 
@@ -168,10 +182,6 @@ cargo test --features GSLv2
 ```
 
 ## Things I should do
-
-- Add binaries.
-
-- Support Windows.
 
 - Separate thread for GUI.
 
