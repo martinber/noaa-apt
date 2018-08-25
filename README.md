@@ -17,9 +17,13 @@ the program with the `--debug` option for more info.
 
 ### GUI
 
-Run by clicking the executable, or from terminal without arguments.
+Run by clicking the executable, or from terminal without arguments. You can do
+two things:
 
-You can decode to a PNG file or resample audio to WAV.
+- Decode a WAV file into a PNG.
+
+- Resample a WAV into another WAV, this is useful if you want to try a program
+  like [atp-dec/apt-dec] that requires a specific sample rate.
 
 ![GUI](./extra/gui.png)
 
@@ -54,15 +58,17 @@ You can download the binaries for Linux or Windows from the
 [releases page](https://github.com/martinber/noaa-apt/releases). I've only built
 binaries for 64 bits.
 
-I'm having problems building portable GUI binaries for Linux, so you can:
-
 - Linux:
 
-  - Download binary for version 0.9.1 (doesn't have GUI, only terminal).
+  - Version 0.9.1 binary: Doesn't have GUI, only terminal. Should work
+    everywhere
+
+  - Version 0.9.3 binary: Has GUI. Needs GLIBC version at least 2.24. I think
+    you should have Ubuntu newer than Xenial, 
 
   - Build yourself version 0.9.3 (has GUI).
 
-- Linux:
+- Windows:
 
   - Download binary for version 0.9.3 (has GUI).
 
@@ -99,13 +105,24 @@ as of August 2018:
   [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
   slow and minor artifacts on the image if you look at the vertical stripes.
 
-[WXtoImg]: http://wxtoimg.com/
-[WXtoImg Restored]: https://wxtoimgrestored.xyz/
-[atp-dec/apt-dec]: https://github.com/csete/aptdec
-[1.7 release]: https://github.com/csete/aptdec/releases
-[repo's master branch]: https://github.com/csete/aptdec
-[zacstewart/apt-decoder]: https://github.com/zacstewart/apt-decoder
-[martinber/apt-decoder]: https://github.com/martinber/apt-decoder
+## Problems
+
+### Syncing
+
+This program starts a new line when it receives a sync frame (those seven white
+and black stripes), works well if the signal has clear sync frames.
+
+The first time I recorded a NOAA APT signal the bright parts had lot's of noise
+(I think the FM demodulator bandwith was too narrow and had saturation when
+receiving white), the sync frames were weally low quality and the alignment was
+really bad.
+
+[atp-dec/apt-dec] has the same problem. But [WXtoIMG] works perfect regardless
+of the sync frames quality.
+
+### Speed
+
+Compared to atp-dec my program is quite slow.
 
 ## Dependencies
 
@@ -339,6 +356,15 @@ samples and filter coefficients.
 - [How to compile C GTK3+ program in Ubuntu for windows?][12].
 
 - [rust-mingw64-gtk Docker image]: I took the Dockerfile from there.
+
+
+[WXtoImg]: http://wxtoimg.com/
+[WXtoImg Restored]: https://wxtoimgrestored.xyz/
+[atp-dec/apt-dec]: https://github.com/csete/aptdec
+[1.7 release]: https://github.com/csete/aptdec/releases
+[repo's master branch]: https://github.com/csete/aptdec
+[zacstewart/apt-decoder]: https://github.com/zacstewart/apt-decoder
+[martinber/apt-decoder]: https://github.com/martinber/apt-decoder
 
 
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
