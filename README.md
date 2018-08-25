@@ -120,11 +120,11 @@ that's why I'm using a Debian Jessie docker image.
 
   - `docker create -v $(pwd):/src --name noaa-apt-linux-build noaa-apt-linux-build-image`.
 
-- Building the package:
+- Building the binary:
 
   - `docker start -ai noaa-apt-linux-build`.
 
-  - The build is on `./target/release/`.
+  - The build is on `./target/x86_64-unknown-linux-gnu/`.
 
 ### Windows portable
 

@@ -12,4 +12,4 @@ WORKDIR /src
 ENV PKG_CONFIG_ALLOW_CROSS=1
 
 COPY ./entrypoint.sh /entrypoint.sh
-CMD ["/docker_entrypoint.sh"]
+CMD ["/entrypoint.sh"]
