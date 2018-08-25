@@ -43,10 +43,10 @@ VOLUME /home/rustacean/src
 WORKDIR /home/rustacean/src
 
 
-COPY ./docker_entrypoint.sh /home/rustacean/docker_entrypoint.sh
+COPY ./entrypoint.sh /home/rustacean/entrypoint.sh
 # RUN chmod +x /home/rustacean/docker_entrypoint.sh
 # CMD ["/home/rustacean/.cargo/bin/cargo", "build", "--target=x86_64-pc-windows-gnu", "--release"]
-CMD ["/home/rustacean/docker_entrypoint.sh"]
+CMD ["/home/rustacean/entrypoint.sh"]
 
 # So one could build a project in the current directory, where this Dockerfile is by
 #   1) Modifying the Dockerfile to add all your native dependencies
