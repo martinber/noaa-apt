@@ -60,19 +60,19 @@ binaries for 64 bits.
 
 - Linux:
 
+  - Last version binary: Has GUI. Needs GTK and GLIBC version at least 2.19. I
+    think that should work in most common distros.
+
+  - Build yourself the last version.
+
   - Version 0.9.1 binary: Doesn't have GUI, only terminal. Should work
-    everywhere
-
-  - Version 0.9.3 binary: Has GUI. Needs GLIBC version at least 2.24. I think
-    you should have Ubuntu newer than Xenial, 
-
-  - Build yourself version 0.9.3 (has GUI).
+    everywhere.
 
 - Windows:
 
-  - Download binary for version 0.9.3 (has GUI).
+  - Download binary for the last version.
 
-  - Build yourself version 0.9.3 (has GUI).
+  - Build yourself the last version (never tried to do that from Windows).
 
 ## Example
 
@@ -82,6 +82,73 @@ From a WAV file I found somewhere on Internet, the US upside down:
 
 The output is upside down if the satellite went from south to north instead of
 north to south that day.
+
+## Compiling
+
+I never tried to compile from Windows, I cross-compile from Linux to Windows. I
+had problems building portable images easily both for Linux and for Windows, so
+I'm using Docker images.
+
+### Linux
+
+**Build with `--release`, Rust does some optimizations and it works MUCH
+faster. Really, otherwise it takes FOREVER.**
+
+- Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
+  1.27.0).
+
+- `sudo apt install libgtk-3-dev`.
+
+- `cargo build --release`.
+
+### Linux portable
+
+I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so I'
+building with the default `x86_64-unknown-linux-gnu` on Debian Jessie. I think
+the binary works on any linux with GLIBC newer than the one used when building,
+that's why I'm using a Debian Jessie docker image.
+
+- Set up:
+
+  - Install Docker.
+
+  - `sudo apt install libgtk-3-dev`.
+
+  - Move to root folder.
+
+  - `docker build ./linux-docker/ -t noaa-apt-linux-build-image`.
+
+  - `docker create -v $(pwd):/src --name noaa-apt-linux-build noaa-apt-linux-build-image`.
+
+- Building the package:
+
+  - `docker start -ai noaa-apt-linux-build`.
+
+  - The build is on `./target/release/`.
+
+### Windows portable
+
+I tried to get a mingw64-gtk environment to work on Debian without success. So I
+use a Docker image I found
+[here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
+
+- Set up:
+
+  - Install Docker.
+
+  - `sudo apt install libgtk-3-dev`.
+
+  - Move to root folder.
+
+  - `docker build ./windows-docker/ -t noaa-apt-windows-build-image`.
+
+  - `docker create -v $(pwd):/home/rustacean/src --name noaa-apt-windows-build noaa-apt-windows-build-image`.
+
+- Building the package:
+
+  - `docker start -ai noaa-apt-windows-build`.
+
+  - The build is on `./target/x86_64-pc-windows-gnu/package/`.
 
 ## Alternatives
 
@@ -124,68 +191,9 @@ of the sync frames quality.
 
 Compared to atp-dec my program is quite slow.
 
-## Dependencies
+## Tests
 
-For running in Linux or Windows generally you don't have to install anything.
-I've built everything from Linux with:
-
-- GNU Scientific Library, only for running the tests:
-
-  - Linux: `sudo apt install libgsl0-dev libgsl0`.
-
-  - In Windows: Never did test there.
-
-- GTK:
-
-  - Linux: `sudo apt install libgtk-3-dev`.
-
-- Docker, if you want to cross-compile to Windows
-
-## Compiling
-
-I never tried to compile from Windows, I cross-compile from Linux to Windows.
-
-### Linux
-
-**Build with `--release`, Rust does some optimizations and it works MUCH
-faster. Really, otherwise it takes FOREVER.**
-
-- Dynamically linked:
-
-  - `cargo build --release`.
-
-- Statically linked:
-
-  - `rustup target add x86_64-unknown-linux-musl`.
-
-  - `PKG_CONFIG_ALLOW_CROSS=1`.
-
-  - `cargo build --release --target x86_64-unknown-linux-musl`.
-
-### Cross-compile to Windows
-
-I tried to get a mingw64-gtk environment to work on Debian without success. So I
-use a Docker image I found
-[here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
-
-- Set up:
-
-  - Install Docker.
-
-  - Move to root folder.
-
-  - `docker build . -t noaa-apt-build-image`.
-
-  - `docker create -v $(pwd):/home/rustacean/src --name noaa-apt-build noaa-apt-build-image`.
-
-- Building the package:
-
-  - `docker start -ai noaa-apt-build`.
-
-  - The build is on `./target/x86_64-pc-windows-gnu/package/`.
-
-
-## Test
+You need the GNU Scientific Library: `sudo apt install libgsl0-dev libgsl0`.
 
 ```
 cargo test
