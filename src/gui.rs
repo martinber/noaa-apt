@@ -48,8 +48,7 @@ fn build_ui(application: &gtk::Application) {
     // Build GUI
 
     let glade_src = include_str!("gui.glade");
-    let builder = Builder::new();
-    builder.add_from_string(glade_src).expect("Couldn't add from string");
+    let builder = Builder::new_from_string(glade_src);
 
     let window: gtk::ApplicationWindow = builder.get_object("window")
             .expect("Couldn't get window");
