@@ -16,11 +16,14 @@ mod misc;
 mod gui;
 mod err;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() -> err::Result<()> {
 
     let mut input_filename: Option<String> = None;
     let mut debug = false;
     let mut quiet = false;
+    let mut print_version = false;
     let mut output_filename: Option<String> = None;
     let mut resample_output: Option<u32> = None;
     {
@@ -30,6 +33,9 @@ fn main() -> err::Result<()> {
         parser.refer(&mut input_filename)
             .add_argument("input_filename", argparse::StoreOption,
             "Input WAV file.");
+        parser.refer(&mut print_version)
+            .add_option(&["-v", "--version"], argparse::StoreTrue,
+            "Show version and quit.");
         parser.refer(&mut debug)
             .add_option(&["-d", "--debug"], argparse::StoreTrue,
             "Print debugging messages.");
@@ -49,6 +55,11 @@ fn main() -> err::Result<()> {
         parser.parse_args_or_exit();
     }
 
+    if print_version {
+        println!("noaa-apt image decoder version {}", VERSION);
+        std::process::exit(0);
+    }
+
     if debug {
         simple_logger::init_with_level(log::Level::Debug)?;
     } else if quiet {
@@ -56,6 +67,8 @@ fn main() -> err::Result<()> {
     } else {
         simple_logger::init_with_level(log::Level::Info)?;
     }
+
+    info!("noaa-apt image decoder version {}", VERSION);
 
     match input_filename {
 

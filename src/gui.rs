@@ -10,6 +10,8 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 // make moving clones into closures more convenient
 macro_rules! clone {
     (@param _) => ( _ );
@@ -65,6 +67,15 @@ fn build_ui(application: &gtk::Application) {
             .expect("Couldn't get start_button");
     status_label.set_label("Ready");
     start_button.set_sensitive(true);
+
+    // Set version on footer
+
+    let footer_label: gtk::Label = builder.get_object("footer_label")
+            .expect("Couldn't get footer_label");
+    footer_label.set_label(format!(
+"noaa-apt {}
+Martín Bernardi
+martin@mbernardi.com.ar", VERSION).as_str());
 
     // Configure decode_output_entry file chooser
 
