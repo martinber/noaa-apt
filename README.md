@@ -153,8 +153,7 @@ use a Docker image I found
 
 ## Alternatives
 
-Just bought an RTL-SDR and tried to receive NOAA APT images, I'm new to this but
-as of August 2018:
+Just bought an RTL-SDR and tried to receive NOAA APT images, as of August 2018:
 
 - [WXtoImg], by far the most popular, lots of features but the site looks dead
   forever.
@@ -172,6 +171,22 @@ as of August 2018:
 - [martinber/apt-decoder], bad hack made by me on top of
   [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
   slow and minor artifacts on the image if you look at the vertical stripes.
+
+- [ThatcherC/APT3000], written in JavaScript.
+
+- [brainwagon/noaa-apt], written in C, I never tried it.
+
+- [LongHairedHacker/apt-decoder]. written in Rust, I never tried it.
+
+- [dlew1716/APT], written in Python, I never tried it.
+
+- [toastedcornflakes/APT], written in Python, I never tried it.
+
+- [la1k/wxfetch], fork of [atp-dec/apt-dec], I never tried it.
+
+- [pietern/apt137], written in C, I never tried it.
+
+- [SopaXorzTaker/napt], written in C, I never tried it.
 
 ## Problems
 
@@ -372,6 +387,14 @@ samples and filter coefficients.
 [repo's master branch]: https://github.com/csete/aptdec
 [zacstewart/apt-decoder]: https://github.com/zacstewart/apt-decoder
 [martinber/apt-decoder]: https://github.com/martinber/apt-decoder
+[ThatcherC/APT3000]: https://github.com/ThatcherC/APT3000
+[brainwagon/noaa-apt]: https://github.com/brainwagon/noaa-apt
+[LongHairedHacker/apt-decoder]: https://github.com/LongHairedHacker/apt-decoder
+[dlew1716/APT]: https://github.com/dlew1716/APT
+[toastedcornflakes/APT]: https://github.com/toastedcornflakes/APT
+[la1k/wxfetch]: https://github.com/la1k/wxfetch
+[pietern/apt137]: https://github.com/pietern/apt137
+[SopaXorzTaker/napt]: https://github.com/SopaXorzTaker/napt
 
 
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
