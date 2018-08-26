@@ -13,24 +13,32 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
     let spec = reader.spec();
 
     if spec.channels != 1 {
-        return Err(err::Error::WavOpen(
-                "Failed to open WAV file: audio should have only one channel"
-                .to_string()))
+        warn!("WAV file has {} channels (probably stereo), processing only the \
+              first one", spec.channels);
     }
 
     debug!("WAV specifications: {:?}", spec);
 
     let input_samples: Signal = match spec.sample_format {
         hound::SampleFormat::Int => {
-            // reader.samples::<i32>().map(|x| x.unwrap() as f32).collect()
-            // reader.samples::<i32>().map(|&x| x as f32).collect()
-            reader.samples::<i32>().collect::<Result<Vec<i32>, hound::Error>>()?
-                .iter().map(|&x| x as f32).collect()
+            reader.samples::<i32>()
+                .collect::<Result<Vec<i32>, hound::Error>>()?
+                .iter().enumerate().filter_map(|(i, x)|
+                        match i % spec.channels as usize {
+                            0 => Some(*x as f32),
+                            _ => None,
+                        })
+                .collect()
         }
         hound::SampleFormat::Float => {
-            // reader.samples::<f32>().map(|x| x.unwrap()).collect()
-            // reader.samples::<f32>().map(|&x| x as f32).collect()
-            reader.samples::<f32>().collect::<Result<Vec<f32>, hound::Error>>()?
+            reader.samples::<f32>()
+                .collect::<Result<Vec<f32>, hound::Error>>()?
+                .iter().enumerate().filter_map(|(i, x)|
+                        match i % spec.channels as usize {
+                            0 => Some(*x),
+                            _ => None,
+                        })
+                .collect()
         }
     };
 

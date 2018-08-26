@@ -7,6 +7,7 @@ Later you can rotate the image and adjust the contrast with something like GIMP
 or Photoshop.
 
 Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
+When loading audio files with more than one channel, only the first one is used.
 
 Written in Rust as a learning exercise but could be useful to someone. Never
 used Rust or made a GUI before. If you get some kind of error or bad result
@@ -209,8 +210,6 @@ cargo test --features GSLv2
 ## Things I should do
 
 - Separate thread for GUI.
-
-- Support stereo WAV files.
 
 - The parameters used for filter design are hardcoded.
 
