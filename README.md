@@ -55,9 +55,9 @@ optional arguments:
 
 ## Download
 
-You can download the binaries for Linux or Windows from the
-[releases page](https://github.com/martinber/noaa-apt/releases). I've only built
-binaries for 64 bits.
+You can download executables for Linux or Windows from the
+[releases page](https://github.com/martinber/noaa-apt/releases). Your options
+are:
 
 - Linux:
 
@@ -85,10 +85,6 @@ The output is upside down if the satellite went from south to north instead of
 north to south that day.
 
 ## Compiling
-
-I never tried to compile from Windows, I cross-compile from Linux to Windows. I
-had problems building portable images easily both for Linux and for Windows, so
-I'm using Docker images.
 
 ### Linux
 
@@ -129,7 +125,8 @@ that's why I'm using a Debian Jessie docker image.
 
 ### Windows portable
 
-I tried to get a mingw64-gtk environment to work on Debian without success. So I
+I never tried to compile from Windows, I cross-compile from Linux to Windows. I
+tried to get a mingw64-gtk environment to work on Debian without success. So I
 use a Docker image I found
 [here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
 
@@ -153,7 +150,7 @@ use a Docker image I found
 
 ## Alternatives
 
-Just bought an RTL-SDR and tried to receive NOAA APT images, as of August 2018:
+These are the alternatives I found, as of August 2018:
 
 - [WXtoImg], by far the most popular, lots of features but the site looks dead
   forever.
@@ -165,6 +162,8 @@ Just bought an RTL-SDR and tried to receive NOAA APT images, as of August 2018:
   the [repo's master branch] without success, later I realized that there was a
   newer [1.7 release] and it worked.
 
+- [pietern/apt137], written in C, extremely fast.
+
 - [zacstewart/apt-decoder], written in Python, slower than the others but really
   simple. Doesn't align the image to the sync stripes.
 
@@ -172,21 +171,24 @@ Just bought an RTL-SDR and tried to receive NOAA APT images, as of August 2018:
   [zacstewart/apt-decoder] trying to align the image to the sync stripes. Still
   slow and minor artifacts on the image if you look at the vertical stripes.
 
-- [ThatcherC/APT3000], written in JavaScript.
+- [ThatcherC/APT3000], written in JavaScript, looks very fast.
 
-- [brainwagon/noaa-apt], written in C, I never tried it.
+Others I found on GitHub:
 
-- [LongHairedHacker/apt-decoder]. written in Rust, I never tried it.
+- [brainwagon/noaa-apt], written in C, does not sync images.
 
-- [dlew1716/APT], written in Python, I never tried it.
+- [LongHairedHacker/apt-decoder]. written in Rust.
 
-- [toastedcornflakes/APT], written in Python, I never tried it.
+- [dlew1716/APT], written in Python and C++, not easily usable.
+
+- [toastedcornflakes/APT], written in Python, not easily usable.
 
 - [la1k/wxfetch], fork of [atp-dec/apt-dec], I never tried it.
 
-- [pietern/apt137], written in C, I never tried it.
+- [SopaXorzTaker/napt], written in C, can't figure out how to use it.
 
-- [SopaXorzTaker/napt], written in C, I never tried it.
+I measured the speed of most of them using the `time` utility from bash, and
+made a comparison of the results on `./extra/comparison.ods`.
 
 ## Problems
 
@@ -197,15 +199,14 @@ and black stripes), works well if the signal has clear sync frames.
 
 The first time I recorded a NOAA APT signal the bright parts had lot's of noise
 (I think the FM demodulator bandwith was too narrow and had saturation when
-receiving white), the sync frames were weally low quality and the alignment was
+receiving white), the sync frames were really low quality and the alignment was
 really bad.
 
-[atp-dec/apt-dec] has the same problem. But [WXtoIMG] works perfect regardless
-of the sync frames quality.
+Every decoder I've tested, excluding [WXtoIMG], has the same problem.
 
 ### Speed
 
-Compared to atp-dec my program is quite slow.
+Compared to alternatives my program is quite slow.
 
 ## Tests
 
@@ -224,7 +225,11 @@ cargo test --features GSLv2
 
 ## Things I should do
 
+- Improve performance.
+
 - Separate thread for GUI.
+
+- Option for disabling syncing.
 
 - The parameters used for filter design are hardcoded.
 
@@ -377,7 +382,7 @@ samples and filter coefficients.
 
 - [How to compile C GTK3+ program in Ubuntu for windows?][12].
 
-- [rust-mingw64-gtk Docker image]: I took the Dockerfile from there.
+- [rust-mingw64-gtk Docker image][13]: I took the Windows Dockerfile from there.
 
 
 [WXtoImg]: http://wxtoimg.com/
