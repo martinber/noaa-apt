@@ -16,7 +16,7 @@ pub fn get_max(vector: &Signal) -> &f32 {
     max
 }
 
-/// Resample signal to given rate some default filter.
+/// Resample signal to given rate, using the default filter.
 ///
 /// The filter has a transition band equal to the 20% of the spectrum width of
 /// the input signal. Starts at 90% of the input signal spectrum, so it lets a
@@ -54,47 +54,59 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
 
     if l > 1 { // If we need interpolation
 
+        // This is the resampling algorithm, i've tried to make it faster
+        // several times, that's why it's so ugly
+
+        // Check the image I made to see what the letters mean
+
         debug!("Resampling by L/M: {}/{}", l, m);
 
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
-        let f = lowpass(1./(l as f32), atten, delta_w);
 
-        // Iterate over each output sample
-        let mut n: usize; // Current working n, see image in README
-        let mut t: usize = 0; // Like n but fixed to the current output sample
-                              // to calculate
-        let mut sum: f32;
+        let f = lowpass(1./(l as f32), atten, delta_w); // filter coefficients
+
         let offset = (f.len()-1)/2; // Filter delay in the n axis, half of
                                     // filter width
+
+        let mut n: usize; // Current working n
+
+        let mut t: usize = offset; // Like n but fixed to the current output
+                                   // sample to calculate
+
+        // Iterate over each output sample
         while t < signal.len()*l {
 
-            // Find first n inside the window with a input sample to multiply
-            // with a filter coefficient
+            // Find first n inside the window that has a input sample that I
+            // should multiply with a filter coefficient
             if t > offset {
-                n = t - offset; // Go to start of filter
+                n = t - offset; // Go to n at start of filter
                 match n % l { // Jump to first sample in window
                     0 => (),
-                    x => n += l - x,
+                    x => n += l - x, // I checked this on paper once and forgot
+                                     // how it works
                 }
-            } else { // In this case the first sample in window is located at n=0
+            } else { // In this case the first sample in window is located at 0
                 n = 0;
             }
 
             // Loop over all n inside the window with input samples and
             // calculate products
-            sum = 0.;
+            let mut sum = 0.;
+            let mut x = n/l; // Current input sample
             while n <= t + offset {
                 // Check if there is a sample in that index, in case that we
                 // use an index bigger that signal.len()
-                match signal.get(n/l) {
+                match signal.get(x) {
+                    // n+offset-t is equal to j
                     Some(sample) => sum += f[n+offset-t] * sample,
                     None => (),
                 }
+                x += 1;
                 n += l;
             }
             output.push(sum); // Store output sample
 
-            t += m; // Jump to next input sample
+            t += m; // Jump to next output sample
         }
 
         debug!("Resampling finished");
