@@ -70,7 +70,6 @@ mod tests {
     pub fn test_bessel_i0() {
         use rgsl::bessel::I0 as gsl_bessel;
         // Compare my implementation of the Bessel function with the one in GSL
-        //
         let tolerance = 0.001; // 0.1%
 
         // Iterate from 0 to 7 with steps of 0.01
