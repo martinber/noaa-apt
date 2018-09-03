@@ -140,10 +140,9 @@ pub fn demodulate(signal: &Signal, sample_rate: u32, carrier_freq: u32) -> Signa
     // y[i] = sqrt(x[i-1]^2 + x[i]^2 - x[i-1]*x[i]*2*cos(phi)) / sin(phi)
     // Where:
     // phi = 2 * pi * (carrier_freq / sampling_freq)
-
-    // I don't know why it works, it's similar to I/Q AM quadrature demodulation
-    // but doesn't need samples in quadrature phase.
-
+    //
+    // Take a look at the README
+    //
     // Taken from:
     // https://github.com/pietern/apt137/blob/master/decoder.c
 

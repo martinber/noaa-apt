@@ -221,11 +221,11 @@ cargo test --features GSLv2
 
 ## Things I should do
 
-- Improve performance.
-
-- Separate thread for GUI.
+- Improve syncing performance.
 
 - Option for disabling syncing.
+
+- Separate thread for GUI.
 
 - The parameters used for filter design are hardcoded.
 
@@ -233,10 +233,9 @@ cargo test --features GSLv2
 
 - Separate GUI and no GUI builds.
 
-## Algorithm
+## How it works
 
-AM resampling and demodulation using FIR filter, following method 4 or 5 in
-reference [1]:
+### General
 
 - Load samples from WAV.
 
@@ -259,22 +258,10 @@ reference [1]:
 
     - Decimate by M.
 
-- Demodulate AM signal yo get the APT signal.
+- Demodulate AM signal to get the APT signal.
 
-  - Get hilbert filter impulse response by window method.
-
-    - Get kaiser window.
-
-    - Sample and window the function `1/(pi*n) * (1-cos(pi*n))`.
-
-  - Get the imaginary part of the Analytical Signal by doing the convolution
-    with the hilbert impulse response. This part adds a delay (maybe I should
-    fix that).
-
-  - Get the real part of the Analytical Signal by adding the same delay to the
-    original AM signal.
-
-  - Calculate the absolute value of each sample: `sqrt(real^2 + imag^2)`.
+  - Iterate over samples, get amplitude by looking at current and previous
+    sample, see below.
 
 - Find the position of the sync frames of the APT signal (the white and black
   stripes that you can see in the final image).
@@ -289,7 +276,7 @@ reference [1]:
 
 - Generate the final image starting a new line on every sync frame.
 
-## Resampling algorithm
+### Resampling algorithm
 
 I did something like what you can see
 [here](https://ccrma.stanford.edu/~jos/resample/) but with a easier
@@ -300,7 +287,26 @@ I did something like what you can see
 For each output sample, we calculate the sum of the products between input
 samples and filter coefficients.
 
-## Notes
+### AM demodulation
+
+Previously I used a Hilbert filter to get the [analytic signal], then the
+absolute value of the [analytic signal] is the modulated signal.
+
+Then I found a very fast demodulator implemented on [pietern/apt137]. For each
+output sample, you only need the current input sample, the previous one and the
+carrier frequency:
+
+![AM demodulation formula](./extra/demodulation.png)
+
+Where theta is the AM carrier frequency divided by the sample rate.
+
+I couldn't find the theory behind that method, looks similar to I/Q
+demodulation. I was able to reach that final expression (which is used by
+[pietern/apt137]) by hand and I wrote the steps on ``extra/demodulation.pdf``. I
+think it only works if the input AM signal is oversampled, maybe that's why I
+can't find anything about it on the web.
+
+### Notes
 
 - Modulation:
 
@@ -350,9 +356,10 @@ samples and filter coefficients.
 	image format.
 
 - [Digital Envelope Detection: The Good, the Bad, and the Ugly][2]: Lists some
-  AM demodulation methods.
+  AM demodulation methods. I'm not using any of these anyway.
 
-- [Hilbert Transform Design Example][3]: How to get the analytic signal.
+- [Hilbert Transform Design Example][3]: How to get the analytic signal if using
+  Hilbert filter demodulation.
 
 - [Spectral Audio Signal Processing: Digital Audio Resampling][4].
 
@@ -379,6 +386,11 @@ samples and filter coefficients.
 - [How to compile C GTK3+ program in Ubuntu for windows?][12].
 
 - [rust-mingw64-gtk Docker image][13]: I took the Windows Dockerfile from there.
+
+- [zacstewart/apt-decoder][14]: Easy to understand NOAA APT decoder.
+
+- [pietern/apt137][15]: The fastest NOAA APT decoder, I took the AM
+  demodulation methid from there.
 
 
 [WXtoImg]: http://wxtoimg.com/
@@ -411,5 +423,7 @@ samples and filter coefficients.
 [11]: https://www.reddit.com/r/rust/comments/5k8uab/crosscompiling_from_ubuntu_to_windows_with_rustup/
 [12]: https://askubuntu.com/questions/942010/how-to-compile-c-gtk3-program-in-ubuntu-for-windows
 [13]: https://github.com/LeoTindall/rust-mingw64-gtk-docker
+[14]: https://github.com/zacstewart/apt-decoder
+[15]: https://github.com/pietern/apt137
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
