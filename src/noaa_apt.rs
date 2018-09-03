@@ -18,6 +18,9 @@ const FINAL_RATE: u32 = 4160;
 // Pixels per row
 const PX_PER_ROW: u32 = 2080;
 
+// AM carrier frequency
+const CARRIER_FREQ: u32 = 2400;
+
 /// Resample wav file
 ///
 /// The filter parameters are the default ones.
@@ -47,7 +50,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
 /// Find sync frame positions.
 ///
-/// 
+/// Returns list of found sync frames positions.
 fn find_sync(signal: &Signal) -> Vec<usize> {
 
     info!("Searching for sync frames");
@@ -119,9 +122,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Demodulating");
 
-    let atten = 40.;
-    let delta_w = 1./20.;
-    let signal = dsp::demodulate(&signal, atten, delta_w);
+    let signal = dsp::demodulate(&signal, WORK_RATE, CARRIER_FREQ);
 
     info!("Syncing");
 

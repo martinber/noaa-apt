@@ -130,23 +130,47 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
 }
 
 /// Demodulate AM signal.
-pub fn demodulate(signal: &Signal, atten: f32, delta_w: f32) -> Signal {
+pub fn demodulate(signal: &Signal, sample_rate: u32, carrier_freq: u32) -> Signal {
+
     debug!("Demodulating signal");
-    let h_filter = hilbert(atten, delta_w);
-    let imag = filter(signal, &h_filter);
-    let delay: usize = h_filter.len() / 2;
 
     let mut output: Signal = vec![0_f32; signal.len()];
 
-    for i in 0..signal.len() {
-        if i >= delay {
-            output[i] = (imag[i].powi(2) + signal[i-delay].powi(2)).sqrt();
-        }
+    // Demodulate from two consecutive samples, by the calculation of:
+    // y[i] = sqrt(x[i-1]^2 + x[i]^2 - x[i-1]*x[i]*2*cos(phi)) / sin(phi)
+    // Where:
+    // phi = 2 * pi * (carrier_freq / sampling_freq)
+
+    // I don't know why it works, it's similar to I/Q AM quadrature demodulation
+    // but doesn't need samples in quadrature phase.
+
+    // Taken from:
+    // https://github.com/pietern/apt137/blob/master/decoder.c
+
+    let phi = 2. * PI * (carrier_freq as f32 / sample_rate as f32);
+    let cosphi2 = phi.cos() * 2.;
+    let sinphi = phi.sin();
+
+    let mut curr;
+    let mut curr_sq;
+    let mut prev = signal[0];
+    let mut prev_sq = signal[0].powi(2);
+    for i in 1..signal.len() {
+        curr = signal[i];
+        curr_sq = signal[i].powi(2);
+
+        output[i] = (prev_sq + curr_sq - prev*curr*cosphi2).sqrt() / sinphi;
+
+        prev = curr;
+        prev_sq = curr_sq;
     }
+
     debug!("Demodulation finished");
 
     output
 }
+
+
 
 /// Filter a signal,
 pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
@@ -179,40 +203,6 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
     }
 
     v1
-}
-
-/// Get hilbert FIR filter, windowed by a kaiser window.
-///
-/// Frequency in fractions of pi radians per second.
-/// Attenuation in positive decibels.
-pub fn hilbert(atten: f32, delta_w: f32) -> Signal {
-
-    debug!("Designing Hilbert filter, \
-           attenuation: {}dB, delta_w: 2*pi*{}rad/s",
-           atten, delta_w);
-
-    let window = kaiser(atten, delta_w);
-
-    if window.len() % 2 == 0 {
-        panic!("Kaiser window length should be odd");
-    }
-
-    let mut filter: Signal = Vec::with_capacity(window.len());
-
-    let m = window.len() as i32;
-
-    for n in -(m-1)/2 ..= (m-1)/2 {
-        if n % 2 != 0 {
-            let n = n as f32;
-            filter.push(2./(PI*n));
-        } else {
-            filter.push(0.);
-        }
-    }
-
-    debug!("Hilbert filter design finished");
-
-    product(filter, &window)
 }
 
 /// Get lowpass FIR filter, windowed by a kaiser window.

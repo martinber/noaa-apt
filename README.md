@@ -204,10 +204,6 @@ really bad.
 
 Every decoder I've tested, excluding [WXtoIMG], has the same problem.
 
-### Speed
-
-Compared to alternatives my program is quite slow.
-
 ## Tests
 
 You need the GNU Scientific Library: `sudo apt install libgsl0-dev libgsl0`.
