@@ -147,10 +147,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE);
     let max = dsp::get_max(&aligned);
+    let min = dsp::get_min(&aligned);
+    let range = max - min;
 
-    debug!("Mapping samples from 0-{} to 0-255", max);
+    debug!("Mapping samples from {}-{} to 0-255", min, max);
 
-    let aligned: Vec<u8> = aligned.iter().map(|x| (x/max*255.) as u8).collect();
+    let aligned: Vec<u8> = aligned.iter().map(|x| ((x-min)/range*255.) as u8).collect();
 
     info!("Writing PNG to '{}'", output_filename);
 

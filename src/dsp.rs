@@ -6,7 +6,7 @@ pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
 pub fn get_max(vector: &Signal) -> &f32 {
-    let mut max: &f32 = &0_f32;
+    let mut max: &f32 = &vector[0];
     for sample in vector.iter() {
         if sample > max {
             max = sample;
@@ -14,6 +14,18 @@ pub fn get_max(vector: &Signal) -> &f32 {
     }
 
     max
+}
+
+/// Get smallest sample in signal.
+pub fn get_min(vector: &Signal) -> &f32 {
+    let mut min: &f32 = &vector[0];
+    for sample in vector.iter() {
+        if sample < min {
+            min = sample;
+        }
+    }
+
+    min
 }
 
 /// Resample signal to given rate, using the default filter.
