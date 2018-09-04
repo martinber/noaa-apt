@@ -4,6 +4,7 @@ use dsp::Signal;
 use err;
 
 use std;
+use std::collections::VecDeque;
 use hound;
 use png;
 
@@ -73,13 +74,40 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
 
     // Minimum distance between peaks, some arbitrary number smaller but close
     // to the number of samples by line
-    let min_distance: usize = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize * 8/10;
+    let samples_per_line: usize = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize;
+    let min_distance: usize = samples_per_line * 8/10;
 
     // Need to center signal on zero (remove DC) to get meaningful correlation
     // values
     let average: f32 = *dsp::get_max(&signal) / 2.; // Not true but close enough.
     let signal: Signal = signal.iter().map(|x| x - average).collect();
 
+    // Holds the last correlation values, has length samples_per_line
+    let mut last_values: VecDeque<f32> = VecDeque::with_capacity(samples_per_line);
+    // Initialize the deque to zeroes.
+    for _i in 0 .. samples_per_line {
+        last_values.push_back(0.);
+    }
+
+    // Holds the last squared difference values, has length samples_per_line
+    let mut last_sq_dif: VecDeque<f32> = VecDeque::with_capacity(samples_per_line);
+    // Initialize the deque to zeroes.
+    for _i in 0 .. samples_per_line {
+        last_sq_dif.push_back(0.);
+    }
+
+    // Current moving average over the last samples_per_line samples.
+    let mut moving_avg: f32 = 0.;
+    // Current moving average of the squared difference between the values and
+    // the moving average
+    let mut moving_sq_dif_avg: f32 = 0.;
+
+    // TODO: remove
+    let mut avg_values: Signal = Vec::with_capacity(signal.len());
+    // TODO: remove
+    let mut sq_dif_values: Signal = Vec::with_capacity(signal.len());
+
+    // Iterate over input samples
     for i in 0 .. signal.len() - guard.len() {
         let mut corr: f32 = 0.;
         for j in 0..guard.len() {
@@ -89,6 +117,19 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
                 _ => unreachable!(),
             }
         }
+
+        // Get new moving average, see https://en.wikipedia.org/wiki/Moving_average
+        moving_avg = moving_avg +
+                (corr - last_values.pop_front().unwrap()) / samples_per_line as f32;
+        last_values.push_back(corr);
+        avg_values.push(moving_avg);
+
+        // Get new squared difference moving average, see https://en.wikipedia.org/wiki/Moving_average
+        let val = (corr - moving_avg).powi(2);
+        moving_sq_dif_avg = moving_sq_dif_avg +
+                (val - last_sq_dif.pop_front().unwrap()) / samples_per_line as f32;
+        last_sq_dif.push_back(val);
+        sq_dif_values.push(val);
 
         // If previous peak is too far, keep it and add this value to the
         // list as a new peak
@@ -103,6 +144,19 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
             peaks.push((i, corr));
         }
     }
+
+
+    let writer_spec = hound::WavSpec {
+        channels: 1,
+        sample_rate: WORK_RATE,
+        bits_per_sample: 32,
+        sample_format: hound::SampleFormat::Float,
+    };
+    debug!("AVG {}", avg_values.last().unwrap());
+    let max = dsp::get_max(&avg_values);
+    let avg_values = sq_dif_values;
+    let avg_values: Signal = avg_values.iter().map(|x| x/max).collect();
+    wav::write_wav("/home/mbernardi/desktop/average.wav", &avg_values, writer_spec);
 
     info!("Found {} sync frames", peaks.len());
 

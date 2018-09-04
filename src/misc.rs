@@ -53,6 +53,11 @@ pub fn bessel_i0(x: f32) -> f32 {
     result + 1.
 }
 
+// pub fn moving_avg(prev_avg, new, old, length) {
+    // prev_avg + (new - old) / length;
+// }
+
+
 #[cfg(test)]
 mod tests {
 
