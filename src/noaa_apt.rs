@@ -124,6 +124,13 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     let signal = dsp::demodulate(&signal, WORK_RATE, CARRIER_FREQ);
 
+    info!("Filtering");
+
+    let cutout: f32 = 4160. / WORK_RATE as f32;
+    let delta_w = cutout / 5.;
+    let lowpass = dsp::lowpass(cutout, 20., delta_w);
+    let signal = dsp::filter(&signal, &lowpass);
+
     info!("Syncing");
 
     // Get list of sync frames positions
@@ -143,9 +150,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     debug!("Mapping samples from 0-{} to 0-255", max);
 
-    // TODO simplify to one line
-    let aligned: Signal = aligned.iter().map(|x| x/max).collect();
-    let aligned: Vec<u8> = aligned.iter().map(|x| (x*255.) as u8).collect();
+    let aligned: Vec<u8> = aligned.iter().map(|x| (x/max*255.) as u8).collect();
 
     info!("Writing PNG to '{}'", output_filename);
 
