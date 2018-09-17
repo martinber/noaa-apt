@@ -109,6 +109,18 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
     peaks.iter().map(|(index, _value)| *index).collect()
 }
 
+/// Get black-white range from telemetry bands.
+///
+/// Takes a aligned signal, where the first PX_PER_ROW samples correspond to the
+/// first row of the image, the next PX_PER_ROW correspond to the second row,
+/// and so on.
+///
+/// Returns the value that should be black and the one that should be white in
+/// the image.
+fn get_range_from_telemetry(signal: &Signal) -> Result<(f32, f32)> {
+    
+}
+
 /// Decode APT image from WAV file.
 pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
