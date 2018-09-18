@@ -231,6 +231,16 @@ cargo test --features GSLv2
 
 - The parameters used for filter design are hardcoded.
 
+- Add optional lowpass filter before demodulation, there is already one to
+  prevent aliasing but I want to filter noise outside the AM bandwidth.
+
+- Optionally filter DC component before demodulation, I think it's useful if the
+  FM demodulation had offset (because of Doppler effect). Looks like otherwise
+  we get bad contrast.
+
+- Optionally output raw samples as WAV at various steps for debugging, maybe
+  plot the FFT too.
+
 - Do tests.
 
 - Separate GUI and no GUI builds.
