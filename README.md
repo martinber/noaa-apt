@@ -1,6 +1,6 @@
 # noaa-apt
 
-NOAA APT image decoder.
+NOAA APT image decoder. Runs on Linux, Windows and OSX.
 
 Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
 Later you can rotate the image and adjust the contrast with something like GIMP
@@ -74,6 +74,10 @@ are:
   - Download binary for the last version.
 
   - Build yourself the last version (never tried to do that from Windows).
+  
+- OSX:
+
+  - Build yourself the last version.
 
 ## Example
 
