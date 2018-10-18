@@ -123,6 +123,19 @@ that's why I'm using a Debian Jessie docker image.
 
   - The build is on `./target/x86_64-unknown-linux-gnu/`.
 
+### Mac / OSX
+
+**Build with `--release`, Rust does some optimizations and it works MUCH
+faster. Really, otherwise it takes FOREVER.**
+
+- Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
+  1.27.0). The 'unix installer' is fine for Macs.
+
+- Install dependencies via [Homebrew](https://brew.sh/):
+  `brew install gtk+3 adwaita-icon-theme`.
+
+- `cargo build --release`.
+
 ### Windows portable
 
 I never tried to compile from Windows, I cross-compile from Linux to Windows. I
