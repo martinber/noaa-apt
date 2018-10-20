@@ -21,6 +21,9 @@ const PX_PER_ROW: u32 = 2080;
 // AM carrier frequency
 const CARRIER_FREQ: u32 = 2400;
 
+// Samples on each image row when at WORK_RATE
+const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
+
 /// Resample wav file
 ///
 /// The filter parameters are the default ones.
@@ -33,6 +36,13 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
     info!("Resampling");
     let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
                                      output_rate);
+
+    if resampled.len() == 0 {
+        return Err(err::Error::Internal(
+                "Got zero samples after resampling, audio file too short or \
+                output sampling frequency too low".to_string()))
+    }
+
 
     let writer_spec = hound::WavSpec {
         channels: 1,
@@ -120,6 +130,11 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE);
 
+    if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
+        return Err(err::Error::Internal("Got less than 10 rows of samples, \
+                                        audio file is too short".to_string()))
+    }
+
     info!("Demodulating");
 
     let signal = dsp::demodulate(&signal, WORK_RATE, CARRIER_FREQ);
@@ -136,18 +151,23 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     // Get list of sync frames positions
     let sync_pos = find_sync(&signal);
 
-    // Create new "aligned" vector, has PX_PER_ROW * WORK_RATE / FINAL_RATE
-    // samples per image row. Each row starts on a found sync frame position
-    let samples_per_row = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize;
+    if sync_pos.len() < 5 {
+        return Err(err::Error::Internal(
+                "Found less than 5 sync frames, audio file is too short or too \
+                noisy".to_string()))
+    }
+
+    // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
+    // a found sync frame position
     let mut aligned: Signal = Vec::new();
 
     // For each sync position
     for i in 0..sync_pos.len()-1 {
         // Check if there are enough samples left to fill an image row
-        if sync_pos[i] + samples_per_row < signal.len() {
+        if (sync_pos[i] + SAMPLES_PER_WORK_ROW as usize) < signal.len() {
 
             aligned.extend_from_slice(&signal[sync_pos[i] ..
-                    sync_pos[i] + samples_per_row]);
+                    sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]);
         }
     }
 
