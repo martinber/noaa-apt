@@ -151,6 +151,11 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 let output_filename = filename_entry.get_text()
                         .expect("Couldn't get decode_output_entry text");
 
+                if output_filename == "" {
+                    status_label.set_markup("<b>Error: Select output filename</b>");
+                    return
+                }
+
                 status_label.set_markup("Processing");
                 debug!("Decode {} to {}", input_filename, output_filename);
 
@@ -176,6 +181,11 @@ martin@mbernardi.com.ar", VERSION).as_str());
                         .expect("Couldn't get resample_output_entry");
                 let output_filename = filename_entry.get_text()
                         .expect("Couldn't get resample_output_entry text");
+
+                if output_filename == "" {
+                    status_label.set_markup("<b>Error: Select output filename</b>");
+                    return
+                }
 
                 let rate_spinner: gtk::SpinButton = builder.get_object("resample_rate_spinner")
                         .expect("Couldn't get resample_rate_entry");

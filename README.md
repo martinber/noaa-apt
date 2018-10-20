@@ -225,9 +225,21 @@ cargo test --features GSLv2
 
 - Option for disabling syncing.
 
+- Error message when dividing by zero when resampling to 0Hz.
+
 - Separate thread for GUI.
 
 - The parameters used for filter design are hardcoded.
+
+- Add optional lowpass filter before demodulation, there is already one to
+  prevent aliasing but I want to filter noise outside the AM bandwidth.
+
+- Optionally filter DC component before demodulation, I think it's useful if the
+  FM demodulation had offset (because of Doppler effect). Looks like otherwise
+  we get bad contrast.
+
+- Optionally output raw samples as WAV at various steps for debugging, maybe
+  plot the FFT too.
 
 - Do tests.
 
@@ -392,6 +404,8 @@ can't find anything about it on the web.
 - [pietern/apt137][15]: The fastest NOAA APT decoder, I took the AM
   demodulation methid from there.
 
+- [APT on sigidwiki.com][16]: More about the APT format.
+
 
 [WXtoImg]: http://wxtoimg.com/
 [WXtoImg Restored]: https://wxtoimgrestored.xyz/
@@ -425,5 +439,6 @@ can't find anything about it on the web.
 [13]: https://github.com/LeoTindall/rust-mingw64-gtk-docker
 [14]: https://github.com/zacstewart/apt-decoder
 [15]: https://github.com/pietern/apt137
+[16]: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
