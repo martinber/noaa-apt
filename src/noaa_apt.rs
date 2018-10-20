@@ -136,11 +136,19 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     // Get list of sync frames positions
     let sync_pos = find_sync(&signal);
 
+    // Create new "aligned" vector, has PX_PER_ROW * WORK_RATE / FINAL_RATE
+    // samples per image row. Each row starts on a found sync frame position
+    let samples_per_row = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize;
     let mut aligned: Signal = Vec::new();
 
+    // For each sync position
     for i in 0..sync_pos.len()-1 {
-        aligned.extend_from_slice(&signal[sync_pos[i] ..
-                sync_pos[i] + (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize]);
+        // Check if there are enough samples left to fill an image row
+        if sync_pos[i] + samples_per_row < signal.len() {
+
+            aligned.extend_from_slice(&signal[sync_pos[i] ..
+                    sync_pos[i] + samples_per_row]);
+        }
     }
 
     debug!("Resampling to 4160");
