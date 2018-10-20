@@ -1,6 +1,6 @@
 # noaa-apt
 
-NOAA APT image decoder.
+NOAA APT image decoder. Runs on Linux, Windows and OSX.
 
 Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
 Later you can rotate the image and adjust the contrast with something like GIMP
@@ -74,6 +74,10 @@ are:
   - Download binary for the last version.
 
   - Build yourself the last version (never tried to do that from Windows).
+  
+- OSX:
+
+  - Build yourself the last version.
 
 ## Example
 
@@ -122,6 +126,19 @@ that's why I'm using a Debian Jessie docker image.
   - `docker start -ai noaa-apt-linux-build`.
 
   - The build is on `./target/x86_64-unknown-linux-gnu/`.
+
+### Mac / OSX
+
+**Build with `--release`, Rust does some optimizations and it works MUCH
+faster. Really, otherwise it takes FOREVER.**
+
+- Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
+  1.27.0). The 'unix installer' is fine for Macs.
+
+- Install dependencies via [Homebrew](https://brew.sh/):
+  `brew install gtk+3 adwaita-icon-theme`.
+
+- `cargo build --release`.
 
 ### Windows portable
 
