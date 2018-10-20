@@ -455,7 +455,7 @@ can't find anything about it on the web.
 
 - [APT on sigidwiki.com][16]: More about the APT format.
 
-- [github-markdown-tog generator][17]: I'm using that for the table of contents
+- [github-markdown-toc generator][17]: I'm using that for the table of contents
   generation.
 
 
