@@ -14,6 +14,32 @@ used Rust or made a GUI before. If you get some kind of error or bad result
 don't hesitate to open a Issue here or to send me an email. You can try to run
 the program with the `--debug` option for more info.
 
+# Table of contents
+
+* [Usage](#usage)
+   * [GUI](#gui)
+   * [Terminal](#terminal)
+* [Download](#download)
+* [Example](#example)
+* [Compiling](#compiling)
+   * [Linux](#linux)
+   * [Linux portable](#linux-portable)
+   * [Mac / OSX](#mac--osx)
+   * [Windows portable](#windows-portable)
+* [Alternatives](#alternatives)
+* [Problems](#problems)
+   * [Syncing](#syncing)
+* [Tests](#tests)
+* [Things to do](#things-to-do)
+* [How it works](#how-it-works)
+   * [General](#general)
+   * [Resampling algorithm](#resampling-algorithm)
+   * [AM demodulation](#am-demodulation)
+   * [Notes](#notes)
+* [References](#references)
+
+
+
 ## Usage
 
 ### GUI
@@ -429,6 +455,9 @@ can't find anything about it on the web.
 
 - [APT on sigidwiki.com][16]: More about the APT format.
 
+- [github-markdown-tog generator][17]: I'm using that for the table of contents
+  generation.
+
 
 [WXtoImg]: http://wxtoimg.com/
 [WXtoImg Restored]: https://wxtoimgrestored.xyz/
@@ -463,5 +492,6 @@ can't find anything about it on the web.
 [14]: https://github.com/zacstewart/apt-decoder
 [15]: https://github.com/pietern/apt137
 [16]: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)
+[17]: https://github.com/ekalinin/github-markdown-toc
 
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal
