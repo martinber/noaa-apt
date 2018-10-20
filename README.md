@@ -74,7 +74,7 @@ are:
   - Download binary for the last version.
 
   - Build yourself the last version (never tried to do that from Windows).
-  
+
 - OSX:
 
   - Build yourself the last version.
@@ -236,7 +236,10 @@ with the ``GSLv2`` feature:
 cargo test --features GSLv2
 ```
 
-## Things I should do
+## Things to do
+
+- Split README into multiple pages and make a better website. Maybe using
+  Jekyll.
 
 - Improve syncing performance.
 
@@ -256,9 +259,14 @@ cargo test --features GSLv2
 - Optionally output raw samples as WAV at various steps for debugging, maybe
   plot the FFT too.
 
-- Do tests.
+- Do and fix tests, first I have to fix (or remove) the GSL dependency.
 
 - Separate GUI and no GUI builds.
+
+- Check and fix `Cargo.toml` dev buils.
+
+- Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
+  machine to work.
 
 ## How it works
 
