@@ -9,10 +9,9 @@ or Photoshop.
 Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 When loading audio files with more than one channel, only the first one is used.
 
-Written in Rust as a learning exercise but could be useful to someone. Never
-used Rust or made a GUI before. If you get some kind of error or bad result
-don't hesitate to open a Issue here or to send me an email. You can try to run
-the program with the `--debug` option for more info.
+If you get some kind of error or bad result don't hesitate to open a Issue or to
+send me an email. You can try to run the program with the `--debug` option for
+more info.
 
 # Table of contents
 
@@ -37,8 +36,6 @@ the program with the `--debug` option for more info.
    * [AM demodulation](#am-demodulation)
    * [Notes](#notes)
 * [References](#references)
-
-
 
 ## Usage
 
@@ -130,10 +127,10 @@ faster. Really, otherwise it takes FOREVER.**
 
 ### Linux portable
 
-I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so I'
-building with the default `x86_64-unknown-linux-gnu` on Debian Jessie. I think
-the binary works on any linux with GLIBC newer than the one used when building,
-that's why I'm using a Debian Jessie docker image.
+I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so
+I'm building with the default `x86_64-unknown-linux-gnu` on Debian Jessie. I
+think the binary works on any linux with GLIBC newer than the one used when
+building, that's why I'm using a Debian Jessie docker image.
 
 - Set up:
 
@@ -293,6 +290,8 @@ cargo test --features GSLv2
 
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
   machine to work.
+
+- For some reason the `--debug` does not work when using the GUI.
 
 ## How it works
 
