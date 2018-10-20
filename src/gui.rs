@@ -132,7 +132,7 @@ martin@mbernardi.com.ar", VERSION).as_str());
             Some(f) => String::from(f.to_str().expect("Invalid character in input path")),
             None => {
                 status_label.set_markup("<b>Error: Select input file</b>");
-                info!("Input file not selected");
+                error!("Input file not selected");
                 return
             },
         };
@@ -163,8 +163,11 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 match noaa_apt::decode(
                         input_filename.as_str(), output_filename.as_str()) {
                     Ok(_) => status_label.set_markup("Finished"),
-                    Err(e) => status_label.set_markup(
-                            format!("<b>Error: {}</b>", e).as_str()),
+                    Err(e) => {
+                        status_label.set_markup(
+                                format!("<b>Error: {}</b>", e).as_str());
+                        error!("{}", e);
+                    },
                 }
             },
 
@@ -190,8 +193,11 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 match noaa_apt::resample_wav(
                         input_filename.as_str(), output_filename.as_str(), rate) {
                     Ok(_) => status_label.set_markup("Finished"),
-                    Err(e) => status_label.set_markup(
-                            format!("<b>Error: {}</b>", e).as_str()),
+                    Err(e) => {
+                        status_label.set_markup(
+                                format!("<b>Error: {}</b>", e).as_str());
+                        error!("{}", e);
+                    },
                 }
             },
 
