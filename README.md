@@ -225,8 +225,6 @@ cargo test --features GSLv2
 
 - Option for disabling syncing.
 
-- Error message when dividing by zero when resampling to 0Hz.
-
 - Separate thread for GUI.
 
 - The parameters used for filter design are hardcoded.

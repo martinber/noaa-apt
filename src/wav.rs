@@ -52,7 +52,7 @@ pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::
 
     debug!("Normalizing samples");
 
-    let max = dsp::get_max(&signal);
+    let max = dsp::get_max(&signal)?;
     debug!("Max: {}", max);
     let normalized: Signal = signal.iter().map(|x| x/max).collect();
 

@@ -35,7 +35,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
     info!("Resampling");
     let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
-                                     output_rate);
+                                     output_rate)?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
@@ -61,7 +61,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 /// Find sync frame positions.
 ///
 /// Returns list of found sync frames positions.
-fn find_sync(signal: &Signal) -> Vec<usize> {
+fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
 
     info!("Searching for sync frames");
 
@@ -87,7 +87,7 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
 
     // Need to center signal on zero (remove DC) to get meaningful correlation
     // values
-    let average: f32 = *dsp::get_max(&signal) / 2.; // Not true but close enough.
+    let average: f32 = *dsp::get_max(&signal)? / 2.; // Not true but close enough.
     let signal: Signal = signal.iter().map(|x| x - average).collect();
 
     for i in 0 .. signal.len() - guard.len() {
@@ -116,19 +116,7 @@ fn find_sync(signal: &Signal) -> Vec<usize> {
 
     info!("Found {} sync frames", peaks.len());
 
-    peaks.iter().map(|(index, _value)| *index).collect()
-}
-
-/// Get black-white range from telemetry bands.
-///
-/// Takes a aligned signal, where the first PX_PER_ROW samples correspond to the
-/// first row of the image, the next PX_PER_ROW correspond to the second row,
-/// and so on.
-///
-/// Returns the value that should be black and the one that should be white in
-/// the image.
-fn get_range_from_telemetry(signal: &Signal) -> Result<(f32, f32)> {
-    
+    Ok(peaks.iter().map(|(index, _value)| *index).collect())
 }
 
 /// Decode APT image from WAV file.
@@ -140,11 +128,11 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Resampling to {}", WORK_RATE);
 
-    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE);
+    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE)?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
         return Err(err::Error::Internal("Got less than 10 rows of samples, \
-                                        audio file is too short".to_string()))
+                                        audio file is too short".to_string()));
     }
 
     info!("Demodulating");
@@ -161,12 +149,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     info!("Syncing");
 
     // Get list of sync frames positions
-    let sync_pos = find_sync(&signal);
+    let sync_pos = find_sync(&signal)?;
 
     if sync_pos.len() < 5 {
         return Err(err::Error::Internal(
                 "Found less than 5 sync frames, audio file is too short or too \
-                noisy".to_string()))
+                noisy".to_string()));
     }
 
     // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
@@ -185,9 +173,9 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     debug!("Resampling to 4160");
 
-    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE);
-    let max = dsp::get_max(&aligned);
-    let min = dsp::get_min(&aligned);
+    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE)?;
+    let max = dsp::get_max(&aligned)?;
+    let min = dsp::get_min(&aligned)?;
     let range = max - min;
 
     debug!("Mapping samples from {}-{} to 0-255", min, max);

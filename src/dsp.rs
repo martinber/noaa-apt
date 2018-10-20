@@ -1,11 +1,17 @@
 use misc;
+use err;
 
 use std::f32::consts::PI;
 
 pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
-pub fn get_max(vector: &Signal) -> &f32 {
+pub fn get_max(vector: &Signal) -> err::Result<&f32> {
+    if vector.len() == 0 {
+        return Err(err::Error::Internal(
+                "Can't get maximum of a zero length vector".to_string()));
+    }
+
     let mut max: &f32 = &vector[0];
     for sample in vector.iter() {
         if sample > max {
@@ -13,11 +19,16 @@ pub fn get_max(vector: &Signal) -> &f32 {
         }
     }
 
-    max
+    Ok(max)
 }
 
 /// Get smallest sample in signal.
-pub fn get_min(vector: &Signal) -> &f32 {
+pub fn get_min(vector: &Signal) -> err::Result<&f32> {
+    if vector.len() == 0 {
+        return Err(err::Error::Internal(
+                "Can't get minimum of a zero length vector".to_string()));
+    }
+
     let mut min: &f32 = &vector[0];
     for sample in vector.iter() {
         if sample < min {
@@ -25,7 +36,7 @@ pub fn get_min(vector: &Signal) -> &f32 {
         }
     }
 
-    min
+    Ok(min)
 }
 
 /// Resample signal to given rate, using the default filter.
@@ -36,7 +47,11 @@ pub fn get_min(vector: &Signal) -> &f32 {
 ///
 /// The filter attenuation is 40dB.
 pub fn resample_to(signal: &Signal, input_rate: u32,
-                   output_rate: u32) -> Signal {
+                   output_rate: u32) -> err::Result<Signal> {
+
+    if output_rate == 0 {
+        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
+    }
 
     let gcd = misc::gcd(input_rate, output_rate);
     let l = output_rate / gcd; // interpolation factor
@@ -45,7 +60,7 @@ pub fn resample_to(signal: &Signal, input_rate: u32,
     let atten = 40.;
     let delta_w = 0.2 / l as f32;
 
-    resample(&signal, l, m, atten, delta_w)
+    Ok(resample(&signal, l, m, atten, delta_w))
 }
 
 
