@@ -35,7 +35,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
     info!("Resampling");
     let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
-                                     output_rate)?;
+                                     output_rate, None)?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
@@ -128,7 +128,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Resampling to {}", WORK_RATE);
 
-    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE)?;
+    // Cutout frequency of the resampling filter, only the AM spectrum (and a
+    // little more) should go through, so the cutout is more than 2 times the
+    // carrier frequency
+    let cutout = CARRIER_FREQ as f32 * 4. / input_spec.sample_rate as f32 / 13.;
+
+    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE, Some(cutout))?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
         return Err(err::Error::Internal("Got less than 10 rows of samples, \
@@ -141,7 +146,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Filtering");
 
-    let cutout: f32 = 4160. / WORK_RATE as f32;
+    let cutout: f32 = FINAL_RATE as f32 / WORK_RATE as f32;
     let delta_w = cutout / 5.;
     let lowpass = dsp::lowpass(cutout, 20., delta_w);
     let signal = dsp::filter(&signal, &lowpass);
@@ -173,7 +178,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     debug!("Resampling to 4160");
 
-    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE)?;
+    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE, None)?;
     let max = dsp::get_max(&aligned)?;
     let min = dsp::get_min(&aligned)?;
     let range = max - min;

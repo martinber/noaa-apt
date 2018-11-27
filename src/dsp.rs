@@ -39,15 +39,19 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     Ok(min)
 }
 
-/// Resample signal to given rate, using the default filter.
+/// Resample signal to given rate.
+///
+/// `cutout` is the cutout frequency of the lowpass filter in fractions of pi
+/// radians per second, has type Option<f32>, when None uses `1/l' to prevent
+/// aliasing on decimation.
 ///
 /// The filter has a transition band equal to the 20% of the spectrum width of
 /// the input signal. Starts at 90% of the input signal spectrum, so it lets a
-/// little of aliasing go through.
+/// little of spectrum to go through.
 ///
 /// The filter attenuation is 40dB.
-pub fn resample_to(signal: &Signal, input_rate: u32,
-                   output_rate: u32) -> err::Result<Signal> {
+pub fn resample_to(signal: &Signal, input_rate: u32, output_rate: u32,
+                   cutout: Option<f32>) -> err::Result<Signal> {
 
     if output_rate == 0 {
         return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
@@ -60,7 +64,7 @@ pub fn resample_to(signal: &Signal, input_rate: u32,
     let atten = 40.;
     let delta_w = 0.2 / l as f32;
 
-    Ok(resample(&signal, l, m, atten, delta_w))
+    Ok(resample(&signal, l, m, cutout, atten, delta_w))
 }
 
 
@@ -70,14 +74,23 @@ pub fn resample_to(signal: &Signal, input_rate: u32,
 /// is designed by a Kaiser window method depending in the attenuation `atten`
 /// and the transition band width `delta_w`.
 ///
+/// `cutout` is the cutout frequency of the lowpass filter in fractions of pi
+/// radians per second, has type Option<f32>, when None uses `1/l' to prevent
+/// aliasing on decimation.
+///
 /// `atten` should be positive and specified in decibels. `delta_w` has units of
 /// fractions of pi radians per second, considering the signal after `l - 1`
 /// insertions of zeros.
-pub fn resample(signal: &Signal, l: u32, m: u32,
+pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<f32>,
                 atten: f32, delta_w: f32) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
+
+    let cutout = match cutout {
+        Some(x) => x,
+        None => 1./(l as f32),
+    };
 
     if l > 1 { // If we need interpolation
 
@@ -90,7 +103,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32,
 
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
-        let f = lowpass(1./(l as f32), atten, delta_w); // filter coefficients
+        let f = lowpass(cutout, atten, delta_w); // filter coefficients
 
         let offset = (f.len()-1)/2; // Filter delay in the n axis, half of
                                     // filter width
