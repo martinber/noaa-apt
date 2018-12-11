@@ -3,6 +3,9 @@ title: How it works
 layout: main
 ---
 
+- TOC
+{:toc}
+
 ## Problems
 
 ### Syncing

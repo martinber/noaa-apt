@@ -3,5 +3,5 @@
 _site/
 
 *.wav
-output.png
-salida.png
+output*.png
+salida*.png
