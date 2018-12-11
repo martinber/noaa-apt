@@ -1,0 +1,751 @@
+/*
+	Horizons by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+*/
+@import url("font-awesome.min.css");
+@import url("http://fonts.googleapis.com/css?family=Raleway:100,200,300,400,500,600,700,800,900");
+
+/* Basic */
+
+	body {
+		background: #222833;
+	}
+
+	body, input, select, textarea {
+		color: #555555;
+		font-family: 'Raleway', sans-serif;
+		font-size: 13pt;
+		font-weight: 300;
+		line-height: 1.75em;
+	}
+
+	a {
+		color: #3ac984;
+		text-decoration: underline;
+	}
+
+		a:hover {
+			text-decoration: none;
+		}
+
+	strong, b {
+		font-weight: 700;
+	}
+
+	em, i {
+		font-style: italic;
+	}
+
+	p, ul, ol, dl, table, blockquote {
+		margin: 0 0 2em 0;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		color: inherit;
+		font-weight: 700;
+		line-height: 1.75em;
+		margin-bottom: 1em;
+	}
+
+		h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+			color: inherit;
+			text-decoration: none;
+		}
+
+	h2 {
+		font-size: 1.5em;
+	}
+
+	h3 {
+		font-size: 1.25em;
+	}
+
+	sub {
+		font-size: 0.8em;
+		position: relative;
+		top: 0.5em;
+	}
+
+	sup {
+		font-size: 0.8em;
+		position: relative;
+		top: -0.5em;
+	}
+
+	hr {
+		border-top: solid 1px #888888;
+		border: 0;
+		margin-bottom: 1.5em;
+	}
+
+	blockquote {
+		border-left: solid 0.5em #888888;
+		font-style: italic;
+		padding: 1em 0 1em 2em;
+	}
+
+	section.special, article.special {
+		text-align: center;
+	}
+
+	header.major {
+		padding-bottom: 4em;
+	}
+
+	header h2 {
+		margin: 0;
+		padding: 0;
+		font-size: 3em;
+		font-weight: 600;
+	}
+
+	header .byline {
+		font-size: 1.6em;
+	}
+
+	footer > :last-child {
+		margin-bottom: 0;
+	}
+
+	footer.major {
+		padding-top: 3em;
+	}
+
+/* Form */
+
+	input[type="text"],
+	input[type="password"],
+	input[type="email"],
+	textarea {
+		-moz-appearance: none;
+		-webkit-appearance: none;
+		-o-appearance: none;
+		-ms-appearance: none;
+		appearance: none;
+		background: none;
+		border: solid 1px #888888;
+		color: inherit;
+		display: block;
+		outline: 0;
+		padding: 0.75em;
+		text-decoration: none;
+		width: 100%;
+	}
+
+		input[type="text"]:focus,
+		input[type="password"]:focus,
+		input[type="email"]:focus,
+		textarea:focus {
+			border-color: #3ac984;
+		}
+
+	input[type="text"],
+	input[type="password"],
+	input[type="email"] {
+		line-height: 1em;
+	}
+
+	::-webkit-input-placeholder {
+		color: inherit;
+		opacity: 0.5;
+		position: relative;
+		top: 3px;
+	}
+
+	:-moz-placeholder {
+		color: inherit;
+		opacity: 0.5;
+	}
+
+	::-moz-placeholder {
+		color: inherit;
+		opacity: 0.5;
+	}
+
+	:-ms-input-placeholder {
+		color: inherit;
+		opacity: 0.5;
+	}
+
+	.formerize-placeholder {
+		color: rgba(85, 85, 85, 0.5) !important;
+	}
+
+/* Image */
+
+	.image {
+		border: 0;
+		position: relative;
+	}
+
+		.image.fit {
+			display: block;
+		}
+
+			.image.fit img {
+				display: block;
+				width: 100%;
+			}
+
+		.image.feature {
+			display: block;
+			margin: 0 0 2em 0;
+		}
+
+			.image.feature img {
+				display: block;
+				width: 100%;
+			}
+
+/* Icon */
+
+	.icon {
+		position: relative;
+	}
+
+		.icon:before {
+			content: "";
+			-moz-osx-font-smoothing: grayscale;
+			-webkit-font-smoothing: antialiased;
+			font-family: FontAwesome;
+			font-style: normal;
+			font-weight: normal;
+			text-transform: none !important;
+		}
+
+		.icon > .label {
+			display: none;
+		}
+
+/* Lists */
+
+	ol.default {
+		list-style: decimal;
+		padding-left: 1.25em;
+	}
+
+		ol.default li {
+			padding-left: 0.25em;
+		}
+
+	ul {
+		margin: 0;
+		padding: 0;
+	}
+
+		ul.default {
+			list-style: none;
+		}
+
+			ul.default li {
+				display: block;
+				padding: 0.60em 0;
+				border-top: 1px solid;
+				border-color: rgba(192, 192, 192, 0.15);
+			}
+
+			ul.default > :first-child {
+				padding-top: 0;
+				border-top: none;
+			}
+
+		ul.icons {
+			cursor: default;
+		}
+
+			ul.icons li {
+				display: inline-block;
+				line-height: 1em;
+				padding-left: 0.5em;
+			}
+
+				ul.icons li:first-child {
+					padding-left: 0;
+				}
+
+		ul.actions {
+			cursor: default;
+		}
+
+			ul.actions:last-child {
+				margin-bottom: 0;
+			}
+
+			ul.actions li {
+				display: inline-block;
+				padding: 0 0 0 1.5em;
+			}
+
+				ul.actions li:first-child {
+					padding: 0;
+				}
+
+			ul.actions.vertical li {
+				display: block;
+				padding: 1.5em 0 0 0;
+			}
+
+				ul.actions.vertical li:first-child {
+					padding: 0;
+				}
+
+		ul.contact li {
+			padding: 1.05em 0;
+			border-top: 1px solid;
+			border-color: rgba(192, 192, 192, 0.15);
+		}
+
+			ul.contact li > span {
+				display: inline-block;
+			}
+
+			ul.contact li .address, ul.contact li .mail, ul.contact li .phone, ul.contact li .contact {
+				float: left;
+				width: 100px;
+				font-weight: 600;
+			}
+
+		ul.contact > :first-child {
+			padding-top: 0;
+			border-top: none;
+		}
+
+		ul.style li {
+			clear: both;
+			display: block;
+			padding-top: 3em;
+		}
+
+		ul.style > :first-child {
+			padding-top: 0;
+		}
+
+		ul.style h3 {
+			display: block;
+			margin: 0;
+			padding-bottom: 0.50em;
+			font-size: 1.1em;
+			font-weight: 700;
+			color: #404040;
+		}
+
+		ul.style .fa {
+			float: left;
+			display: inline-block;
+			width: 80px;
+			height: 80px;
+			margin-right: 1em;
+			background: #3ac984;
+			line-height: 80px;
+			text-align: center;
+			border-radius: 10px;
+			font-size: 2em;
+			color: white;
+		}
+
+		ul.list {
+			list-style: none;
+		}
+
+			ul.list li {
+				display: block;
+				padding: 0.60em 0;
+				border-top: 1px solid;
+				border-color: red;
+			}
+
+			ul.list > :first-child {
+				padding-top: 0;
+				border-top: none;
+			}
+
+/* Tables */
+
+	table {
+		width: 100%;
+	}
+
+		table.default {
+			width: 100%;
+		}
+
+			table.default tbody tr {
+				border-bottom: solid 1px #888888;
+			}
+
+			table.default td {
+				padding: 0.5em 1em 0.5em 1em;
+			}
+
+			table.default th {
+				font-weight: 700;
+				padding: 0.5em 1em 0.5em 1em;
+				text-align: left;
+			}
+
+			table.default thead {
+				background: #555555;
+				color: #fff;
+			}
+
+/* Button */
+
+	input[type="submit"],
+	input[type="reset"],
+	input[type="button"],
+	.button {
+		-moz-appearance: none;
+		-webkit-appearance: none;
+		-o-appearance: none;
+		-ms-appearance: none;
+		appearance: none;
+		-moz-transition: background-color 0.2s ease-in-out;
+		-webkit-transition: background-color 0.2s ease-in-out;
+		-o-transition: background-color 0.2s ease-in-out;
+		-ms-transition: background-color 0.2s ease-in-out;
+		transition: background-color 0.2s ease-in-out;
+		background: #3ac984;
+		border-radius: 40px;
+		border: 0;
+		color: white;
+		cursor: pointer;
+		display: inline-block;
+		padding: 0.80em 2em;
+		text-align: center;
+		text-decoration: none;
+		font-size: 1.4em;
+		font-weight: 600;
+		min-width: 10em;
+	}
+
+		input[type="submit"]:hover,
+		input[type="reset"]:hover,
+		input[type="button"]:hover,
+		.button:hover {
+			background-color: #32b777;
+		}
+
+		input[type="submit"].fit,
+		input[type="reset"].fit,
+		input[type="button"].fit,
+		.button.fit {
+			width: 100%;
+		}
+
+		input[type="submit"].small,
+		input[type="reset"].small,
+		input[type="button"].small,
+		.button.small {
+			font-size: 0.8em;
+		}
+
+/* Wrapper */
+
+	.wrapper.style1 {
+		background: #fff;
+	}
+
+	.wrapper.style2 {
+		background: #ececec;
+		padding: 6em 0;
+		text-align: center;
+	}
+
+	.wrapper.style3 {
+		padding: 2em 0 3.5em 0;
+		background: #ececec;
+	}
+
+		.wrapper.style3 span {
+			display: inline-block;
+			padding-top: 0.80em;
+			font-size: 2em;
+			font-weight: 600;
+		}
+
+		.wrapper.style3 .button {
+			float: right;
+		}
+
+/* Header */
+
+	#header {
+		background: #333333 url("../images/header.jpg") no-repeat;
+		background-size: cover;
+		color: #fff;
+		padding: 6em 0;
+		text-align: center;
+		background-position: 0% 65%;
+		position: relative;
+	}
+
+		#header:before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+		}
+
+		#header > * {
+			position: relative;
+			z-index: 1;
+		}
+
+	.homepage #header {
+		padding: 8em 0;
+		background-position: center;
+	}
+
+	#logo {
+		font-size: 2em;
+	}
+
+	#nav > ul {
+		margin: 0;
+	}
+
+		#nav > ul > li {
+			border-radius: 10px 10px 0 0;
+			display: inline-block;
+			margin-left: 0.5em;
+			padding: 0.5em 1.5em;
+		}
+
+			#nav > ul > li a {
+				color: #FFF;
+				text-decoration: none;
+				font-size: 1.2em;
+			}
+
+			#nav > ul > li:first-child {
+				margin-left: 0;
+			}
+
+			#nav > ul > li:hover a {
+				color: #fff;
+			}
+
+			#nav > ul > li.active {
+				background: #3ac984;
+			}
+
+				#nav > ul > li.active a {
+					color: white;
+				}
+
+			#nav > ul > li > ul {
+				display: none;
+			}
+
+/* Dropotron */
+
+	.dropotron {
+		margin-top: -2px;
+		background: #3ac984;
+		border-radius: 10px;
+		color: white;
+		min-width: 12em;
+		padding: 1em 0;
+	}
+
+		.dropotron > li {
+			line-height: 2em;
+			padding: 0 1em;
+		}
+
+			.dropotron > li > a {
+				color: #FFF;
+				text-decoration: none;
+			}
+
+			.dropotron > li.active > a, .dropotron > li:hover > a {
+				color: #FFF;
+			}
+
+		.dropotron.level-0 {
+			border-radius: 0 10px 10px 10px;
+			font-size: 1em;
+		}
+
+/* Banner */
+
+	#banner {
+		text-align: center;
+		padding: 4em 0 0 0;
+	}
+
+		#banner .major h2 {
+			font-size: 3.5em;
+		}
+
+		#banner .major .byline {
+			display: block;
+			margin: 0em 2em;
+			line-height: 1.6em;
+			font-size: 1.5em;
+		}
+
+		#banner a {
+			color: inherit;
+		}
+
+/* Main */
+
+	.no-sidebar #main .major, .left-sidebar #main .major, .right-sidebar #main .major {
+		text-align: left;
+	}
+
+	.homepage #main .major {
+		text-align: center;
+	}
+
+	#main {
+		padding: 6em 0;
+	}
+
+		#main .sidebar .major {
+			padding-bottom: 2em;
+		}
+
+			#main .sidebar .major h2 {
+				font-size: 1.8em;
+			}
+
+		#main .sidebar .default li {
+			border-color: #cdcdcd;
+		}
+
+		#main .sidebar .default a {
+			color: #464646;
+		}
+
+		#main .sidebar > :first-child {
+			margin-bottom: 3em;
+		}
+
+/* Footer */
+
+	#footer {
+		padding: 4em 0;
+		color: #fff;
+	}
+
+		#footer .major h2 {
+			font-size: 2em;
+			color: #FFF;
+		}
+
+		#footer .major .byline {
+			font-size: 1.1em;
+		}
+
+		#footer .copyright {
+			margin-top: 3em;
+			padding-top: 3em;
+			border-top: 1px solid;
+			border-color: rgba(192, 192, 192, 0.15);
+			text-align: center;
+			color: inherit;
+		}
+
+		#footer a {
+			color: inherit;
+		}
+
+/* My custom styles */
+
+/* Lists on content haven't got bullets and indent*/
+#main ul {
+	list-style: circle;
+	margin-left: 2em
+}
+
+/* Paragraphs on content are too sparse */
+#main p {
+	margin: 1em 0 0.3em 0;
+}
+
+/* Paragraphs on bullets are too sparse */
+#main li p {
+	margin: 0.3em 0 0.3em 0;
+}
+
+/* Headers have very little top margin and too much line-height */
+#main h1,
+#main h2,
+#main h3,
+#main h4,
+#main h5,
+#main h6 {
+	margin: 1.5em 0em 1em 0em;
+	line-height: 1.2em;
+}
+
+/* Less margin for headers on index */
+#main .major h1,
+#main .major h2,
+#main .major h3,
+#main .major h4,
+#main .major h5,
+#main .major h6 {
+	margin: 0.2em 0;
+	line-height: 1.2em;
+}
+
+/* Images on sidebar otherwise have original size */
+#sidebar img {
+	width: 100%;
+}
+
+/* Images on sidebar otherwise have original size */
+#main img {
+	max-width: 100%;
+}
+
+/* By default code has no style */
+pre { /* Only blocks of code */
+	border: solid;
+	border-width: 1px;
+	border-color: #DEDEDE;
+	display: block;
+	overflow: auto;
+	padding: 0.7em;
+	background-color: #FDFDFD;
+}
+
+code { /* Inline code too */
+	font-family: monospace;
+	font-size: 90%;
+}
+
+/* Otherwise it ends up too wide */
+.article {
+	max-width: 800px;
+}
+
+/* Center header background-image, change default color and alpha*/
+#header {
+	background: #AAAAAA url("../images/header.jpg") no-repeat;
+	background-size: cover;
+	background-position: 50% 50%;
+}
+
+	#header:before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.7);
+	}
+
+/* Header icon */
+#icon {
+	width: 60%;
+	max-width: 10em;
+}

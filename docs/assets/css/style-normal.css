@@ -1,0 +1,63 @@
+/*
+	Horizons by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+*/
+
+/* Basic */
+
+	header.major {
+		padding-bottom: 3em;
+	}
+
+	header h2 {
+		font-size: 2.5em;
+	}
+
+	header .byline {
+		font-size: 1.35em;
+	}
+
+/* Wrapper */
+
+	.wrapper.style3 {
+		padding: 2em 0em 3.6em 0em;
+	}
+
+		.wrapper.style3 span {
+			font-size: 1.6em;
+		}
+
+		.wrapper.style3 .button {
+			padding: 1.3em 3em;
+		}
+
+/* Header */
+
+	#header {
+		padding: 4em 0;
+	}
+
+	.homepage #header {
+		padding: 6em 0;
+	}
+
+/* Banner */
+
+	#banner {
+		padding: 3em 0 0 0;
+	}
+
+		#banner .major h2 {
+			font-size: 2.75em;
+		}
+
+		#banner .major .byline {
+			font-size: 1.35em;
+		}
+
+/* Footer */
+
+	#footer .major h2 {
+		font-size: 1.5em;
+	}

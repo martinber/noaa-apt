@@ -1,0 +1,36 @@
+/*
+	Horizons by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+*/
+
+/* Basic */
+
+	body, input, select, textarea {
+		font-size: 11pt;
+	}
+
+	.button {
+		display: block;
+		width: 100%;
+		min-width: 0;
+		padding: 0;
+		font-size: 1.2em;
+		line-height: 2.75em;
+		height: 2.75em;
+	}
+
+/* Banner */
+
+	#banner {
+		padding: 0;
+	}
+
+		#banner .major h2 {
+			font-size: 2em;
+		}
+
+		#banner .major .byline {
+			font-size: 1em;
+			margin: 0;
+		}

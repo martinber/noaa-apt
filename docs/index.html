@@ -1,0 +1,85 @@
+---
+title: noaa-apt image decoder
+layout: landing
+---
+
+<!-- Main -->
+<div id="main" class="wrapper style1">
+	<section class="container">
+
+		<div class="row">
+			<div id="sidebar" class="4u sidebar">
+				<section>
+					<img src="images/index_sidebar.jpg" alt="Example image"/>
+					Example image, I don't have a very nice antenna, so if you have a
+					better image contact me.
+				</section>
+			</div>
+
+		<div id="content" class="8u skel-cell-important">
+			<header class="major">
+				<h2>Receive and decode images from weather satellites</h2>
+				<span class="byline">Free (GPLv3) and available for Linux, Windows and OSX</span>
+			</header>
+
+			<p>
+				Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw
+				image. Later you can rotate the image and adjust the contrast with
+				something like GIMP or Photoshop.
+			</p>
+			<p>
+				Keep in mind that the output is upside down if the satellite went from
+				south to north instead of north to south that day.
+			</p>
+			<p>
+				Works with WAV files of any sample rate, 32 bit float or 16 bit integer
+				encoded. When loading audio files with more than one channel (stereo),
+				only the first one is used.
+			</p>
+			<p>
+				If you get some kind of error or bad result don't hesitate to open a
+				Issue or to send me an email. You can try to run the program with the
+				`--debug` option for more info. The quality of the decoded image should
+				be very similar to what you get using WXtoIMG, but without colors and
+				country lines.
+			</p>
+
+			<!-- Content -->
+			<!--
+				<div class="6u">
+					<section>
+						<ul class="style">
+							<li>
+								<span class="fa fa-wrench"></span>
+								<h3>Integer ultrices</h3>
+								<span>In posuere eleifend odio. Quisque semper augue mattis wisi. Maecenas ligula. Pellentesque viverra vulputate enim.</span>
+							</li>
+							<li>
+								<span class="fa fa-cloud"></span>
+								<h3>Aliquam luctus</h3>
+								<span>Pellentesque viverra vulputate enim. Aliquam erat volutpat. Maecenas condimentum enim tincidunt risus accumsan.</span>
+							</li>
+						</ul>
+					</section>
+				</div>
+				<div class="6u">
+					<section>
+						<ul class="style">
+							<li>
+								<span class="fa fa-cogs"></span>
+								<h3>Integer ultrices</h3>
+								<span>In posuere eleifend odio. Quisque semper augue mattis wisi. Maecenas ligula. Pellentesque viverra vulputate enim.</span>
+							</li>
+							<li>
+								<span class="fa fa-leaf"></span>
+								<h3>Aliquam luctus</h3>
+								<span>Pellentesque viverra vulputate enim. Aliquam erat volutpat. Maecenas condimentum enim tincidunt risus accumsan.</span>
+							</li>
+						</ul>
+					</section>
+				</div>
+			-->
+
+		</section>
+	</section>
+</div>

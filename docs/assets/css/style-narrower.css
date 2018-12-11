@@ -1,0 +1,189 @@
+/*
+	Horizons by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+*/
+
+/* Basic */
+
+	#skel-layers-wrapper {
+		padding-top: 44px;
+	}
+
+	header.major {
+		padding-bottom: 2em;
+	}
+
+	header h2 {
+		line-height: 1.2em;
+		font-size: 1.8em;
+	}
+
+	header .byline {
+		padding-top: 0.50em;
+		font-size: 1.1em;
+	}
+
+/* Layers */
+
+	#titleBar {
+		background: #222833;
+		height: 44px;
+		line-height: 44px;
+	}
+
+		#titleBar .title {
+			display: block;
+			position: relative;
+			font-weight: 700;
+			text-align: center;
+			font-size: 1.2em;
+			color: #fff;
+			z-index: 1;
+		}
+
+		#titleBar .toggle {
+			height: 60px;
+			left: 0;
+			position: absolute;
+			top: 0;
+			width: 80px;
+			z-index: 2;
+		}
+
+			#titleBar .toggle:before {
+				content: "\f0c9";
+				-moz-osx-font-smoothing: grayscale;
+				-webkit-font-smoothing: antialiased;
+				font-family: FontAwesome;
+				font-style: normal;
+				font-weight: normal;
+				text-transform: none !important;
+			}
+
+			#titleBar .toggle:before {
+				background: none;
+				color: white;
+				display: block;
+				height: 44px;
+				text-align: center;
+				width: 44px;
+			}
+
+			#titleBar .toggle:after {
+				background: url("images/toggle.svg") 0px 0px no-repeat;
+				content: '';
+				display: block;
+				height: 13px;
+				left: 10px;
+				opacity: 0.75;
+				position: absolute;
+				top: 15px;
+				width: 20px;
+			}
+
+	#navPanel {
+		background: #222833;
+	}
+
+		#navPanel .link {
+			border-top: solid 1px rgba(192, 192, 192, 0.15);
+			color: #ccc;
+			display: block;
+			height: 44px;
+			line-height: 44px;
+			padding: 0 1em 0 1em;
+			text-decoration: none;
+		}
+
+			#navPanel .link:first-child {
+				border-top: 0;
+			}
+
+			#navPanel .link.depth-0 {
+				color: #fff;
+			}
+
+			#navPanel .link .indent-1 {
+				display: inline-block;
+				width: 1em;
+			}
+
+			#navPanel .link .indent-2 {
+				display: inline-block;
+				width: 2em;
+			}
+
+			#navPanel .link .indent-3 {
+				display: inline-block;
+				width: 3em;
+			}
+
+			#navPanel .link .indent-4 {
+				display: inline-block;
+				width: 4em;
+			}
+
+			#navPanel .link .indent-5 {
+				display: inline-block;
+				width: 5em;
+			}
+
+/* Wrapper */
+
+	.wrapper.style2 {
+		padding: 4em 0 3em 0;
+	}
+
+	.wrapper.style3 {
+		text-align: center;
+	}
+
+		.wrapper.style3 span {
+			display: block;
+			padding-bottom: 1em;
+			line-height: 1.6em;
+			text-align: center;
+			font-size: 1.4em;
+		}
+
+		.wrapper.style3 .button {
+			float: none;
+			padding: 1.1em 3em;
+		}
+
+/* Header */
+
+	.no-sidebar #header, .left-sidebar #header, .right-sidebar #header {
+		display: none;
+	}
+
+	.homepage #header {
+		padding: 3em 0 4em 0;
+	}
+
+	#logo {
+		display: none;
+	}
+
+	#nav {
+		display: none;
+	}
+
+/* Banner */
+
+	#banner {
+		padding: 0;
+	}
+
+/* Main */
+
+	#main {
+		padding: 4em 0;
+	}
+
+/* Footer */
+
+	#footer section {
+		margin-bottom: 3em;
+	}

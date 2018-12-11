@@ -1,0 +1,58 @@
+---
+layout: default
+---
+
+<!-- Header -->
+			<div id="header">
+				<div class="container">
+
+					<!-- Logo -->
+						<h1><a href="#" id="logo">{{ page.title }}</a></h1>
+
+					{% include nav.html %}
+
+					<!-- Banner -->
+						<div id="banner">
+							<div class="container">
+								<section>
+									<header class="major">
+										<img id="icon" src="images/icon.png" alt="Icon"/>
+										<h2>noaa-apt</h2>
+										<span class="byline">{{ site.description }}</span>
+									</header>
+									<a href="{{ site.baseurl }}/download.html" class="button alt">Download</a>
+								</section>
+							</div>
+						</div>
+
+				</div>
+			</div>
+
+		<!-- Featured -->
+
+			<!--
+			<div class="wrapper style2">
+				<section class="container">
+					<header class="major">
+						<h2>Nulla luctus eleifend</h2>
+						<span class="byline">Mauris vulputate dolor sit amet nibh</span>
+					</header>
+					<div class="row no-collapse-1">
+						<section class="4u">
+							<a href="#" class="image feature"><img src="{{ site.baseurl }}/assets/images/pic02.jpg" alt=""></a>
+							<p>Nam in massa. Sed vel tellus. Curabitur sem urna, consequat vel, suscipit in, mattis placerat.</p>
+						</section>
+						<section class="4u">
+							<a href="#" class="image feature"><img src="{{ site.baseurl }}/assets/images/pic03.jpg" alt=""></a>
+							<p>Donec ornare neque ac sem. Mauris aliquet. Aliquam sem leo, vulputate sed, convallis. Donec magna.</p>
+						</section>
+						<section class="4u">
+							<a href="#" class="image feature"><img src="{{ site.baseurl }}/assets/images/pic04.jpg" alt=""></a>
+							<p>Curabitur sem urna, consequat vel, suscipit convallis sem leo, mattis placerat, nulla. Sed ac leo.</p>
+						</section>
+					</div>
+				</section>
+			</div>
+			-->
+
+	{{ content }}

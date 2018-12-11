@@ -1,5 +1,7 @@
 /target
 **/*.rs.bk
+_site/
 
 *.wav
 output.png
+salida.png

@@ -1,0 +1,32 @@
+/*
+	Horizons by TEMPLATED
+	templated.co @templatedco
+	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
+*/
+
+	.button {
+		position: relative;
+		-ms-behavior: url("css/ie/PIE.htc");
+	}
+
+	ul.style .fa {
+		position: relative;
+		-ms-behavior: url("css/ie/PIE.htc");
+	}
+
+	#nav > ul > li {
+		position: relative;
+		-ms-behavior: url("css/ie/PIE.htc");
+	}
+
+/* Dropotron */
+
+	.dropotron {
+		position: relative;
+		-ms-behavior: url("css/ie/PIE.htc");
+	}
+
+		.dropotron.level-0 {
+			position: relative;
+			-ms-behavior: url("css/ie/PIE.htc");
+		}
