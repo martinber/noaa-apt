@@ -115,7 +115,7 @@ I did something like what you can see
 [here](https://ccrma.stanford.edu/~jos/resample/) but with a easier
 (and slower) implementation.
 
-![Resampling algorithm](./images/resampling.png)
+![Resampling algorithm](images/resampling.png)
 
 For each output sample, we calculate the sum of the products between input
 samples and filter coefficients.
@@ -129,7 +129,7 @@ Then I found a very fast demodulator implemented on [pietern/apt137]. For each
 output sample, you only need the current input sample, the previous one and the
 carrier frequency:
 
-![AM demodulation formula](./images/demodulation.png)
+![AM demodulation formula](/images/demodulation.png)
 
 Where theta is the AM carrier frequency divided by the sample rate.
 

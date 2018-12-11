@@ -15,7 +15,7 @@ two things:
 - Resample a WAV into another WAV, this is useful if you want to try a program
   like [atp-dec/apt-dec] that requires a specific sample rate.
 
-![GUI](./images/gui.png)
+![GUI](/images/gui.png)
 
 ### Terminal
 
