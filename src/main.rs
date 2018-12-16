@@ -11,6 +11,7 @@ extern crate gio;
 
 mod noaa_apt;
 mod dsp;
+mod frequency;
 mod wav;
 mod misc;
 mod gui;

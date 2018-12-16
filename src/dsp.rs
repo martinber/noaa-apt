@@ -1,4 +1,5 @@
 use misc;
+pub use frequency::Frequency;
 use err;
 
 use std::f32::consts::PI;

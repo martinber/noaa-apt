@@ -22,17 +22,8 @@ Every decoder I've tested, excluding [WXtoIMG], has the same problem.
 
 ## Tests
 
-You need the GNU Scientific Library: `sudo apt install libgsl0-dev libgsl0`.
-
 ```
 cargo test
-```
-
-If you get something like a wall of errors because linking with GSL fails, run
-with the ``GSLv2`` feature:
-
-```
-cargo test --features GSLv2
 ```
 
 ## Things to do
@@ -58,11 +49,7 @@ cargo test --features GSLv2
 - Optionally output raw samples as WAV at various steps for debugging, maybe
   plot the FFT too.
 
-- Do and fix tests, first I have to fix (or remove) the GSL dependency.
-
 - Separate GUI and no GUI builds.
-
-- Check and fix `Cargo.toml` dev buils.
 
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
   machine to work.
