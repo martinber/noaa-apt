@@ -112,6 +112,32 @@ cargo test --features GSLv2
 
 - Generate the final image starting a new line on every sync frame.
 
+### About frequency
+
+![Frequency unit comparison]({{ site.baseurl }}/images/frequency.png)
+
+I made this drawing because I keep forgetting how to represent frequencies. Here
+you can see the frequency spectrum of some APT signal sampled at 11025Hz, the
+peak is the AM carrier at 2400Hz, and everything wraps around because we use
+discrete signals.
+
+I'm using the struct `Frequency` to represent frequencies and convert from one
+unit to another:
+
+- `Frequency::hertz()` and `Frequency.get_hertz()`: On discrete systems it
+  doesn't make much sense to talk about frequency on terms of Hertz because it
+  depends on the sample rate used.
+
+- `Frequency::radians()` and `Frequency.get_radians()`: Measuring frequency on
+  radians per second is useful. For example pi radians per second is the maximum
+  frequency you can have on a discrete signal, then it wraps around so that 2
+  times pi radians per second is the same as 0 radians per second.
+
+- `Frequency::pi_radians()` and `Frequency.get_pi_radians()`: I think that
+  measuring in terms of fractions of pi radians per second is better, because
+  now the maximum frequency you can have is 1, you don't have to keep writing pi
+  everywhere.
+
 ### Resampling algorithm
 
 I did something like what you can see

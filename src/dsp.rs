@@ -323,36 +323,44 @@ mod tests {
 
     use super::*;
 
-    /// Calculate absolute value of fft and divide each sample by n
+    /// Calculate absolute value of fft
     fn abs_fft(signal: &Signal) -> Signal {
-        use rgsl;
-        use rgsl::types::fast_fourier_transforms::FftComplexWaveTable;
-        use rgsl::types::fast_fourier_transforms::FftComplexWorkspace;
+        use rustfft::FFTplanner;
+        use rustfft::num_complex::Complex;
+        use rustfft::num_traits::Zero;
 
-        let mut data: Vec<f64> = Vec::with_capacity(signal.len() * 2);
+        let mut input: Vec<Complex<f32>> = signal.iter()
+                .map(|x| Complex::new(*x, 0.)).collect();
 
-        for s in signal.iter() {
-            data.push(*s as f64);
-            data.push(0.);
-        }
+        let mut output: Vec<Complex<f32>> = vec![Complex::zero(); input.len()];
 
-        let wavetable = FftComplexWaveTable::new(signal.len()).unwrap();
-        let mut workspace = FftComplexWorkspace::new(signal.len()).unwrap();
+        let mut planner = FFTplanner::new(false); // inverse=false
+        let fft = planner.plan_fft(input.len());
+        fft.process(&mut input, &mut output);
 
-        rgsl::fft::mixed_radix::forward(
-                &mut data, 1, signal.len(), &wavetable, &mut workspace);
-
-        let mut result: Signal = Vec::with_capacity(signal.len());
-
-        for i in 0 .. signal.len() {
-            result.push(f64::sqrt(data[2*i].powi(2) + data[2*i+1].powi(2)) as f32);
-        }
-
-        result
+        output.iter().map(|x| x.norm()).collect()
     }
 
-    /// Check if the filter meets the required parameters in the positive half
-    /// of the spectrum.
+    /// Check if two vectors of float are equal given some margin of precision
+    fn vector_roughly_equal(a: &Vec<f32>, b: &Vec<f32>) -> bool {
+        // Iterator with tuples of values to compare.
+        // [(a1, b1), (a2, b2), (a3, b3), ...]
+        let mut values = a.iter().zip(b.iter());
+        // Check if every pair have similar values
+        values.all(|(&a, &b)| ulps_eq!(a, b))
+    }
+
+    #[test]
+    fn test_abs_fft() {
+        // Checked with GNU Octave
+        assert!(vector_roughly_equal(&abs_fft(&vec![1., 2., 3., 4.]),
+                &vec![10., 2.828427124746190, 2., 2.828427124746190]));
+        assert!(vector_roughly_equal(&abs_fft(&vec![1., 1., 1., 1., 1., 1., 1.]),
+                &vec![7., 0., 0., 0., 0., 0., 0.]));
+        assert!(vector_roughly_equal(&abs_fft(&vec![1., -1., 1., -1.]),
+                &vec![0., 0., 4., 0.]));
+    }
+
     #[test]
     fn test_lowpass() {
         // cutout, atten and delta_w values

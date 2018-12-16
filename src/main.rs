@@ -1,4 +1,6 @@
 extern crate hound;
+extern crate rustfft;
+#[cfg_attr(test, macro_use)] extern crate approx;
 extern crate png;
 #[macro_use] extern crate log;
 extern crate simple_logger;
@@ -6,8 +8,6 @@ extern crate argparse;
 extern crate gtk;
 extern crate gdk;
 extern crate gio;
-
-#[cfg(test)] extern crate rgsl;
 
 mod noaa_apt;
 mod dsp;

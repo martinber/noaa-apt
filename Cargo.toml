@@ -5,23 +5,19 @@ authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
 [dependencies]
 hound = "*"
+rustfft = "*"
+approx = "*"
 png = "*"
 log = "*"
 simple_logger = "*"
 argparse = "*"
 
 [dependencies.gtk]
-version = "0.4.1"
+version = "0.5.0"
 features = ["v3_10"]
 
 [dependencies.gdk]
-version = "0.8.0"
+version = "0.9.0"
 
 [dependencies.gio]
-version = "0.4.1"
-
-[dev-dependencies]
-GSL = "*"
-
-[dev-features]
-GSLv2 = ["GSL/v2"]
+version = "0.5.0"

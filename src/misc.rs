@@ -68,19 +68,23 @@ mod tests {
 
     #[test]
     pub fn test_bessel_i0() {
-        use rgsl::bessel::I0 as gsl_bessel;
-        // Compare my implementation of the Bessel function with the one in GSL
         let tolerance = 0.001; // 0.1%
 
-        // Iterate from 0 to 7 with steps of 0.01
-        for i in 0..700 {
-            let i = i as f32 / 100.;
-
-            println!("my_bessel({}) = {}", i, bessel_i0(i as f32));
-            println!("gsl_bessel({}) = {}", i, gsl_bessel(i as f64));
-            assert!(((bessel_i0(i as f32) - gsl_bessel(i as f64) as f32) /
-                    bessel_i0(i as f32)).abs() < tolerance);
-        }
+        // Compare values with results from GNU Octave
+        assert_relative_eq!(bessel_i0(0.),  1.00000000000000, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(0.5), 1.06348337074132, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(1.),  1.26606587775201, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(1.5), 1.64672318977289, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(2.),  2.27958530233607, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(2.5), 3.28983914405012, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(3.),  4.88079258586502, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(3.5), 7.37820343222548, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(4.),  11.3019219521363, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(4.5), 17.4811718556093, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(5.),  27.2398718236044, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(5.5), 42.6946451518478, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(6.),  67.2344069764780, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(6.5), 106.292858243996, max_relative = tolerance);
+        assert_relative_eq!(bessel_i0(7.),  168.593908510290, max_relative = tolerance);
     }
 }
-
