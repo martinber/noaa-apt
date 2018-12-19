@@ -108,22 +108,33 @@ you can see the frequency spectrum of some APT signal sampled at 11025Hz, the
 peak is the AM carrier at 2400Hz, and everything wraps around because we use
 discrete signals.
 
-I'm using the struct `Frequency` to represent frequencies and convert from one
+I'm using the struct `Freq` to represent frequencies and convert from one
 unit to another:
 
-- `Frequency::hertz()` and `Frequency.get_hertz()`: On discrete systems it
+- `Freq::hertz()` and `Freq.get_hertz()`: On discrete systems it
   doesn't make much sense to talk about frequency on terms of Hertz because it
   depends on the sample rate used.
 
-- `Frequency::radians()` and `Frequency.get_radians()`: Measuring frequency on
+- `Freq::radians()` and `Freq.get_radians()`: Measuring frequency on
   radians per second is useful. For example pi radians per second is the maximum
   frequency you can have on a discrete signal, then it wraps around so that 2
   times pi radians per second is the same as 0 radians per second.
 
-- `Frequency::pi_radians()` and `Frequency.get_pi_radians()`: I think that
+- `Freq::pi_radians()` and `Freq.get_pi_radians()`: I think that
   measuring in terms of fractions of pi radians per second is better, because
   now the maximum frequency you can have is 1, you don't have to keep writing pi
   everywhere.
+
+Also, in this program *frequency* is not the same as *rate*:
+
+- I represent *frequencies* as `Freq`, these are discrete-time frequencies,
+  that's why it makes sense to represent them on radians per second, and that's
+  why you need to set a sample rate when converting to hertz.
+
+- *Rates* instead are represented as `Rate` and, they are sample rates,
+  measured in Hertz.
+
+I made them different types so it's harder to confuse them.
 
 ### Resampling algorithm
 
