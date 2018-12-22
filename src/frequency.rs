@@ -27,7 +27,7 @@ impl Freq {
 
     /// Create frequency struct from Hertz and the sample rate used.
     fn hz(f: f32, rate: Rate) -> Freq {
-        Freq { pi_rad: 2.*f/rate.get_hz() }
+        Freq { pi_rad: 2.*f / rate.get_hz() as f32 }
     }
 
     /// Get radians per second.
@@ -42,22 +42,23 @@ impl Freq {
 
     /// Get frequency on Hertz given some sample rate.
     fn get_hz(&self, rate: Rate) -> f32 {
-        self.pi_rad*rate.get_hz()/2.
+        self.pi_rad * rate.get_hz() as f32 / 2.
     }
 }
 
 #[derive(Copy, Clone, Debug)]
 pub struct Rate {
-    hz: f32
+    hz: u32
 }
 
 impl Rate {
     /// Create rate from Hertz.
-    fn hz(r: f32) -> Rate {
-        Rate { hz: r }
+    fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Rate {
+        // Should panic only when r < 0
+        Rate { hz: num::NumCast::from(r).unwrap() }
     }
     /// Get rate on Hertz.
-    fn get_hz(&self) -> f32 {
+    fn get_hz(&self) -> u32 {
         self.hz
     }
 }
@@ -107,6 +108,15 @@ overload!(trait Div, self: Freq, other: f32, fn div {
     Freq { pi_rad: self.pi_rad / other }
 });
 
+// Freq against u32
+
+overload!(trait Mul, self: Freq, other: u32, fn mul {
+    Freq { pi_rad: self.pi_rad * other as f32 }
+});
+overload!(trait Div, self: Freq, other: u32, fn div {
+    Freq { pi_rad: self.pi_rad / other as f32 }
+});
+
 // Freq assign against Freq
 
 overload_assign!(trait AddAssign, self: Freq, other: Freq, fn add_assign {
@@ -135,6 +145,16 @@ overload_assign!(trait DivAssign, self: Freq, other: f32, fn div_assign {
     self.pi_rad /= other;
 });
 
+// Freq assign against u32
+
+overload_assign!(trait MulAssign, self: Freq, other: u32, fn mul_assign {
+    self.pi_rad *= other as f32;
+});
+
+overload_assign!(trait DivAssign, self: Freq, other: u32, fn div_assign {
+    self.pi_rad /= other as f32;
+});
+
 // Rate against Rate
 
 overload!(trait Add, self: Rate, other: Rate, fn add {
@@ -150,12 +170,12 @@ overload!(trait Div, self: Rate, other: Rate, fn div {
     Rate { hz: self.hz / other.hz }
 });
 
-// Rate against f32
+// Rate against u32
 
-overload!(trait Mul, self: Rate, other: f32, fn mul {
+overload!(trait Mul, self: Rate, other: u32, fn mul {
     Rate { hz: self.hz * other }
 });
-overload!(trait Div, self: Rate, other: f32, fn div {
+overload!(trait Div, self: Rate, other: u32, fn div {
     Rate { hz: self.hz / other }
 });
 
@@ -177,13 +197,13 @@ overload_assign!(trait DivAssign, self: Rate, other: Rate, fn div_assign {
     self.hz /= other.hz;
 });
 
-// Rate assign against f32
+// Rate assign against u32
 
-overload_assign!(trait MulAssign, self: Rate, other: f32, fn mul_assign {
+overload_assign!(trait MulAssign, self: Rate, other: u32, fn mul_assign {
     self.hz *= other;
 });
 
-overload_assign!(trait DivAssign, self: Rate, other: f32, fn div_assign {
+overload_assign!(trait DivAssign, self: Rate, other: u32, fn div_assign {
     self.hz /= other;
 });
 
@@ -198,7 +218,7 @@ mod tests {
         pi_rad: f32,
         rad: f32,
         hz: f32,
-        rate: f32
+        rate: u32
     }
 
     const TEST_VALUES: [Equivalence; 11] = [
@@ -206,33 +226,33 @@ mod tests {
             pi_rad: 0.435374149659864,
             rad: 1.367768230134332,
             hz: 2400.,
-            rate: 11025.
+            rate: 11025
         },
         Equivalence {
             pi_rad: -0.435374149659864,
             rad: -1.367768230134332,
             hz: -2400.,
-            rate: 11025.
+            rate: 11025
         },
         Equivalence {
             pi_rad: 0.1,
             rad: 0.3141592653589793,
             hz: 100.,
-            rate: 2000.
+            rate: 2000
         },
         Equivalence {
             pi_rad: -0.1,
             rad: -0.3141592653589793,
             hz: -100.,
-            rate: 2000.
+            rate: 2000
         },
-        Equivalence { pi_rad: 0., rad: 0., hz: 0., rate: 11025. },
-        Equivalence { pi_rad: 1., rad: PI, hz: 5512.5, rate: 11025. },
-        Equivalence { pi_rad: -1., rad: -PI, hz: -5512.5, rate: 11025. },
-        Equivalence { pi_rad: 2., rad: 2.*PI, hz: 11025., rate: 11025. },
-        Equivalence { pi_rad: -2., rad: -2.*PI, hz: -11025., rate: 11025. },
-        Equivalence { pi_rad: 300., rad: 300.*PI, hz: 150., rate: 1. },
-        Equivalence { pi_rad: -300., rad: -300.*PI, hz: -150., rate: 1. },
+        Equivalence { pi_rad: 0., rad: 0., hz: 0., rate: 11025 },
+        Equivalence { pi_rad: 1., rad: PI, hz: 5512.5, rate: 11025 },
+        Equivalence { pi_rad: -1., rad: -PI, hz: -5512.5, rate: 11025 },
+        Equivalence { pi_rad: 2., rad: 2.*PI, hz: 11025., rate: 11025 },
+        Equivalence { pi_rad: -2., rad: -2.*PI, hz: -11025., rate: 11025 },
+        Equivalence { pi_rad: 300., rad: 300.*PI, hz: 150., rate: 1 },
+        Equivalence { pi_rad: -300., rad: -300.*PI, hz: -150., rate: 1 },
     ];
 
 
@@ -337,35 +357,23 @@ mod tests {
 
     #[test]
     fn test_rate_operations() {
-        let a: f32 = 12345.;
-        let b: f32 = -23456.;
+        let a: u32 = 23456;
+        let b: u32 = 12345;
 
         let fa = Rate::hz(a);
         let fb = Rate::hz(b);
 
         // Operators against Rates
 
-        assert_roughly_equal(
-            fa.get_hz() + fb.get_hz(),
-            (fa + fb).get_hz());
-        assert_roughly_equal(
-            fa.get_hz() - fb.get_hz(),
-            (fa - fb).get_hz());
-        assert_roughly_equal(
-            fa.get_hz() * fb.get_hz(),
-            (fa * fb).get_hz());
-        assert_roughly_equal(
-            fa.get_hz() / fb.get_hz(),
-            (fa / fb).get_hz());
+        assert!(fa.get_hz() + fb.get_hz() == (fa + fb).get_hz());
+        assert!(fa.get_hz() - fb.get_hz() == (fa - fb).get_hz());
+        assert!(fa.get_hz() * fb.get_hz() == (fa * fb).get_hz());
+        assert!(fa.get_hz() / fb.get_hz() == (fa / fb).get_hz());
 
-        // Operators against f32
+        // Operators against u32
 
-        assert_roughly_equal(
-            fa.get_hz() * b,
-            (fa * b).get_hz());
-        assert_roughly_equal(
-            fa.get_hz() / b,
-            (fa / b).get_hz());
+        assert!(fa.get_hz() * b == (fa * b).get_hz());
+        assert!(fa.get_hz() / b == (fa / b).get_hz());
 
         // Assign operators against rates
 
@@ -373,40 +381,53 @@ mod tests {
 
         let mut fa = Rate::hz(a);
         fa += fb;
-        assert_roughly_equal(fa.get_hz(), a + b);
+        assert!(fa.get_hz() == a + b);
 
         let mut fa = Rate::hz(a);
         fa -= fb;
-        assert_roughly_equal(fa.get_hz(), a - b);
+        assert!(fa.get_hz() == a - b);
 
         let mut fa = Rate::hz(a);
         fa *= fb;
-        assert_roughly_equal(fa.get_hz(), a * b);
+        assert!(fa.get_hz() == a * b);
 
         let mut fa = Rate::hz(a);
         fa /= fb;
-        assert_roughly_equal(fa.get_hz(), a / b);
+        assert!(fa.get_hz() == a / b);
 
         // Assign operators against f32
 
         let mut fa = Rate::hz(a);
         fa *= b;
-        assert_roughly_equal(fa.get_hz(), a * b);
+        assert!(fa.get_hz() == a * b);
 
         let mut fa = Rate::hz(a);
         fa /= b;
-        assert_roughly_equal(fa.get_hz(), a / b);
+        assert!(fa.get_hz() == a / b);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(unused_must_use)]
+    fn test_rate_overflow() {
+        Rate::hz(1) - Rate::hz(2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_rate_negative() {
+        Rate::hz(-1);
     }
 
     #[test]
     #[allow(unused_assignments, unused_mut)]
     fn test_rate_copying() {
-        let mut a = Rate::hz(123.);
-        let mut b = Rate::hz(456.);
+        let mut a = Rate::hz(123_u32);
+        let mut b = Rate::hz(456_u32);
 
         b = a;
 
-        assert_roughly_equal(b.get_hz(), 123.);
-        assert_roughly_equal(b.get_hz(), 123.);
+        assert!(b.get_hz() == 123);
+        assert!(b.get_hz() == 123);
     }
 }

@@ -136,6 +136,11 @@ Also, in this program *frequency* is not the same as *rate*:
 
 I made them different types so it's harder to confuse them.
 
+- Rates are integer because AFAIK nobody uses non-integer sample rates.
+
+- There are no direct operators between Freqs and Rates because they should
+  depend on the units you want to use.
+
 ### Resampling algorithm
 
 I did something like what you can see

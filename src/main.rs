@@ -1,3 +1,4 @@
+extern crate num;
 extern crate hound;
 extern crate rustfft;
 #[cfg_attr(test, macro_use)] extern crate approx;
