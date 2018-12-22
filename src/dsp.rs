@@ -1,8 +1,8 @@
-use misc;
 pub use frequency::Freq;
 pub use frequency::Rate;
 use err;
 
+use num::Integer; // For u32.gcd(u32)
 use std::f32::consts::PI;
 
 pub type Signal = Vec<f32>;
@@ -52,19 +52,19 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 /// little of spectrum to go through.
 ///
 /// The filter attenuation is 40dB.
-pub fn resample_to(signal: &Signal, input_rate: u32, output_rate: u32,
-                   cutout: Option<f32>) -> err::Result<Signal> {
+pub fn resample_to(signal: &Signal, input_rate: Rate, output_rate: Rate,
+                   cutout: Option<Freq>) -> err::Result<Signal> {
 
-    if output_rate == 0 {
+    if output_rate.get_hz() == 0 {
         return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
     }
 
-    let gcd = misc::gcd(input_rate, output_rate);
-    let l = output_rate / gcd; // interpolation factor
-    let m = input_rate / gcd; // decimation factor
+    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let l = output_rate.get_hz() / gcd; // interpolation factor
+    let m = input_rate.get_hz() / gcd; // decimation factor
 
     let atten = 40.;
-    let delta_w = 0.2 / l as f32;
+    let delta_w = Freq::pi_rad(0.2) / l;
 
     Ok(resample(&signal, l, m, cutout, atten, delta_w))
 }
@@ -83,15 +83,15 @@ pub fn resample_to(signal: &Signal, input_rate: u32, output_rate: u32,
 /// `atten` should be positive and specified in decibels. `delta_w` has units of
 /// fractions of pi radians per second, considering the signal after `l - 1`
 /// insertions of zeros.
-pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<f32>,
-                atten: f32, delta_w: f32) -> Signal {
+pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
+                atten: f32, delta_w: Freq) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
 
     let cutout = match cutout {
         Some(x) => x,
-        None => 1./(l as f32),
+        None => Freq::pi_rad(1.) / l,
     };
 
     if l > 1 { // If we need interpolation
@@ -156,6 +156,8 @@ pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<f32>,
 
     } else {
 
+        // TODO: Check if wee need a filter
+
         debug!("Resampling by decimation, L/M: {}/{}", l, m);
 
         let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
@@ -172,7 +174,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<f32>,
 }
 
 /// Demodulate AM signal.
-pub fn demodulate(signal: &Signal, sample_rate: u32, carrier_freq: u32) -> Signal {
+pub fn demodulate(signal: &Signal, sample_rate: Rate, carrier_freq: Freq) -> Signal {
 
     debug!("Demodulating signal");
 
@@ -188,7 +190,7 @@ pub fn demodulate(signal: &Signal, sample_rate: u32, carrier_freq: u32) -> Signa
     // Taken from:
     // https://github.com/pietern/apt137/blob/master/decoder.c
 
-    let phi = 2. * PI * (carrier_freq as f32 / sample_rate as f32);
+    let phi = 2. * (carrier_freq / sample_rate.get_hz()).get_rad();
     let cosphi2 = phi.cos() * 2.;
     let sinphi = phi.sin();
 
@@ -250,11 +252,11 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
 ///
 /// Frequency in fractions of pi radians per second.
 /// Attenuation in positive decibels.
-pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
+pub fn lowpass(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
 
     debug!("Designing Lowpass filter, \
-           cutout: 2*pi*{}rad/s, attenuation: {}dB, delta_w: 2*pi*{}rad/s",
-           cutout, atten, delta_w);
+           cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
+           cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
 
     let window = kaiser(atten, delta_w);
 
@@ -268,10 +270,10 @@ pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 
     for n in -(m-1)/2 ..= (m-1)/2 {
         if n == 0 {
-            filter.push(cutout);
+            filter.push(cutout.get_pi_rad());
         } else {
             let n = n as f32;
-            filter.push((n*PI*cutout).sin()/(n*PI));
+            filter.push((n*PI*cutout.get_pi_rad()).sin()/(n*PI));
         }
     }
 
@@ -284,11 +286,11 @@ pub fn lowpass(cutout: f32, atten: f32, delta_w: f32) -> Signal {
 ///
 /// The length depends on the parameters given, and it's always odd.
 /// Frequency in fractions of pi radians per second.
-fn kaiser(atten: f32, delta_w: f32) -> Signal {
+fn kaiser(atten: f32, delta_w: Freq) -> Signal {
 
     debug!("Designing Kaiser window,\
-           attenuation: {}dB, delta_w: 2*pi*{}rad/s",
-           atten, delta_w);
+           attenuation: {}dB, delta_w: pi*{}rad/s",
+           atten, delta_w.get_pi_rad());
 
     let beta: f32;
     if atten > 50. {
@@ -300,7 +302,7 @@ fn kaiser(atten: f32, delta_w: f32) -> Signal {
     }
 
     // Filter length, we want an odd length
-    let mut length: i32 = ((atten - 8.) / (2.285 * PI*delta_w)).ceil() as i32 + 1;
+    let mut length: i32 = ((atten - 8.) / (2.285 * delta_w.get_rad())).ceil() as i32 + 1;
     if length % 2 == 0 {
         length += 1;
     }
@@ -366,8 +368,10 @@ mod tests {
     #[test]
     fn test_lowpass() {
         // cutout, atten and delta_w values
-        let test_parameters: Vec<(f32, f32, f32)> = vec![
-                (1./4., 20., 1./10.), (1./3., 35., 1./30.), (2./5., 60., 1./20.)];
+        let test_parameters: Vec<(Freq, f32, Freq)> = vec![
+                (Freq::pi_rad(1./4.), 20., Freq::pi_rad(1./10.)),
+                (Freq::pi_rad(1./3.), 35., Freq::pi_rad(1./30.)),
+                (Freq::pi_rad(2./5.), 60., Freq::pi_rad(1./20.))];
 
         for parameters in test_parameters.iter() {
             let (cutout, atten, delta_w) = *parameters;
@@ -377,18 +381,19 @@ mod tests {
             let filter = lowpass(cutout, atten, delta_w);
             let mut fft = abs_fft(&filter);
 
-            println!("cutout: {}, atten: {}, delta_w: {}", cutout, atten, delta_w);
+            println!("cutout: {}, atten: {}, delta_w: {}",
+                     cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
             println!("filter: {:?}", filter);
 
             for (i, v) in fft.iter().enumerate() {
-                let w = 2. * (i as f32) / (fft.len() as f32);
+                let w = Freq::pi_rad(2. * (i as f32) / (fft.len() as f32));
 
                 if w < cutout - delta_w/2. {
-                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
+                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w.get_pi_rad());
                     assert!(*v < 1. + ripple && *v > 1. - ripple);
                 }
-                else if w > cutout + delta_w/2. && w < 1. {
-                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w);
+                else if w > cutout + delta_w/2. && w < Freq::pi_rad(1.) {
+                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w.get_pi_rad());
                     assert!(*v < ripple);
                 }
             }

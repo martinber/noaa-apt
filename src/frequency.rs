@@ -16,32 +16,32 @@ pub struct Freq {
 
 impl Freq {
     /// Create frequency struct from radians per second.
-    fn rad(f: f32) -> Freq {
+    pub fn rad(f: f32) -> Freq {
         Freq { pi_rad: f/PI }
     }
 
     /// Create frequency struct from fractions of pi radians per second.
-    fn pi_rad(f: f32) -> Freq {
+    pub fn pi_rad(f: f32) -> Freq {
         Freq { pi_rad: f }
     }
 
     /// Create frequency struct from Hertz and the sample rate used.
-    fn hz(f: f32, rate: Rate) -> Freq {
+    pub fn hz(f: f32, rate: Rate) -> Freq {
         Freq { pi_rad: 2.*f / rate.get_hz() as f32 }
     }
 
     /// Get radians per second.
-    fn get_rad(&self) -> f32 {
+    pub fn get_rad(&self) -> f32 {
         self.pi_rad*PI
     }
 
     /// Get fractions of pi radians per second.
-    fn get_pi_rad(&self) -> f32 {
+    pub fn get_pi_rad(&self) -> f32 {
         self.pi_rad
     }
 
     /// Get frequency on Hertz given some sample rate.
-    fn get_hz(&self, rate: Rate) -> f32 {
+    pub fn get_hz(&self, rate: Rate) -> f32 {
         self.pi_rad * rate.get_hz() as f32 / 2.
     }
 }
@@ -53,12 +53,12 @@ pub struct Rate {
 
 impl Rate {
     /// Create rate from Hertz.
-    fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Rate {
+    pub fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Rate {
         // Should panic only when r < 0
         Rate { hz: num::NumCast::from(r).unwrap() }
     }
     /// Get rate on Hertz.
-    fn get_hz(&self) -> u32 {
+    pub fn get_hz(&self) -> u32 {
         self.hz
     }
 }
@@ -81,6 +81,30 @@ macro_rules! overload_assign {
                 $expr
             }
         }
+    }
+}
+
+impl PartialOrd for Freq {
+    fn partial_cmp(&self, other: &Freq) -> Option<std::cmp::Ordering> {
+        self.pi_rad.partial_cmp(&other.pi_rad)
+    }
+}
+
+impl PartialEq for Freq {
+    fn eq(&self, other: &Freq) -> bool {
+        self.pi_rad == other.pi_rad
+    }
+}
+
+impl PartialOrd for Rate {
+    fn partial_cmp(&self, other: &Rate) -> Option<std::cmp::Ordering> {
+        self.hz.partial_cmp(&other.hz)
+    }
+}
+
+impl PartialEq for Rate {
+    fn eq(&self, other: &Rate) -> bool {
+        self.hz == other.hz
     }
 }
 
@@ -114,6 +138,15 @@ overload!(trait Mul, self: Freq, other: u32, fn mul {
     Freq { pi_rad: self.pi_rad * other as f32 }
 });
 overload!(trait Div, self: Freq, other: u32, fn div {
+    Freq { pi_rad: self.pi_rad / other as f32 }
+});
+
+// Freq against usize
+
+overload!(trait Mul, self: Freq, other: usize, fn mul {
+    Freq { pi_rad: self.pi_rad * other as f32 }
+});
+overload!(trait Div, self: Freq, other: usize, fn div {
     Freq { pi_rad: self.pi_rad / other as f32 }
 });
 
@@ -155,6 +188,16 @@ overload_assign!(trait DivAssign, self: Freq, other: u32, fn div_assign {
     self.pi_rad /= other as f32;
 });
 
+// Freq assign against usize
+
+overload_assign!(trait MulAssign, self: Freq, other: usize, fn mul_assign {
+    self.pi_rad *= other as f32;
+});
+
+overload_assign!(trait DivAssign, self: Freq, other: usize, fn div_assign {
+    self.pi_rad /= other as f32;
+});
+
 // Rate against Rate
 
 overload!(trait Add, self: Rate, other: Rate, fn add {
@@ -177,6 +220,15 @@ overload!(trait Mul, self: Rate, other: u32, fn mul {
 });
 overload!(trait Div, self: Rate, other: u32, fn div {
     Rate { hz: self.hz / other }
+});
+
+// Rate against usize
+
+overload!(trait Mul, self: Rate, other: usize, fn mul {
+    Rate { hz: self.hz * other as u32 }
+});
+overload!(trait Div, self: Rate, other: usize, fn div {
+    Rate { hz: self.hz / other as u32 }
 });
 
 // Rate assign against Rate
@@ -205,6 +257,16 @@ overload_assign!(trait MulAssign, self: Rate, other: u32, fn mul_assign {
 
 overload_assign!(trait DivAssign, self: Rate, other: u32, fn div_assign {
     self.hz /= other;
+});
+
+// Rate assign against usize
+
+overload_assign!(trait MulAssign, self: Rate, other: usize, fn mul_assign {
+    self.hz *= other as u32;
+});
+
+overload_assign!(trait DivAssign, self: Rate, other: usize, fn div_assign {
+    self.hz /= other as u32;
 });
 
 #[cfg(test)]

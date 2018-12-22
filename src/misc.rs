@@ -23,21 +23,6 @@ const BESSEL_TABLE: [f32; 20] = [
     2.458504017633177e-46
 ];
 
-/// Greatest common divisor
-///
-/// Used to choose interpolation (L) and decimation (M) factors for
-/// interpolation.
-pub fn gcd(a: u32, b: u32) -> u32 {
-    let mut a = a;
-    let mut b = b;
-    while a != 0 {
-        let c = a;
-        a = b % c;
-        b = c;
-    }
-    b
-}
-
 /// First Kind modified Bessel function of order zero.
 ///
 /// From https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
@@ -57,14 +42,6 @@ pub fn bessel_i0(x: f32) -> f32 {
 mod tests {
 
     use super::*;
-
-    #[test]
-    pub fn test_gcd() {
-        assert_eq!(gcd(346, 1), 1);
-        assert_eq!(gcd(123, 234), 3);
-        assert_eq!(gcd(123, 23), 1);
-        assert_eq!(gcd(10012, 50060), 10012);
-    }
 
     #[test]
     pub fn test_bessel_i0() {

@@ -1,6 +1,6 @@
 use wav;
 use dsp;
-use dsp::Signal;
+use dsp::{Signal, Rate, Freq};
 use err;
 
 use std;
@@ -28,14 +28,14 @@ const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
 ///
 /// The filter parameters are the default ones.
 pub fn resample_wav(input_filename: &str, output_filename: &str,
-                    output_rate: u32) -> err::Result<()> {
+                    output_rate: Rate) -> err::Result<()> {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename)?;
+    let input_rate = Rate::hz(input_spec.sample_rate);
 
     info!("Resampling");
-    let resampled = dsp::resample_to(&input_signal, input_spec.sample_rate,
-                                     output_rate, None)?;
+    let resampled = dsp::resample_to(&input_signal, input_rate, output_rate, None)?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
@@ -46,7 +46,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
     let writer_spec = hound::WavSpec {
         channels: 1,
-        sample_rate: output_rate,
+        sample_rate: output_rate.get_hz(),
         bits_per_sample: 32,
         sample_format: hound::SampleFormat::Float,
     };
@@ -83,7 +83,7 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
 
     // Minimum distance between peaks, some arbitrary number smaller but close
     // to the number of samples by line
-    let min_distance: usize = (PX_PER_ROW * WORK_RATE / FINAL_RATE) as usize * 8/10;
+    let min_distance: usize = SAMPLES_PER_WORK_ROW as usize * 8/10;
 
     // Need to center signal on zero (remove DC) to get meaningful correlation
     // values
@@ -125,15 +125,20 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     info!("Reading WAV file");
 
     let (signal, input_spec) = wav::load_wav(input_filename)?;
+    let input_rate = Rate::hz(input_spec.sample_rate);
+    let work_rate = Rate::hz(WORK_RATE);
+    let final_rate = Rate::hz(FINAL_RATE);
 
     info!("Resampling to {}", WORK_RATE);
 
     // Cutout frequency of the resampling filter, only the AM spectrum (and a
     // little more) should go through, so the cutout is more than 2 times the
     // carrier frequency
-    let cutout = CARRIER_FREQ as f32 * 4. / input_spec.sample_rate as f32 / 13.;
+    // let cutout = CARRIER_FREQ as f32 * 4. / input_spec.sample_rate as f32 / 13.;
+    let cutout = Freq::hz(CARRIER_FREQ as f32, input_rate) * 1.;
+    // TODO check better, why works with 1??
 
-    let signal = dsp::resample_to(&signal, input_spec.sample_rate, WORK_RATE, Some(cutout))?;
+    let signal = dsp::resample_to(&signal, input_rate, work_rate, Some(cutout))?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
         return Err(err::Error::Internal("Got less than 10 rows of samples, \
@@ -142,11 +147,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Demodulating");
 
-    let signal = dsp::demodulate(&signal, WORK_RATE, CARRIER_FREQ);
+    let signal = dsp::demodulate(&signal, work_rate,
+                                 Freq::hz(CARRIER_FREQ as f32, work_rate));
 
     info!("Filtering");
 
-    let cutout: f32 = FINAL_RATE as f32 / WORK_RATE as f32;
+    let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let delta_w = cutout / 5.;
     let lowpass = dsp::lowpass(cutout, 20., delta_w);
     let signal = dsp::filter(&signal, &lowpass);
@@ -178,7 +184,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     debug!("Resampling to 4160");
 
-    let aligned = dsp::resample_to(&aligned, WORK_RATE, FINAL_RATE, None)?;
+    let aligned = dsp::resample_to(&aligned, work_rate, final_rate, None)?;
     let max = dsp::get_max(&aligned)?;
     let min = dsp::get_min(&aligned)?;
     let range = max - min;

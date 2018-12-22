@@ -18,6 +18,8 @@ mod misc;
 mod gui;
 mod err;
 
+use dsp::Rate;
+
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 fn main() -> err::Result<()> {
@@ -86,7 +88,7 @@ fn main() -> err::Result<()> {
                     };
 
                     match noaa_apt::resample_wav(
-                            input_filename.as_str(), output.as_str(), rate) {
+                            input_filename.as_str(), output.as_str(), Rate::hz(rate)) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),
                     };

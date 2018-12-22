@@ -1,4 +1,5 @@
 use noaa_apt;
+use dsp::Rate;
 
 use gtk;
 use gdk;
@@ -201,7 +202,7 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 gdk::Window::process_all_updates();
 
                 match noaa_apt::resample_wav(
-                        input_filename.as_str(), output_filename.as_str(), rate) {
+                        input_filename.as_str(), output_filename.as_str(), Rate::hz(rate)) {
                     Ok(_) => status_label.set_markup("Finished"),
                     Err(e) => {
                         status_label.set_markup(
