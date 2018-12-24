@@ -105,7 +105,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
 
         let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
-        let f = lowpass(cutout, atten, delta_w); // filter coefficients
+        let f = lowpass_dc_removal(cutout, atten, delta_w); // filter coefficients
 
         let offset = (f.len()-1)/2; // Filter delay in the n axis, half of
                                     // filter width
@@ -252,7 +252,6 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
 
 /// Get lowpass FIR filter, windowed by a kaiser window.
 ///
-/// Frequency in fractions of pi radians per second.
 /// Attenuation in positive decibels.
 pub fn lowpass(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
 
@@ -280,6 +279,40 @@ pub fn lowpass(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
     }
 
     debug!("Lowpass filter design finished");
+
+    product(filter, &window)
+}
+
+/// Get lowpass and DC removal FIR filter, windowed by a kaiser window.
+///
+/// Attenuation in positive decibels.
+pub fn lowpass_dc_removal(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
+
+    debug!("Designing Lowpass and DC removal filter, \
+           cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
+           cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
+
+    let window = kaiser(atten, delta_w);
+
+    if window.len() % 2 == 0 {
+        panic!("Kaiser window length should be odd");
+    }
+
+    let mut filter: Signal = Vec::with_capacity(window.len());
+
+    let m = window.len() as i32;
+
+    for n in -(m-1)/2 ..= (m-1)/2 {
+        if n == 0 {
+            filter.push(cutout.get_pi_rad() - (delta_w/2.).get_pi_rad());
+        } else {
+            let n = n as f32;
+            filter.push((n*PI*cutout.get_pi_rad()).sin()/(n*PI) -
+                        (n*PI*(delta_w/2.).get_pi_rad()).sin()/(n*PI));
+        }
+    }
+
+    debug!("Lowpass and DC removal filter design finished");
 
     product(filter, &window)
 }
