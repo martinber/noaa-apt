@@ -154,7 +154,7 @@ samples and filter coefficients.
 
 ### AM demodulation
 
-Previously I used a Hilbert filter to get the [analytic signal], then the
+Previously I used a Hilbert filter to get the [analytic signal], because the
 absolute value of the [analytic signal] is the modulated signal.
 
 Then I found a very fast demodulator implemented on [pietern/apt137]. For each
@@ -162,8 +162,6 @@ output sample, you only need the current input sample, the previous one and the
 carrier frequency:
 
 ![AM demodulation formula]({{ site.baseurl }}/images/demodulation.png)
-
-Where theta is the AM carrier frequency divided by the sample rate.
 
 I couldn't find the theory behind that method, looks similar to I/Q
 demodulation. I was able to reach that final expression (which is used by

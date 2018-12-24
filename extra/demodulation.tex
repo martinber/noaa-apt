@@ -7,14 +7,44 @@
 \begin{document}
 \pagestyle{empty}
 
+Two samples of an AM signal with carrier frequency $\omega_c$.
+
 \begin{align*}
 \begin{cases}
-x[0]=A\sin(\omega t_{0}+\alpha)\\
-x[1]=A\sin(\omega t_{1}+\alpha)
+x[0]=f(t_{0})\sin(\omega_c t_{0}+\alpha)\\
+x[1]=f(t_{1})\sin(\omega_c t_{1}+\alpha)
 \end{cases}
 \end{align*}
 
-If $t_{0}=0$, then $\omega t_{0}=0$ and $\omega t_{1}=\alpha$
+If the samples were taken $\Delta t$ seconds apart, then the sampling frequency
+$f_s$ is $1/\Delta t$.
+
+\begin{align*}
+\begin{cases}
+x[0]=f(t_{0})\sin(\omega_c t_{0}+\alpha)\\
+x[1]=f(t_{0}+\Delta t)\sin(\omega_c (t_{0}+\Delta t)+\alpha)
+\end{cases}
+\end{align*}
+
+If $\Delta t$ is quite small, $f(t_0) = f(t_0 + \Delta t) = A$: 
+
+\begin{align*}
+\begin{cases}
+x[0]=A\sin(\omega_c t_{0}+\alpha)\\
+x[1]=A\sin(\omega_c (t_{0}+\Delta t)+\alpha)
+\end{cases}
+\end{align*}
+
+If $t_0 = 0$:
+
+\begin{align*}
+\begin{cases}
+x[0]=A\sin(\alpha)\\
+x[1]=A\sin(\omega_c \Delta t+\alpha)
+\end{cases}
+\end{align*}
+
+We define $\phi$ as $\omega_c \Delta t = \omega_c / f_s = 2\pi f_c / f_s$.
 
 \begin{align*}
 \begin{cases}
@@ -68,5 +98,7 @@ Then:
 \begin{align*}
 y[i]=\frac{\sqrt{x[i]^{2}+x[i-1]^{2}-2x[i]x[i-1]\cos\phi}}{\sin\phi}
 \end{align*}
+
+Where $\phi = 2\pi f_c / f_s$ 
 
 \end{document}
