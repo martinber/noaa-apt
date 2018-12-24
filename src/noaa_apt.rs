@@ -131,12 +131,9 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Resampling to {}", WORK_RATE);
 
-    // Cutout frequency of the resampling filter, only the AM spectrum (and a
-    // little more) should go through, so the cutout is more than 2 times the
-    // carrier frequency
-    // let cutout = CARRIER_FREQ as f32 * 4. / input_spec.sample_rate as f32 / 13.;
-    let cutout = Freq::hz(CARRIER_FREQ as f32, input_rate) * 1.;
-    // TODO check better, why works with 1??
+    // Cutout frequency of the resampling filter, only the AM spectrum should go
+    // through to avoid noise, 2 times the carrier frequency is enough
+    let cutout = Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.;
 
     let signal = dsp::resample_to(&signal, input_rate, work_rate, Some(cutout))?;
 
@@ -147,8 +144,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Demodulating");
 
-    let signal = dsp::demodulate(&signal, work_rate,
-                                 Freq::hz(CARRIER_FREQ as f32, work_rate));
+    let signal = dsp::demodulate(&signal, Freq::hz(CARRIER_FREQ as f32, work_rate));
 
     info!("Filtering");
 

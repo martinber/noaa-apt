@@ -43,9 +43,8 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 
 /// Resample signal to given rate.
 ///
-/// `cutout` is the cutout frequency of the lowpass filter in fractions of pi
-/// radians per second, has type Option<f32>, when None uses `1/l' to prevent
-/// aliasing on decimation.
+/// `cutout` is the cutout frequency of the lowpass filter, when None uses 1
+/// radians per second to prevent aliasing on decimation.
 ///
 /// The filter has a transition band equal to the 20% of the spectrum width of
 /// the input signal. Starts at 90% of the input signal spectrum, so it lets a
@@ -64,7 +63,8 @@ pub fn resample_to(signal: &Signal, input_rate: Rate, output_rate: Rate,
     let m = input_rate.get_hz() / gcd; // decimation factor
 
     let atten = 40.;
-    let delta_w = Freq::pi_rad(0.2) / l;
+    let delta_w = Freq::pi_rad(0.2);
+    // TODO: check
 
     Ok(resample(&signal, l, m, cutout, atten, delta_w))
 }
@@ -76,23 +76,23 @@ pub fn resample_to(signal: &Signal, input_rate: Rate, output_rate: Rate,
 /// is designed by a Kaiser window method depending in the attenuation `atten`
 /// and the transition band width `delta_w`.
 ///
-/// `cutout` is the cutout frequency of the lowpass filter in fractions of pi
-/// radians per second, has type Option<f32>, when None uses `1/l' to prevent
-/// aliasing on decimation.
+/// `cutout` is the cutout frequency of the lowpass filter, when None uses 1
+/// radians per second to prevent aliasing on decimation.
 ///
-/// `atten` should be positive and specified in decibels. `delta_w` has units of
-/// fractions of pi radians per second, considering the signal after `l - 1`
-/// insertions of zeros.
+/// `atten` should be positive and specified in decibels. `delta_w` is the
+/// transition band.
 pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
                 atten: f32, delta_w: Freq) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
 
+    // Divide by l to reference the frequencies to the rate we have after interpolation
     let cutout = match cutout {
-        Some(x) => x,
+        Some(x) => x / l,
         None => Freq::pi_rad(1.) / l,
     };
+    let delta_w = delta_w / l;
 
     if l > 1 { // If we need interpolation
 
@@ -174,7 +174,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
 }
 
 /// Demodulate AM signal.
-pub fn demodulate(signal: &Signal, sample_rate: Rate, carrier_freq: Freq) -> Signal {
+pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
 
     debug!("Demodulating signal");
 
@@ -185,12 +185,14 @@ pub fn demodulate(signal: &Signal, sample_rate: Rate, carrier_freq: Freq) -> Sig
     // Where:
     // phi = 2 * pi * (carrier_freq / sampling_freq)
     //
-    // Take a look at the README
+    // Take a look at the documentation
     //
     // Taken from:
     // https://github.com/pietern/apt137/blob/master/decoder.c
 
-    let phi = 2. * (carrier_freq / sample_rate.get_hz()).get_rad();
+    // Shortcut to 2 * pi * (carrier_freq.get_hz() / sample_rate.get_hz())
+    let phi = 2. * carrier_freq.get_rad();
+
     let cosphi2 = phi.cos() * 2.;
     let sinphi = phi.sin();
 
