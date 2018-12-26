@@ -9,7 +9,7 @@ use std::ops::SubAssign;
 use std::ops::MulAssign;
 use std::ops::DivAssign;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Freq {
     pi_rad: f32
 }
@@ -46,7 +46,7 @@ impl Freq {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Rate {
     hz: u32
 }
@@ -64,7 +64,11 @@ impl Rate {
 }
 
 macro_rules! overload {
-    (trait $trait:ident, $self:ident : $self_type:ident, $other:ident : $other_type:ident, fn $method:ident $expr:block ) => {
+    (trait $trait:ident,
+     $self:ident : $self_type:ident,
+     $other:ident : $other_type:ident,
+     fn $method:ident $expr:block ) => {
+
         impl $trait<$other_type> for $self_type {
             type Output = $self_type;
 
@@ -75,36 +79,16 @@ macro_rules! overload {
     }
 }
 macro_rules! overload_assign {
-    (trait $trait:ident, $self:ident : $self_type:ident, $other:ident : $other_type:ident, fn $method:ident $expr:block ) => {
+    (trait $trait:ident,
+     $self:ident : $self_type:ident,
+     $other:ident : $other_type:ident,
+     fn $method:ident $expr:block ) => {
+
         impl $trait<$other_type> for $self_type {
             fn $method(&mut $self, $other: $other_type) {
                 $expr
             }
         }
-    }
-}
-
-impl PartialOrd for Freq {
-    fn partial_cmp(&self, other: &Freq) -> Option<std::cmp::Ordering> {
-        self.pi_rad.partial_cmp(&other.pi_rad)
-    }
-}
-
-impl PartialEq for Freq {
-    fn eq(&self, other: &Freq) -> bool {
-        self.pi_rad == other.pi_rad
-    }
-}
-
-impl PartialOrd for Rate {
-    fn partial_cmp(&self, other: &Rate) -> Option<std::cmp::Ordering> {
-        self.hz.partial_cmp(&other.hz)
-    }
-}
-
-impl PartialEq for Rate {
-    fn eq(&self, other: &Rate) -> bool {
-        self.hz == other.hz
     }
 }
 
@@ -354,25 +338,31 @@ mod tests {
 
         assert_roughly_equal(
             fa.get_pi_rad() + fb.get_pi_rad(),
-            (fa + fb).get_pi_rad());
+            (fa + fb).get_pi_rad()
+        );
         assert_roughly_equal(
             fa.get_pi_rad() - fb.get_pi_rad(),
-            (fa - fb).get_pi_rad());
+            (fa - fb).get_pi_rad()
+        );
         assert_roughly_equal(
             fa.get_pi_rad() * fb.get_pi_rad(),
-            (fa * fb).get_pi_rad());
+            (fa * fb).get_pi_rad()
+        );
         assert_roughly_equal(
             fa.get_pi_rad() / fb.get_pi_rad(),
-            (fa / fb).get_pi_rad());
+            (fa / fb).get_pi_rad()
+        );
 
         // Operators against f32
 
         assert_roughly_equal(
             fa.get_pi_rad() * b,
-            (fa * b).get_pi_rad());
+            (fa * b).get_pi_rad()
+        );
         assert_roughly_equal(
             fa.get_pi_rad() / b,
-            (fa / b).get_pi_rad());
+            (fa / b).get_pi_rad()
+        );
 
         // Assign operators against frequencies
 

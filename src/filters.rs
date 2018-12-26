@@ -1,0 +1,250 @@
+use dsp::{self, Signal, Rate, Freq};
+use misc;
+
+use std::f32::consts::PI;
+
+
+/// Some kind of filter
+pub trait Filter {
+    /// Design filter from parameters.
+    fn design(&self) -> Signal;
+}
+
+/// No filter.
+pub struct NoFilter;
+
+/// Lowpass FIR filter, windowed by a kaiser window.
+///
+/// Attenuation in positive decibels. The transition band goes from
+/// `cutout - delta_w / 2` to `cutout + delta_w / 2`.
+pub struct Lowpass {
+    pub cutout: Freq,
+    pub atten: f32,
+    pub delta_w: Freq
+}
+
+/// Lowpass and DC removal FIR filter, windowed by a kaiser window.
+///
+/// Attenuation in positive decibels. It's actually a bandpass filter so has two
+/// transition bands, one is the same transition band that lowpass() has:
+/// `cutout - delta_w / 2` to `cutout + delta_w / 2`. The other transition band
+/// goes from `0` to `delta_w`.
+pub struct LowpassDcRemoval {
+    pub cutout: Freq,
+    pub atten: f32,
+    pub delta_w: Freq
+}
+
+impl Filter for NoFilter {
+    fn design(&self) -> Signal {
+        return vec![1.,];
+
+impl Filter for Lowpass {
+    fn design(&self) -> Signal {
+
+        debug!("Designing Lowpass filter, \
+               cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
+               self.cutout.get_pi_rad(), self.atten, self.delta_w.get_pi_rad());
+
+        let window = kaiser(self.atten, self.delta_w);
+
+        if window.len() % 2 == 0 {
+            panic!("Kaiser window length should be odd");
+        }
+
+        let mut filter: Signal = Vec::with_capacity(window.len());
+
+        let m = window.len() as i32;
+
+        for n in -(m - 1) / 2 ..= (m - 1) / 2 {
+            if n == 0 {
+                filter.push(self.cutout.get_pi_rad());
+            } else {
+                let n = n as f32;
+                filter.push((n * PI * self.cutout.get_pi_rad()).sin() / (n * PI));
+            }
+        }
+
+        debug!("Lowpass filter design finished");
+
+        product(filter, &window)
+    }
+}
+
+impl Filter for LowpassDcRemoval {
+    fn design(&self) -> Signal {
+
+        debug!("Designing Lowpass and DC removal filter, \
+               cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
+               self.cutout.get_pi_rad(), self.atten, self.delta_w.get_pi_rad());
+
+        let window = kaiser(self.atten, self.delta_w);
+
+        if window.len() % 2 == 0 {
+            panic!("Kaiser window length should be odd");
+        }
+
+        let mut filter: Signal = Vec::with_capacity(window.len());
+
+        let m = window.len() as i32;
+
+        for n in -(m - 1) / 2 ..= (m - 1) / 2 {
+            if n == 0 {
+                filter.push(
+                    self.cutout.get_pi_rad() - (self.delta_w / 2.).get_pi_rad()
+                );
+            } else {
+                let n = n as f32;
+                filter.push(
+                    (n * PI * self.cutout.get_pi_rad()).sin() / (n * PI)
+                    - (n * PI * (self.delta_w / 2.).get_pi_rad()).sin() / (n * PI)
+                );
+            }
+        }
+
+        debug!("Lowpass and DC removal filter design finished");
+
+        product(filter, &window)
+    }
+}
+
+/// Design Kaiser window from parameters.
+///
+/// The length depends on the parameters given, and it's always odd.
+/// Frequency in fractions of pi radians per second.
+fn kaiser(atten: f32, delta_w: Freq) -> Signal {
+
+    debug!("Designing Kaiser window, \
+           attenuation: {}dB, delta_w: pi*{}rad/s",
+           atten, delta_w.get_pi_rad());
+
+    let beta: f32;
+    if atten > 50. {
+        beta = 0.1102 * (atten - 8.7);
+    } else if atten < 21. {
+        beta = 0.;
+    } else {
+        beta = 0.5842 * (atten - 21.).powf(0.4) + 0.07886 * (atten - 21.);
+    }
+
+    // Filter length, we want an odd length
+    let mut length: i32 = ((atten - 8.) / (2.285 * delta_w.get_rad())).ceil() as i32 + 1;
+    if length % 2 == 0 {
+        length += 1;
+    }
+
+    let mut window: Signal = Vec::with_capacity(length as usize);
+
+    use misc::bessel_i0 as bessel;
+    for n in -(length-1)/2 ..= (length-1)/2 {
+        let n = n as f32;
+        let m = length as f32;
+        window.push(bessel(beta * (1. - (n / (m/2.)).powi(2)).sqrt()) /
+                    bessel(beta))
+    }
+
+    debug!("Kaiser window design finished, beta: {}, length: {}", beta, length);
+
+    window
+}
+
+/// Product of two vectors, element by element.
+pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
+    if v1.len() != v2.len() {
+        panic!("Both vectors must have the same length");
+    }
+
+    for i in 0 .. v1.len() {
+        v1[i] = v1[i] * v2[i];
+    }
+
+    v1
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    /// Calculate absolute value of fft
+    fn abs_fft(signal: &Signal) -> Signal {
+        use rustfft::FFTplanner;
+        use rustfft::num_complex::Complex;
+        use rustfft::num_traits::Zero;
+
+        let mut input: Vec<Complex<f32>> = signal.iter()
+            .map(|x| Complex::new(*x, 0.)).collect();
+
+        let mut output: Vec<Complex<f32>> = vec![Complex::zero(); input.len()];
+
+        let mut planner = FFTplanner::new(false); // inverse=false
+        let fft = planner.plan_fft(input.len());
+        fft.process(&mut input, &mut output);
+
+        output.iter().map(|x| x.norm()).collect()
+    }
+
+    /// Check if two vectors of float are equal given some margin of precision
+    fn vector_roughly_equal(a: &Vec<f32>, b: &Vec<f32>) -> bool {
+        // Iterator with tuples of values to compare.
+        // [(a1, b1), (a2, b2), (a3, b3), ...]
+        let mut values = a.iter().zip(b.iter());
+        // Check if every pair have similar values
+        values.all(|(&a, &b)| ulps_eq!(a, b))
+    }
+
+    #[test]
+    fn test_abs_fft() {
+        // Checked with GNU Octave
+        assert!(vector_roughly_equal(
+            &abs_fft(&vec![1., 2., 3., 4.]),
+            &vec![10., 2.828427124746190, 2., 2.828427124746190])
+        );
+        assert!(vector_roughly_equal(
+            &abs_fft(&vec![1., 1., 1., 1., 1., 1., 1.]),
+            &vec![7., 0., 0., 0., 0., 0., 0.])
+            );
+        assert!(vector_roughly_equal(
+            &abs_fft(&vec![1., -1., 1., -1.]),
+            &vec![0., 0., 4., 0.])
+        );
+    }
+
+    #[test]
+    fn test_lowpass() {
+        // cutout, atten and delta_w values
+        let test_parameters: Vec<(Freq, f32, Freq)> = vec![
+            (Freq::pi_rad(1./4.), 20., Freq::pi_rad(1./10.)),
+            (Freq::pi_rad(1./3.), 35., Freq::pi_rad(1./30.)),
+            (Freq::pi_rad(2./5.), 60., Freq::pi_rad(1./20.))
+        ];
+
+        for parameters in test_parameters.iter() {
+            let (cutout, atten, delta_w) = *parameters;
+
+            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
+
+            let filter = lowpass(cutout, atten, delta_w);
+            let mut fft = abs_fft(&filter);
+
+            println!("cutout: {}, atten: {}, delta_w: {}",
+                     cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
+            println!("filter: {:?}", filter);
+
+            for (i, v) in fft.iter().enumerate() {
+                let w = Freq::pi_rad(2. * (i as f32) / (fft.len() as f32));
+
+                if w < cutout - delta_w/2. {
+                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}",
+                             ripple, v, i, w.get_pi_rad());
+                    assert!(*v < 1. + ripple && *v > 1. - ripple);
+                }
+                else if w > cutout + delta_w/2. && w < Freq::pi_rad(1.) {
+                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}",
+                             ripple, v, i, w.get_pi_rad());
+                    assert!(*v < ripple);
+                }
+            }
+        }
+    }
+}

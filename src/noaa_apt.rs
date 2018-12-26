@@ -1,7 +1,7 @@
 use wav;
-use dsp;
-use dsp::{Signal, Rate, Freq};
+use dsp::{self, Signal, Rate, Freq};
 use err;
+use filters;
 
 use std;
 use hound;
@@ -25,22 +25,25 @@ const CARRIER_FREQ: u32 = 2400;
 const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
 
 /// Resample wav file
-///
-/// The filter parameters are the default ones.
-pub fn resample_wav(input_filename: &str, output_filename: &str,
-                    output_rate: Rate) -> err::Result<()> {
+pub fn resample_wav(
+    input_filename: &str,
+    output_filename: &str,
+    output_rate: Rate,
+) -> err::Result<()> {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
 
     info!("Resampling");
-    let resampled = dsp::resample_to(&input_signal, input_rate, output_rate, None)?;
+    let resampled = dsp::lowpass_resample(&input_signal, input_rate, output_rate,
+        Freq::pi_rad(1.), 40., Freq::pi_rad(0.1))?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
-                "Got zero samples after resampling, audio file too short or \
-                output sampling frequency too low".to_string()))
+            "Got zero samples after resampling, audio file too short or \
+            output sampling frequency too low".to_string())
+        );
     }
 
 
@@ -55,7 +58,7 @@ pub fn resample_wav(input_filename: &str, output_filename: &str,
 
     wav::write_wav(output_filename, &resampled, writer_spec)?;
 
-   Ok(())
+    Ok(())
 }
 
 /// Find sync frame positions.
@@ -94,8 +97,8 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
         let mut corr: f32 = 0.;
         for j in 0..guard.len() {
             match guard[j] {
-                1 => corr += signal[i+j],
-                -1 => corr -= signal[i+j],
+                1 => corr += signal[i + j],
+                -1 => corr -= signal[i + j],
                 _ => unreachable!(),
             }
         }
@@ -135,11 +138,17 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     // through to avoid noise, 2 times the carrier frequency is enough
     let cutout = Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.;
 
-    let signal = dsp::resample_to(&signal, input_rate, work_rate, Some(cutout))?;
+    // Width of transition band, we are using a DC removal filter that has a
+    // transition band from zero to delta_w. I think that APT signals have
+    // nothing below 500Hz.
+    let delta_w = Freq::hz(500., input_rate);
+
+    let signal = dsp::lowpass_dc_removal_resample(&signal, input_rate, work_rate,
+        cutout, 40., delta_w)?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
-        return Err(err::Error::Internal("Got less than 10 rows of samples, \
-                                        audio file is too short".to_string()));
+        return Err(err::Error::Internal(
+            "Got less than 10 rows of samples, audio file is too short".to_string()));
     }
 
     info!("Demodulating");
@@ -150,8 +159,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let delta_w = cutout / 5.;
-    let lowpass = dsp::lowpass(cutout, 20., delta_w);
-    let signal = dsp::filter(&signal, &lowpass);
+    let signal = dsp::filter(&signal, &dsp::lowpass(cutout, 20., delta_w));
 
     info!("Syncing");
 
@@ -160,8 +168,9 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     if sync_pos.len() < 5 {
         return Err(err::Error::Internal(
-                "Found less than 5 sync frames, audio file is too short or too \
-                noisy".to_string()));
+            "Found less than 5 sync frames, audio file is too short or too \
+            noisy".to_string())
+        );
     }
 
     // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
@@ -173,21 +182,24 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
         // Check if there are enough samples left to fill an image row
         if (sync_pos[i] + SAMPLES_PER_WORK_ROW as usize) < signal.len() {
 
-            aligned.extend_from_slice(&signal[sync_pos[i] ..
-                    sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]);
+            aligned.extend_from_slice(
+                &signal[sync_pos[i] .. sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]
+            );
         }
     }
 
     debug!("Resampling to 4160");
 
-    let aligned = dsp::resample_to(&aligned, work_rate, final_rate, None)?;
+    let aligned = dsp::lowpass_resample(&aligned, work_rate, final_rate,
+        Freq::pi_rad(1.), 40., Freq::pi_rad(0.1))?;
     let max = dsp::get_max(&aligned)?;
     let min = dsp::get_min(&aligned)?;
     let range = max - min;
 
     debug!("Mapping samples from {}-{} to 0-255", min, max);
 
-    let aligned: Vec<u8> = aligned.iter().map(|x| ((x-min)/range*255.) as u8).collect();
+    let aligned: Vec<u8> = aligned.iter()
+        .map(|x| ((x - min) / range * 255.) as u8).collect();
 
     info!("Writing PNG to '{}'", output_filename);
 

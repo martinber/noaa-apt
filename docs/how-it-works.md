@@ -213,6 +213,11 @@ can't find anything about it on the web.
 
     - Telemetry B: For calibration I think?
 
+- Misc
+
+  - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
+    change the address to `127.0.0.1`.
+
 Favicons generated using [RealFaviconGenerator](https://realfavicongenerator.net/)
 
 ## References

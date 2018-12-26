@@ -1,9 +1,9 @@
 pub use frequency::Freq;
 pub use frequency::Rate;
 use err;
+use filters;
 
 use num::Integer; // For u32.gcd(u32)
-use std::f32::consts::PI;
 
 pub type Signal = Vec<f32>;
 
@@ -11,11 +11,11 @@ pub type Signal = Vec<f32>;
 pub fn get_max(vector: &Signal) -> err::Result<&f32> {
     if vector.len() == 0 {
         return Err(err::Error::Internal(
-                "Can't get maximum of a zero length vector".to_string()));
+            "Can't get maximum of a zero length vector".to_string()));
     }
 
     let mut max: &f32 = &vector[0];
-    for sample in vector.iter() {
+    for sample in vector {
         if sample > max {
             max = sample;
         }
@@ -28,11 +28,11 @@ pub fn get_max(vector: &Signal) -> err::Result<&f32> {
 pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     if vector.len() == 0 {
         return Err(err::Error::Internal(
-                "Can't get minimum of a zero length vector".to_string()));
+            "Can't get minimum of a zero length vector".to_string()));
     }
 
     let mut min: &f32 = &vector[0];
-    for sample in vector.iter() {
+    for sample in vector {
         if sample < min {
             min = sample;
         }
@@ -41,6 +41,185 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     Ok(min)
 }
 
+/// Filter with lowpass and then resample.
+///
+/// Does both things at the same time, so it's faster than calling filter() and
+/// then resample()
+///
+/// Like resample(), takes a &Signal, the input rate and the output rate.
+/// The next parameters, cutout, atten and delta_w are given to lowpass().
+pub fn lowpass_resample(
+    signal: &Signal,
+    input_rate: Rate,
+    output_rate: Rate,
+    cutout: Freq,
+    atten: f32,
+    delta_w: Freq,
+) -> err::Result<Signal> {
+
+    if output_rate.get_hz() == 0 {
+        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
+    }
+
+    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let l = output_rate.get_hz() / gcd; // interpolation factor
+    let m = input_rate.get_hz() / gcd; // decimation factor
+
+    // Divide by l to reference the frequencies to the rate we have after
+    // interpolation
+    let filter = lowpass(cutout / l as f32, atten, delta_w / l as f32);
+
+    Ok(resample_with_filter(&signal, l, m, &filter))
+}
+
+/// Filter with a lowpass and DC removal filter and then resample.
+///
+/// Does both things at the same time, so it's faster than calling filter() and
+/// then resample()
+///
+/// Like resample(), takes a &Signal, the input rate and the output rate.
+/// The next parameters, cutout, atten and delta_w are given to
+/// lowpass_dc_removal().
+pub fn lowpass_dc_removal_resample(
+    signal: &Signal,
+    input_rate: Rate,
+    output_rate: Rate,
+    cutout: Freq,
+    atten: f32,
+    delta_w: Freq,
+) -> err::Result<Signal> {
+
+    if output_rate.get_hz() == 0 {
+        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
+    }
+
+    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let l = output_rate.get_hz() / gcd; // interpolation factor
+    let m = input_rate.get_hz() / gcd; // decimation factor
+
+    // Divide by l to reference the frequencies to the rate we have after
+    // interpolation
+    let filter = lowpass_dc_removal(cutout / l as f32, atten, delta_w / l as f32);
+
+    Ok(resample_with_filter(&signal, l, m, &filter))
+}
+
+/// Decimate without filtering.
+///
+/// The signal should be accordingly bandlimited previously to avoid aliasing.
+pub fn decimate(
+    signal: &Signal,
+    input_rate: Rate,
+    output_rate: Rate,
+    cutout: Freq,
+    atten: f32,
+    delta_w: Freq,
+) -> err::Result<Signal> {
+
+    if output_rate.get_hz() == 0 {
+        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
+    }
+
+    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let l = output_rate.get_hz() / gcd; // interpolation factor
+    let m = input_rate.get_hz() / gcd; // decimation factor
+
+    // Divide by l to reference the frequencies to the rate we have after
+    // interpolation
+    let filter = lowpass_dc_removal(cutout / l as f32, atten, delta_w / l as f32);
+
+    Ok(resample_with_filter(&signal, l, m, &filter))
+}
+
+/// Resample a signal using a given filter.
+///
+/// Resamples by expansion by l, filtering and then decimation by m. The
+/// expansion is equivalent to the insertion of l-1 zeros between samples.
+///
+/// The given filter should be designed for the signal after expansion by l, so
+/// you might want to divide every frequency by l when designing the filter.
+fn resample_with_filter(signal: &Signal, l: u32, m: u32, filter: &Signal) -> Signal {
+
+    let l = l as usize;
+    let m = m as usize;
+
+    if l > 1 { // If we need interpolation
+
+        // This is the resampling algorithm, i've tried to make it faster
+        // several times, that's why it's so ugly
+
+        // Check the diagram on the documentation to see what the letters mean
+
+        debug!("Resampling by L/M: {}/{}", l, m);
+
+        let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+
+        let offset = (filter.len() - 1) / 2; // Filter delay in the n axis, half
+                                             // of filter width
+
+        let mut n: usize; // Current working n
+
+        let mut t: usize = offset; // Like n but fixed to the current output
+                                   // sample to calculate
+
+        // Iterate over each output sample
+        while t < signal.len() * l {
+
+            // Find first n inside the window that has a input sample that I
+            // should multiply with a filter coefficient
+            if t > offset {
+                n = t - offset; // Go to n at start of filter
+                match n % l { // Jump to first sample in window
+                    0 => (),
+                    x => n += l - x, // I checked this on paper once and forgot
+                                     // how it works
+                }
+            } else { // In this case the first sample in window is located at 0
+                n = 0;
+            }
+
+            // Loop over all n inside the window with input samples and
+            // calculate products
+            let mut sum = 0.;
+            let mut x = n / l; // Current input sample
+            while n <= t + offset {
+                // Check if there is a sample in that index, in case that we
+                // use an index bigger that signal.len()
+                match signal.get(x) {
+                    // n+offset-t is equal to j
+                    Some(sample) => sum += filter[n + offset - t] * sample,
+                    None => (),
+                }
+                x += 1;
+                n += l;
+            }
+            output.push(sum); // Store output sample
+
+            t += m; // Jump to next output sample
+        }
+
+        debug!("Resampling finished");
+        output
+
+    } else {
+
+        // TODO: Check if we need a filter
+
+        debug!("Resampling by decimation, L/M: {}/{}", l, m);
+
+        let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
+
+        for i in 0..signal.len() / m {
+            decimated.push(signal[i * m]);
+        }
+
+        debug!("Resampling finished");
+        decimated
+
+    }
+}
+
+/*
 /// Resample signal to given rate.
 ///
 /// `cutout` is the cutout frequency of the lowpass filter, when None uses 1
@@ -68,8 +247,9 @@ pub fn resample_to(signal: &Signal, input_rate: Rate, output_rate: Rate,
 
     Ok(resample(&signal, l, m, cutout, atten, delta_w))
 }
+*/
 
-
+/*
 /// Resample signal by L/M following specific parameters.
 ///
 /// `l` is the interpolation factor and `m` is the decimation one. The filter
@@ -172,6 +352,7 @@ pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
     }
 
 }
+*/
 
 /// Demodulate AM signal.
 pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
@@ -204,7 +385,7 @@ pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
         curr = signal[i];
         curr_sq = signal[i].powi(2);
 
-        output[i] = (prev_sq + curr_sq - prev*curr*cosphi2).sqrt() / sinphi;
+        output[i] = (prev_sq + curr_sq - (prev * curr * cosphi2)).sqrt() / sinphi;
 
         prev = curr;
         prev_sq = curr_sq;
@@ -214,8 +395,6 @@ pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
 
     output
 }
-
-
 
 /// Filter a signal,
 pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
@@ -235,203 +414,4 @@ pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
     }
     debug!("Filtering finished");
     output
-}
-
-/// Product of two vectors, element by element.
-pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
-    if v1.len() != v2.len() {
-        panic!("Both vectors must have the same length");
-    }
-
-    for i in 0 .. v1.len() {
-        v1[i] = v1[i] * v2[i];
-    }
-
-    v1
-}
-
-/// Get lowpass FIR filter, windowed by a kaiser window.
-///
-/// Attenuation in positive decibels.
-pub fn lowpass(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
-
-    debug!("Designing Lowpass filter, \
-           cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
-           cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
-
-    let window = kaiser(atten, delta_w);
-
-    if window.len() % 2 == 0 {
-        panic!("Kaiser window length should be odd");
-    }
-
-    let mut filter: Signal = Vec::with_capacity(window.len());
-
-    let m = window.len() as i32;
-
-    for n in -(m-1)/2 ..= (m-1)/2 {
-        if n == 0 {
-            filter.push(cutout.get_pi_rad());
-        } else {
-            let n = n as f32;
-            filter.push((n*PI*cutout.get_pi_rad()).sin()/(n*PI));
-        }
-    }
-
-    debug!("Lowpass filter design finished");
-
-    product(filter, &window)
-}
-
-/// Get lowpass and DC removal FIR filter, windowed by a kaiser window.
-///
-/// Attenuation in positive decibels.
-pub fn lowpass_dc_removal(cutout: Freq, atten: f32, delta_w: Freq) -> Signal {
-
-    debug!("Designing Lowpass and DC removal filter, \
-           cutout: pi*{}rad/s, attenuation: {}dB, delta_w: pi*{}rad/s",
-           cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
-
-    let window = kaiser(atten, delta_w);
-
-    if window.len() % 2 == 0 {
-        panic!("Kaiser window length should be odd");
-    }
-
-    let mut filter: Signal = Vec::with_capacity(window.len());
-
-    let m = window.len() as i32;
-
-    for n in -(m-1)/2 ..= (m-1)/2 {
-        if n == 0 {
-            filter.push(cutout.get_pi_rad() - (delta_w/2.).get_pi_rad());
-        } else {
-            let n = n as f32;
-            filter.push((n*PI*cutout.get_pi_rad()).sin()/(n*PI) -
-                        (n*PI*(delta_w/2.).get_pi_rad()).sin()/(n*PI));
-        }
-    }
-
-    debug!("Lowpass and DC removal filter design finished");
-
-    product(filter, &window)
-}
-
-/// Design Kaiser window from parameters.
-///
-/// The length depends on the parameters given, and it's always odd.
-/// Frequency in fractions of pi radians per second.
-fn kaiser(atten: f32, delta_w: Freq) -> Signal {
-
-    debug!("Designing Kaiser window,\
-           attenuation: {}dB, delta_w: pi*{}rad/s",
-           atten, delta_w.get_pi_rad());
-
-    let beta: f32;
-    if atten > 50. {
-        beta = 0.1102 * (atten - 8.7);
-    } else if atten < 21. {
-        beta = 0.;
-    } else {
-        beta = 0.5842 * (atten - 21.).powf(0.4) + 0.07886 * (atten - 21.);
-    }
-
-    // Filter length, we want an odd length
-    let mut length: i32 = ((atten - 8.) / (2.285 * delta_w.get_rad())).ceil() as i32 + 1;
-    if length % 2 == 0 {
-        length += 1;
-    }
-
-    let mut window: Signal = Vec::with_capacity(length as usize);
-
-    use misc::bessel_i0 as bessel;
-    for n in -(length-1)/2 ..= (length-1)/2 {
-        let n = n as f32;
-        let m = length as f32;
-        window.push(bessel(beta * (1. - (n / (m/2.)).powi(2)).sqrt()) /
-                    bessel(beta))
-    }
-
-    debug!("Kaiser window design finished, beta: {}, length: {}", beta, length);
-
-    window
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    /// Calculate absolute value of fft
-    fn abs_fft(signal: &Signal) -> Signal {
-        use rustfft::FFTplanner;
-        use rustfft::num_complex::Complex;
-        use rustfft::num_traits::Zero;
-
-        let mut input: Vec<Complex<f32>> = signal.iter()
-                .map(|x| Complex::new(*x, 0.)).collect();
-
-        let mut output: Vec<Complex<f32>> = vec![Complex::zero(); input.len()];
-
-        let mut planner = FFTplanner::new(false); // inverse=false
-        let fft = planner.plan_fft(input.len());
-        fft.process(&mut input, &mut output);
-
-        output.iter().map(|x| x.norm()).collect()
-    }
-
-    /// Check if two vectors of float are equal given some margin of precision
-    fn vector_roughly_equal(a: &Vec<f32>, b: &Vec<f32>) -> bool {
-        // Iterator with tuples of values to compare.
-        // [(a1, b1), (a2, b2), (a3, b3), ...]
-        let mut values = a.iter().zip(b.iter());
-        // Check if every pair have similar values
-        values.all(|(&a, &b)| ulps_eq!(a, b))
-    }
-
-    #[test]
-    fn test_abs_fft() {
-        // Checked with GNU Octave
-        assert!(vector_roughly_equal(&abs_fft(&vec![1., 2., 3., 4.]),
-                &vec![10., 2.828427124746190, 2., 2.828427124746190]));
-        assert!(vector_roughly_equal(&abs_fft(&vec![1., 1., 1., 1., 1., 1., 1.]),
-                &vec![7., 0., 0., 0., 0., 0., 0.]));
-        assert!(vector_roughly_equal(&abs_fft(&vec![1., -1., 1., -1.]),
-                &vec![0., 0., 4., 0.]));
-    }
-
-    #[test]
-    fn test_lowpass() {
-        // cutout, atten and delta_w values
-        let test_parameters: Vec<(Freq, f32, Freq)> = vec![
-                (Freq::pi_rad(1./4.), 20., Freq::pi_rad(1./10.)),
-                (Freq::pi_rad(1./3.), 35., Freq::pi_rad(1./30.)),
-                (Freq::pi_rad(2./5.), 60., Freq::pi_rad(1./20.))];
-
-        for parameters in test_parameters.iter() {
-            let (cutout, atten, delta_w) = *parameters;
-
-            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
-
-            let filter = lowpass(cutout, atten, delta_w);
-            let mut fft = abs_fft(&filter);
-
-            println!("cutout: {}, atten: {}, delta_w: {}",
-                     cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
-            println!("filter: {:?}", filter);
-
-            for (i, v) in fft.iter().enumerate() {
-                let w = Freq::pi_rad(2. * (i as f32) / (fft.len() as f32));
-
-                if w < cutout - delta_w/2. {
-                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w.get_pi_rad());
-                    assert!(*v < 1. + ripple && *v > 1. - ripple);
-                }
-                else if w > cutout + delta_w/2. && w < Freq::pi_rad(1.) {
-                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}", ripple, v, i, w.get_pi_rad());
-                    assert!(*v < ripple);
-                }
-            }
-        }
-    }
 }

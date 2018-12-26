@@ -17,6 +17,7 @@ mod wav;
 mod misc;
 mod gui;
 mod err;
+mod filters;
 
 use dsp::Rate;
 

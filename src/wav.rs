@@ -14,7 +14,7 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 
     if spec.channels != 1 {
         warn!("WAV file has {} channels (probably stereo), processing only the \
-              first one", spec.channels);
+            first one", spec.channels);
     }
 
     debug!("WAV specifications: {:?}", spec);
@@ -23,21 +23,27 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
         hound::SampleFormat::Int => {
             reader.samples::<i32>()
                 .collect::<Result<Vec<i32>, hound::Error>>()?
-                .iter().enumerate().filter_map(|(i, x)|
-                        match i % spec.channels as usize {
-                            0 => Some(*x as f32),
-                            _ => None,
-                        })
+                .iter()
+                .enumerate()
+                .filter_map(|(i, x)|
+                    match i % spec.channels as usize {
+                        0 => Some(*x as f32),
+                        _ => None,
+                    }
+                )
                 .collect()
         }
         hound::SampleFormat::Float => {
             reader.samples::<f32>()
                 .collect::<Result<Vec<f32>, hound::Error>>()?
-                .iter().enumerate().filter_map(|(i, x)|
-                        match i % spec.channels as usize {
-                            0 => Some(*x),
-                            _ => None,
-                        })
+                .iter()
+                .enumerate()
+                .filter_map(|(i, x)|
+                    match i % spec.channels as usize {
+                        0 => Some(*x),
+                        _ => None,
+                    }
+                )
                 .collect()
         }
     };
@@ -54,7 +60,7 @@ pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::
 
     let max = dsp::get_max(&signal)?;
     debug!("Max: {}", max);
-    let normalized: Signal = signal.iter().map(|x| x/max).collect();
+    let normalized: Signal = signal.iter().map(|x| x / max).collect();
 
     debug!("Writing WAV to '{}'", filename);
 
