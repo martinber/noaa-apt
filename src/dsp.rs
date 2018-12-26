@@ -41,20 +41,17 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     Ok(min)
 }
 
-/// Filter with lowpass and then resample.
+/// Filter and then resample.
 ///
 /// Does both things at the same time, so it's faster than calling filter() and
-/// then resample()
+/// then resampling. Make sure that the filter prevents aliasing.
 ///
-/// Like resample(), takes a &Signal, the input rate and the output rate.
-/// The next parameters, cutout, atten and delta_w are given to lowpass().
-pub fn lowpass_resample(
+/// Takes a &Signal, the input rate, the output rate and the filter to use.
+pub fn resample_with_filter(
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
-    cutout: Freq,
-    atten: f32,
-    delta_w: Freq,
+    mut filt: impl filters::Filter,
 ) -> err::Result<Signal> {
 
     if output_rate.get_hz() == 0 {
@@ -65,70 +62,36 @@ pub fn lowpass_resample(
     let l = output_rate.get_hz() / gcd; // interpolation factor
     let m = input_rate.get_hz() / gcd; // decimation factor
 
-    // Divide by l to reference the frequencies to the rate we have after
-    // interpolation
-    let filter = lowpass(cutout / l as f32, atten, delta_w / l as f32);
 
-    Ok(resample_with_filter(&signal, l, m, &filter))
+    if l > 1 { // If we need interpolation
+        // Reference the frequencies to the rate we have after interpolation
+        filt.resample(input_rate, input_rate * l);
+        let coeff = filt.design();
+
+        Ok(fast_resampling(&signal, l, m, &coeff))
+    } else {
+        Ok(decimate(&filter(&signal, filt), m))
+    }
 }
 
-/// Filter with a lowpass and DC removal filter and then resample.
+/// Resample signal.
 ///
-/// Does both things at the same time, so it's faster than calling filter() and
-/// then resample()
-///
-/// Like resample(), takes a &Signal, the input rate and the output rate.
-/// The next parameters, cutout, atten and delta_w are given to
-/// lowpass_dc_removal().
-pub fn lowpass_dc_removal_resample(
+/// Takes a &Signal, the input rate, the output rate and the transition band of
+/// the lowpass filter to use.
+pub fn resample(
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
-    cutout: Freq,
-    atten: f32,
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
-    if output_rate.get_hz() == 0 {
-        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
-    }
-
-    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
-    let l = output_rate.get_hz() / gcd; // interpolation factor
-    let m = input_rate.get_hz() / gcd; // decimation factor
-
-    // Divide by l to reference the frequencies to the rate we have after
-    // interpolation
-    let filter = lowpass_dc_removal(cutout / l as f32, atten, delta_w / l as f32);
-
-    Ok(resample_with_filter(&signal, l, m, &filter))
-}
-
-/// Decimate without filtering.
-///
-/// The signal should be accordingly bandlimited previously to avoid aliasing.
-pub fn decimate(
-    signal: &Signal,
-    input_rate: Rate,
-    output_rate: Rate,
-    cutout: Freq,
-    atten: f32,
-    delta_w: Freq,
-) -> err::Result<Signal> {
-
-    if output_rate.get_hz() == 0 {
-        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
-    }
-
-    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
-    let l = output_rate.get_hz() / gcd; // interpolation factor
-    let m = input_rate.get_hz() / gcd; // decimation factor
-
-    // Divide by l to reference the frequencies to the rate we have after
-    // interpolation
-    let filter = lowpass_dc_removal(cutout / l as f32, atten, delta_w / l as f32);
-
-    Ok(resample_with_filter(&signal, l, m, &filter))
+    resample_with_filter(&signal, input_rate, output_rate,
+        filters::Lowpass {
+            cutout: Freq::pi_rad(1.),
+            atten: 40.,
+            delta_w: delta_w
+        }
+    )
 }
 
 /// Resample a signal using a given filter.
@@ -136,87 +99,89 @@ pub fn decimate(
 /// Resamples by expansion by l, filtering and then decimation by m. The
 /// expansion is equivalent to the insertion of l-1 zeros between samples.
 ///
-/// The given filter should be designed for the signal after expansion by l, so
-/// you might want to divide every frequency by l when designing the filter.
-fn resample_with_filter(signal: &Signal, l: u32, m: u32, filter: &Signal) -> Signal {
+/// The given filter coefficients should be designed for the signal after
+/// expansion by l, so you might want to divide every frequency by l when
+/// designing the filter.
+fn fast_resampling(signal: &Signal, l: u32, m: u32, coeff: &Signal) -> Signal {
 
     let l = l as usize;
     let m = m as usize;
 
-    if l > 1 { // If we need interpolation
+    // This is the resampling algorithm, i've tried to make it faster
+    // several times, that's why it's so ugly
 
-        // This is the resampling algorithm, i've tried to make it faster
-        // several times, that's why it's so ugly
+    // Check the diagram on the documentation to see what the letters mean
 
-        // Check the diagram on the documentation to see what the letters mean
+    debug!("Resampling by L/M: {}/{}", l, m);
 
-        debug!("Resampling by L/M: {}/{}", l, m);
+    let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
-        let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+    let offset = (coeff.len() - 1) / 2; // Filter delay in the n axis, half
+                                         // of filter width
 
-        let offset = (filter.len() - 1) / 2; // Filter delay in the n axis, half
-                                             // of filter width
+    let mut n: usize; // Current working n
 
-        let mut n: usize; // Current working n
+    let mut t: usize = offset; // Like n but fixed to the current output
+                               // sample to calculate
 
-        let mut t: usize = offset; // Like n but fixed to the current output
-                                   // sample to calculate
+    // Iterate over each output sample
+    while t < signal.len() * l {
 
-        // Iterate over each output sample
-        while t < signal.len() * l {
-
-            // Find first n inside the window that has a input sample that I
-            // should multiply with a filter coefficient
-            if t > offset {
-                n = t - offset; // Go to n at start of filter
-                match n % l { // Jump to first sample in window
-                    0 => (),
-                    x => n += l - x, // I checked this on paper once and forgot
-                                     // how it works
-                }
-            } else { // In this case the first sample in window is located at 0
-                n = 0;
+        // Find first n inside the window that has a input sample that I
+        // should multiply with a filter coefficient
+        if t > offset {
+            n = t - offset; // Go to n at start of filter
+            match n % l { // Jump to first sample in window
+                0 => (),
+                x => n += l - x, // I checked this on paper once and forgot
+                                 // how it works
             }
-
-            // Loop over all n inside the window with input samples and
-            // calculate products
-            let mut sum = 0.;
-            let mut x = n / l; // Current input sample
-            while n <= t + offset {
-                // Check if there is a sample in that index, in case that we
-                // use an index bigger that signal.len()
-                match signal.get(x) {
-                    // n+offset-t is equal to j
-                    Some(sample) => sum += filter[n + offset - t] * sample,
-                    None => (),
-                }
-                x += 1;
-                n += l;
-            }
-            output.push(sum); // Store output sample
-
-            t += m; // Jump to next output sample
+        } else { // In this case the first sample in window is located at 0
+            n = 0;
         }
 
-        debug!("Resampling finished");
-        output
-
-    } else {
-
-        // TODO: Check if we need a filter
-
-        debug!("Resampling by decimation, L/M: {}/{}", l, m);
-
-        let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
-
-        for i in 0..signal.len() / m {
-            decimated.push(signal[i * m]);
+        // Loop over all n inside the window with input samples and
+        // calculate products
+        let mut sum = 0.;
+        let mut x = n / l; // Current input sample
+        while n <= t + offset {
+            // Check if there is a sample in that index, in case that we
+            // use an index bigger that signal.len()
+            match signal.get(x) {
+                // n+offset-t is equal to j
+                Some(sample) => sum += coeff[n + offset - t] * sample,
+                None => (),
+            }
+            x += 1;
+            n += l;
         }
+        output.push(sum); // Store output sample
 
-        debug!("Resampling finished");
-        decimated
-
+        t += m; // Jump to next output sample
     }
+
+    debug!("Resampling finished");
+    output
+}
+
+/// Decimate without filtering
+///
+/// The signal should be accordingly bandlimited previously to avoid aliasing.
+fn decimate(signal: &Signal, m: u32) -> Signal {
+
+    let m = m as usize;
+
+    debug!("Resampling by decimation, M: {}", m);
+
+    let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
+
+    for i in 0..signal.len() / m {
+        decimated.push(signal[i * m]);
+    }
+
+    debug!("Resampling finished");
+    decimated
+
 }
 
 /*
@@ -397,10 +362,11 @@ pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
 }
 
 /// Filter a signal,
-pub fn filter(signal: &Signal, coeff: &Signal) -> Signal {
+pub fn filter(signal: &Signal, filter: impl filters::Filter) -> Signal {
 
     debug!("Filtering signal");
 
+    let coeff = filter.design();
     let mut output: Signal = vec![0_f32; signal.len()];
 
     for i in 0..signal.len() {

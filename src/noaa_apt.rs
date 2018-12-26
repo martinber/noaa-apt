@@ -36,8 +36,8 @@ pub fn resample_wav(
     let input_rate = Rate::hz(input_spec.sample_rate);
 
     info!("Resampling");
-    let resampled = dsp::lowpass_resample(&input_signal, input_rate, output_rate,
-        Freq::pi_rad(1.), 40., Freq::pi_rad(0.1))?;
+    let resampled = dsp::resample(&input_signal, input_rate, output_rate,
+        Freq::pi_rad(0.1))?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
@@ -134,17 +134,19 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Resampling to {}", WORK_RATE);
 
-    // Cutout frequency of the resampling filter, only the AM spectrum should go
-    // through to avoid noise, 2 times the carrier frequency is enough
-    let cutout = Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.;
+    let filter = filters::LowpassDcRemoval {
+        // Cutout frequency of the resampling filter, only the AM spectrum should go
+        // through to avoid noise, 2 times the carrier frequency is enough
+        cutout: Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.,
 
-    // Width of transition band, we are using a DC removal filter that has a
-    // transition band from zero to delta_w. I think that APT signals have
-    // nothing below 500Hz.
-    let delta_w = Freq::hz(500., input_rate);
+        atten: 40.,
 
-    let signal = dsp::lowpass_dc_removal_resample(&signal, input_rate, work_rate,
-        cutout, 40., delta_w)?;
+        // Width of transition band, we are using a DC removal filter that has a
+        // transition band from zero to delta_w. I think that APT signals have
+        // nothing below 500Hz.
+        delta_w: Freq::hz(500., input_rate)
+    };
+    let signal = dsp::resample_with_filter(&signal, input_rate, work_rate, filter)?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
         return Err(err::Error::Internal(
@@ -158,8 +160,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     info!("Filtering");
 
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
-    let delta_w = cutout / 5.;
-    let signal = dsp::filter(&signal, &dsp::lowpass(cutout, 20., delta_w));
+    let filter = filters::Lowpass {
+        cutout: cutout,
+        atten: 20.,
+        delta_w: cutout / 5.
+    };
+    let signal = dsp::filter(&signal, filter);
 
     info!("Syncing");
 
@@ -190,8 +196,8 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     debug!("Resampling to 4160");
 
-    let aligned = dsp::lowpass_resample(&aligned, work_rate, final_rate,
-        Freq::pi_rad(1.), 40., Freq::pi_rad(0.1))?;
+    let aligned = dsp::resample_with_filter(&aligned, work_rate, final_rate,
+        filters::NoFilter)?;
     let max = dsp::get_max(&aligned)?;
     let min = dsp::get_min(&aligned)?;
     let range = max - min;

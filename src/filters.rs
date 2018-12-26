@@ -1,5 +1,4 @@
-use dsp::{self, Signal, Rate, Freq};
-use misc;
+use dsp::{Signal, Rate, Freq};
 
 use std::f32::consts::PI;
 
@@ -8,6 +7,9 @@ use std::f32::consts::PI;
 pub trait Filter {
     /// Design filter from parameters.
     fn design(&self) -> Signal;
+
+    /// Resample filter.
+    fn resample(&mut self, input_rate: Rate, output_rate: Rate);
 }
 
 /// No filter.
@@ -38,6 +40,10 @@ pub struct LowpassDcRemoval {
 impl Filter for NoFilter {
     fn design(&self) -> Signal {
         return vec![1.,];
+    }
+
+    fn resample(&mut self, _input_rate: Rate, _output_rate: Rate) {}
+}
 
 impl Filter for Lowpass {
     fn design(&self) -> Signal {
@@ -68,6 +74,12 @@ impl Filter for Lowpass {
         debug!("Lowpass filter design finished");
 
         product(filter, &window)
+    }
+
+    fn resample(&mut self, input_rate: Rate, output_rate: Rate) {
+        let ratio = output_rate.get_hz() as f32 / input_rate.get_hz() as f32;
+        self.cutout /= ratio;
+        self.delta_w /= ratio;
     }
 }
 
@@ -105,6 +117,12 @@ impl Filter for LowpassDcRemoval {
         debug!("Lowpass and DC removal filter design finished");
 
         product(filter, &window)
+    }
+
+    fn resample(&mut self, input_rate: Rate, output_rate: Rate) {
+        let ratio = output_rate.get_hz() as f32 / input_rate.get_hz() as f32;
+        self.cutout /= ratio;
+        self.delta_w /= ratio;
     }
 }
 
@@ -224,12 +242,12 @@ mod tests {
 
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
-            let filter = lowpass(cutout, atten, delta_w);
-            let mut fft = abs_fft(&filter);
+            let coeff = Lowpass { cutout, atten, delta_w }.design();
+            let mut fft = abs_fft(&coeff);
 
             println!("cutout: {}, atten: {}, delta_w: {}",
                      cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
-            println!("filter: {:?}", filter);
+            println!("coeff: {:?}", coeff);
 
             for (i, v) in fft.iter().enumerate() {
                 let w = Freq::pi_rad(2. * (i as f32) / (fft.len() as f32));
