@@ -14,6 +14,7 @@ pub struct Freq {
     pi_rad: f32
 }
 
+#[allow(dead_code)]
 impl Freq {
     /// Create frequency struct from radians per second.
     pub fn rad(f: f32) -> Freq {

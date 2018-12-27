@@ -1,23 +1,26 @@
 extern crate num;
 extern crate hound;
 extern crate rustfft;
-#[cfg_attr(test, macro_use)] extern crate approx;
 extern crate png;
 #[macro_use] extern crate log;
 extern crate simple_logger;
 extern crate argparse;
-extern crate gtk;
-extern crate gdk;
-extern crate gio;
 
 mod noaa_apt;
 mod dsp;
 mod frequency;
 mod wav;
 mod misc;
-mod gui;
 mod err;
 mod filters;
+
+#[cfg_attr(test, macro_use)] extern crate approx;
+
+#[cfg(feature = "gui")] mod gui;
+#[cfg(feature = "gui")] extern crate gtk;
+#[cfg(feature = "gui")] extern crate gdk;
+#[cfg(feature = "gui")] extern crate gio;
+
 
 use dsp::Rate;
 
@@ -113,7 +116,15 @@ fn main() -> err::Result<()> {
 
         // Input filename not set, launch GUI
         None => {
-            gui::main();
+            #[cfg(feature = "gui")]
+            {
+                gui::main();
+            }
+            #[cfg(not(feature = "gui"))]
+            {
+                error!("Program compiled without gui support, please download \
+                    the gui version of this program.");
+            }
         }
     }
 

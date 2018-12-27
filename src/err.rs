@@ -15,6 +15,8 @@ pub enum Error {
     WavOpen(String), // About WAV decoding/opening
     PngWrite(String), // About PNG encoding/writing
     Internal(String), // noaa-apt internal errors because of some bug
+    FeatureNotAvailable(Vec<String>), // Functionality not available because the
+                                   // program was compiled without those features
 }
 
 impl std::fmt::Display for Error {
@@ -24,17 +26,9 @@ impl std::fmt::Display for Error {
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
             Error::PngWrite(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
-        }
-    }
-}
-
-impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Io(ref err) => err.description(),
-            Error::WavOpen(ref msg) => msg.as_str(),
-            Error::PngWrite(ref msg) => msg.as_str(),
-            Error::Internal(ref msg) => msg.as_str(),
+            Error::FeatureNotAvailable(ref features) =>
+                write!(f, "Program compiled without support for features: {:?}",
+                    features),
         }
     }
 }

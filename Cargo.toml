@@ -3,6 +3,10 @@ name = "noaa-apt"
 version = "0.9.6"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
+[features]
+default = ["gui"]
+gui = ["gtk", "gdk", "gio"]
+
 [dependencies]
 num = "*"
 hound = "*"
@@ -13,12 +17,6 @@ log = "*"
 simple_logger = "*"
 argparse = "*"
 
-[dependencies.gtk]
-version = "0.5.0"
-features = ["v3_10"]
-
-[dependencies.gdk]
-version = "0.9.0"
-
-[dependencies.gio]
-version = "0.5.0"
+gtk = { version = "0.5.0", optional = true, features = ["v3_10"] }
+gdk = { version = "0.9.0", optional = true }
+gio = { version = "0.5.0", optional = true }
