@@ -167,7 +167,10 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 gdk::Window::process_all_updates();
 
                 match noaa_apt::decode(
-                        input_filename.as_str(), output_filename.as_str()) {
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        false,
+                ) {
                     Ok(_) => status_label.set_markup("Finished"),
                     Err(e) => {
                         status_label.set_markup(
@@ -202,7 +205,11 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 gdk::Window::process_all_updates();
 
                 match noaa_apt::resample_wav(
-                        input_filename.as_str(), output_filename.as_str(), Rate::hz(rate)) {
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        Rate::hz(rate),
+                        false
+                ) {
                     Ok(_) => status_label.set_markup("Finished"),
                     Err(e) => {
                         status_label.set_markup(

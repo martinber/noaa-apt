@@ -2,6 +2,7 @@ pub use frequency::Freq;
 pub use frequency::Rate;
 use err;
 use filters;
+use context::{Context, Step};
 
 use num::Integer; // For u32.gcd(u32)
 
@@ -48,6 +49,7 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 ///
 /// Takes a &Signal, the input rate, the output rate and the filter to use.
 pub fn resample_with_filter(
+    context: &mut Context,
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
@@ -62,16 +64,22 @@ pub fn resample_with_filter(
     let l = output_rate.get_hz() / gcd; // interpolation factor
     let m = input_rate.get_hz() / gcd; // decimation factor
 
+    let result;
 
     if l > 1 { // If we need interpolation
         // Reference the frequencies to the rate we have after interpolation
         filt.resample(input_rate, input_rate * l);
         let coeff = filt.design();
 
-        Ok(fast_resampling(&signal, l, m, &coeff))
+        context.step(Step::Filter(&coeff))?;
+        result = fast_resampling(&signal, l, m, &coeff);
+        context.step(Step::Signal(&result, Some(output_rate)))?;
     } else {
-        Ok(decimate(&filter(&signal, filt), m))
+        let filtered = &filter(context, &signal, filt)?;
+        result = decimate(filtered, m);
     }
+
+    Ok(result)
 }
 
 /// Resample signal.
@@ -79,13 +87,14 @@ pub fn resample_with_filter(
 /// Takes a &Signal, the input rate, the output rate and the transition band of
 /// the lowpass filter to use.
 pub fn resample(
+    context: &mut Context,
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
-    resample_with_filter(&signal, input_rate, output_rate,
+    resample_with_filter(context, &signal, input_rate, output_rate,
         filters::Lowpass {
             cutout: Freq::pi_rad(1.),
             atten: 40.,
@@ -184,143 +193,12 @@ fn decimate(signal: &Signal, m: u32) -> Signal {
 
 }
 
-/*
-/// Resample signal to given rate.
-///
-/// `cutout` is the cutout frequency of the lowpass filter, when None uses 1
-/// radians per second to prevent aliasing on decimation.
-///
-/// The filter has a transition band equal to the 20% of the spectrum width of
-/// the input signal. Starts at 90% of the input signal spectrum, so it lets a
-/// little of spectrum to go through.
-///
-/// The filter attenuation is 40dB.
-pub fn resample_to(signal: &Signal, input_rate: Rate, output_rate: Rate,
-                   cutout: Option<Freq>) -> err::Result<Signal> {
-
-    if output_rate.get_hz() == 0 {
-        return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
-    }
-
-    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
-    let l = output_rate.get_hz() / gcd; // interpolation factor
-    let m = input_rate.get_hz() / gcd; // decimation factor
-
-    let atten = 40.;
-    let delta_w = Freq::pi_rad(0.2);
-    // TODO: check
-
-    Ok(resample(&signal, l, m, cutout, atten, delta_w))
-}
-*/
-
-/*
-/// Resample signal by L/M following specific parameters.
-///
-/// `l` is the interpolation factor and `m` is the decimation one. The filter
-/// is designed by a Kaiser window method depending in the attenuation `atten`
-/// and the transition band width `delta_w`.
-///
-/// `cutout` is the cutout frequency of the lowpass filter, when None uses 1
-/// radians per second to prevent aliasing on decimation.
-///
-/// `atten` should be positive and specified in decibels. `delta_w` is the
-/// transition band.
-pub fn resample(signal: &Signal, l: u32, m: u32, cutout: Option<Freq>,
-                atten: f32, delta_w: Freq) -> Signal {
-
-    let l = l as usize;
-    let m = m as usize;
-
-    // Divide by l to reference the frequencies to the rate we have after interpolation
-    let cutout = match cutout {
-        Some(x) => x / l,
-        None => Freq::pi_rad(1.) / l,
-    };
-    let delta_w = delta_w / l;
-
-    if l > 1 { // If we need interpolation
-
-        // This is the resampling algorithm, i've tried to make it faster
-        // several times, that's why it's so ugly
-
-        // Check the image I made to see what the letters mean
-
-        debug!("Resampling by L/M: {}/{}", l, m);
-
-        let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
-
-        let f = lowpass_dc_removal(cutout, atten, delta_w); // filter coefficients
-
-        let offset = (f.len()-1)/2; // Filter delay in the n axis, half of
-                                    // filter width
-
-        let mut n: usize; // Current working n
-
-        let mut t: usize = offset; // Like n but fixed to the current output
-                                   // sample to calculate
-
-        // Iterate over each output sample
-        while t < signal.len()*l {
-
-            // Find first n inside the window that has a input sample that I
-            // should multiply with a filter coefficient
-            if t > offset {
-                n = t - offset; // Go to n at start of filter
-                match n % l { // Jump to first sample in window
-                    0 => (),
-                    x => n += l - x, // I checked this on paper once and forgot
-                                     // how it works
-                }
-            } else { // In this case the first sample in window is located at 0
-                n = 0;
-            }
-
-            // Loop over all n inside the window with input samples and
-            // calculate products
-            let mut sum = 0.;
-            let mut x = n/l; // Current input sample
-            while n <= t + offset {
-                // Check if there is a sample in that index, in case that we
-                // use an index bigger that signal.len()
-                match signal.get(x) {
-                    // n+offset-t is equal to j
-                    Some(sample) => sum += f[n+offset-t] * sample,
-                    None => (),
-                }
-                x += 1;
-                n += l;
-            }
-            output.push(sum); // Store output sample
-
-            t += m; // Jump to next output sample
-        }
-
-        debug!("Resampling finished");
-        output
-
-    } else {
-
-        // TODO: Check if wee need a filter
-
-        debug!("Resampling by decimation, L/M: {}/{}", l, m);
-
-        let mut decimated: Signal = Vec::with_capacity(signal.len() / m);
-
-        for i in 0..signal.len()/m {
-            decimated.push(signal[i*m]);
-        }
-
-        debug!("Resampling finished");
-        decimated
-
-    }
-
-}
-*/
-
 /// Demodulate AM signal.
-pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
+pub fn demodulate(
+    context: &mut Context,
+    signal: &Signal,
+    carrier_freq: Freq
+) -> err::Result<Signal> {
 
     debug!("Demodulating signal");
 
@@ -358,11 +236,16 @@ pub fn demodulate(signal: &Signal, carrier_freq: Freq) -> Signal {
 
     debug!("Demodulation finished");
 
-    output
+    context.step(Step::Signal(&output, None))?;
+    Ok(output)
 }
 
 /// Filter a signal,
-pub fn filter(signal: &Signal, filter: impl filters::Filter) -> Signal {
+pub fn filter(
+    context: &mut Context,
+    signal: &Signal,
+    filter: impl filters::Filter
+) -> err::Result<Signal> {
 
     debug!("Filtering signal");
 
@@ -379,5 +262,8 @@ pub fn filter(signal: &Signal, filter: impl filters::Filter) -> Signal {
         output[i] = sum;
     }
     debug!("Filtering finished");
-    output
+
+    context.step(Step::Filter(&coeff))?;
+    context.step(Step::Signal(&output, None))?;
+    Ok(output)
 }

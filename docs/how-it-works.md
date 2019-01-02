@@ -28,10 +28,7 @@ cargo test
 
 ## Things to do
 
-- Split README into multiple pages and make a better website. Maybe using
-  Jekyll.
-
-- Improve syncing performance.
+- Improve syncing performance. Improve hardcoded sync frame.
 
 - Option for disabling syncing.
 
@@ -39,22 +36,12 @@ cargo test
 
 - The parameters used for filter design are hardcoded.
 
-- Add optional lowpass filter before demodulation, there is already one to
-  prevent aliasing but I want to filter noise outside the AM bandwidth.
-
-- Optionally filter DC component before demodulation, I think it's useful if the
-  FM demodulation had offset (because of Doppler effect). Looks like otherwise
-  we get bad contrast.
-
-- Optionally output raw samples as WAV at various steps for debugging, maybe
-  plot the FFT too.
-
-- Separate GUI and no GUI builds.
-
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
   machine to work.
 
 - For some reason the `--debug` does not work when using the GUI.
+
+- Add a *Development* page to the website.
 
 ## How it works
 

@@ -2,6 +2,7 @@ use wav;
 use dsp::{self, Signal, Rate, Freq};
 use err;
 use filters;
+use context::{Context, Step};
 
 use std;
 use hound;
@@ -29,15 +30,19 @@ pub fn resample_wav(
     input_filename: &str,
     output_filename: &str,
     output_rate: Rate,
+    export_wav: bool,
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
+    let mut context = Context::resample(export_wav);
+
+    context.step(Step::Signal(&input_signal, Some(input_rate)))?;
 
     info!("Resampling");
-    let resampled = dsp::resample(&input_signal, input_rate, output_rate,
-        Freq::pi_rad(0.1))?;
+    let resampled = dsp::resample(
+        &mut context, &input_signal, input_rate, output_rate, Freq::pi_rad(0.1))?;
 
     if resampled.len() == 0 {
         return Err(err::Error::Internal(
@@ -123,7 +128,11 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
 }
 
 /// Decode APT image from WAV file.
-pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
+pub fn decode(
+    input_filename: &str,
+    output_filename: &str,
+    export_wav: bool,
+) -> err::Result<()>{
 
     info!("Reading WAV file");
 
@@ -131,6 +140,9 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
     let input_rate = Rate::hz(input_spec.sample_rate);
     let work_rate = Rate::hz(WORK_RATE);
     let final_rate = Rate::hz(FINAL_RATE);
+    let mut context = Context::decode(work_rate, final_rate, export_wav);
+
+    context.step(Step::Signal(&signal, Some(input_rate)))?;
 
     info!("Resampling to {}", WORK_RATE);
 
@@ -146,7 +158,8 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
         // nothing below 500Hz.
         delta_w: Freq::hz(500., input_rate)
     };
-    let signal = dsp::resample_with_filter(&signal, input_rate, work_rate, filter)?;
+    let signal = dsp::resample_with_filter(
+        &mut context, &signal, input_rate, work_rate, filter)?;
 
     if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
         return Err(err::Error::Internal(
@@ -155,7 +168,8 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     info!("Demodulating");
 
-    let signal = dsp::demodulate(&signal, Freq::hz(CARRIER_FREQ as f32, work_rate));
+    let signal = dsp::demodulate(
+        &mut context, &signal, Freq::hz(CARRIER_FREQ as f32, work_rate))?;
 
     info!("Filtering");
 
@@ -165,7 +179,7 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
         atten: 20.,
         delta_w: cutout / 5.
     };
-    let signal = dsp::filter(&signal, filter);
+    let signal = dsp::filter(&mut context, &signal, filter)?;
 
     info!("Syncing");
 
@@ -194,10 +208,12 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
         }
     }
 
+    context.step(Step::Signal(&aligned, Some(work_rate)))?;
+
     debug!("Resampling to 4160");
 
-    let aligned = dsp::resample_with_filter(&aligned, work_rate, final_rate,
-        filters::NoFilter)?;
+    let aligned = dsp::resample_with_filter(
+        &mut context, &aligned, work_rate, final_rate, filters::NoFilter)?;
     let max = dsp::get_max(&aligned)?;
     let min = dsp::get_min(&aligned)?;
     let range = max - min;
@@ -206,6 +222,8 @@ pub fn decode(input_filename: &str, output_filename: &str) -> err::Result<()>{
 
     let aligned: Vec<u8> = aligned.iter()
         .map(|x| ((x - min) / range * 255.) as u8).collect();
+
+    context.step(Step::Signal(&aligned.iter().map(|x| *x as f32).collect(), Some(final_rate)))?;
 
     info!("Writing PNG to '{}'", output_filename);
 

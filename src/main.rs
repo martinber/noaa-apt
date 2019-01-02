@@ -13,6 +13,7 @@ mod wav;
 mod misc;
 mod err;
 mod filters;
+mod context;
 
 #[cfg_attr(test, macro_use)] extern crate approx;
 
@@ -31,6 +32,7 @@ fn main() -> err::Result<()> {
     let mut input_filename: Option<String> = None;
     let mut debug = false;
     let mut quiet = false;
+    let mut wav_steps = false;
     let mut print_version = false;
     let mut output_filename: Option<String> = None;
     let mut resample_output: Option<u32> = None;
@@ -50,6 +52,11 @@ fn main() -> err::Result<()> {
         parser.refer(&mut quiet)
             .add_option(&["-q", "--quiet"], argparse::StoreTrue,
             "Don't print info messages.");
+        parser.refer(&mut wav_steps)
+            .add_option(&["--wav-steps"], argparse::StoreTrue,
+            "Export a WAV for every step of the decoding process for debugging, \
+            the files will be located on the current folder with names \
+            noaa-apt_decoding_step_{number}_{description}.wav");
         parser.refer(&mut output_filename)
             .add_option(&["-o", "--output"], argparse::StoreOption,
             "Set output path. When decoding images the default is \
@@ -92,7 +99,11 @@ fn main() -> err::Result<()> {
                     };
 
                     match noaa_apt::resample_wav(
-                            input_filename.as_str(), output.as_str(), Rate::hz(rate)) {
+                        input_filename.as_str(),
+                        output.as_str(),
+                        Rate::hz(rate),
+                        wav_steps,
+                    ) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),
                     };
@@ -106,7 +117,10 @@ fn main() -> err::Result<()> {
                     };
 
                     match noaa_apt::decode(
-                            input_filename.as_str(), output.as_str()) {
+                        input_filename.as_str(),
+                        output.as_str(),
+                        wav_steps,
+                    ) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),
                     };
