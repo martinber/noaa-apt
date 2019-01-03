@@ -34,6 +34,10 @@ cargo test
 
 - Separate thread for GUI.
 
+- Export cross-correlation as WAV step.
+
+- Add update message.
+
 - The parameters used for filter design are hardcoded.
 
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual

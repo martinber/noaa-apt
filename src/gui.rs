@@ -33,9 +33,10 @@ macro_rules! clone {
 
 /// Start GUI.
 pub fn main() {
-    let application = gtk::Application::new("ar.com.mbernardi.noaa-apt",
-                                            gio::ApplicationFlags::empty())
-                                       .expect("Initialization failed...");
+    let application = gtk::Application::new(
+        "ar.com.mbernardi.noaa-apt",
+        gio::ApplicationFlags::empty(),
+    ).expect("Initialization failed...");
 
     application.connect_startup(move |app| {
         build_ui(app);
@@ -73,27 +74,38 @@ fn build_ui(application: &gtk::Application) {
 
     let footer_label: gtk::Label = builder.get_object("footer_label")
             .expect("Couldn't get footer_label");
+
     footer_label.set_label(format!(
-"noaa-apt {}
-Martín Bernardi
-martin@mbernardi.com.ar", VERSION).as_str());
+        "noaa-apt {}\n\
+        Martín Bernardi\n\
+        martin@mbernardi.com.ar",
+        VERSION
+    ).as_str());
 
     // Configure decode_output_entry file chooser
 
-    let decode_output_entry: gtk::Entry = builder.get_object("decode_output_entry")
-            .expect("Couldn't get decode_output_entry");
+    let decode_output_entry: gtk::Entry =
+        builder.get_object("decode_output_entry")
+        .expect("Couldn't get decode_output_entry");
+
     decode_output_entry.connect_icon_press(clone!(window, builder => move |_, _, _| {
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Save file as"), Some(&window), gtk::FileChooserAction::Save);
+
         file_chooser.add_buttons(&[
             ("Ok", gtk::ResponseType::Ok.into()),
             ("Cancel", gtk::ResponseType::Cancel.into()),
         ]);
-        if file_chooser.run() == gtk::ResponseType::Ok.into() {
-            let filename = file_chooser.get_filename().expect("Couldn't get filename");
 
-            let entry: gtk::Entry = builder.get_object("decode_output_entry")
-                    .expect("Couldn't get decode_output_entry");
+        if file_chooser.run() == gtk::ResponseType::Ok.into() {
+            let filename =
+                file_chooser.get_filename()
+                .expect("Couldn't get filename");
+
+            let entry: gtk::Entry =
+                builder.get_object("decode_output_entry")
+                .expect("Couldn't get decode_output_entry");
+
             entry.set_text(filename.to_str().unwrap());
         }
 
@@ -102,20 +114,28 @@ martin@mbernardi.com.ar", VERSION).as_str());
 
     // Configure resample_output_entry file chooser
 
-    let resample_output_entry: gtk::Entry = builder.get_object("resample_output_entry")
-            .expect("Couldn't get resample_output_entry");
+    let resample_output_entry: gtk::Entry =
+        builder.get_object("resample_output_entry")
+        .expect("Couldn't get resample_output_entry");
+
     resample_output_entry.connect_icon_press(clone!(window, builder => move |_, _, _| {
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Save file as"), Some(&window), gtk::FileChooserAction::Save);
+
         file_chooser.add_buttons(&[
             ("Ok", gtk::ResponseType::Ok.into()),
             ("Cancel", gtk::ResponseType::Cancel.into()),
         ]);
-        if file_chooser.run() == gtk::ResponseType::Ok.into() {
-            let filename = file_chooser.get_filename().expect("Couldn't get filename");
 
-            let entry: gtk::Entry = builder.get_object("resample_output_entry")
-                    .expect("Couldn't get decode_output_entry");
+        if file_chooser.run() == gtk::ResponseType::Ok.into() {
+            let filename =
+                file_chooser.get_filename()
+                .expect("Couldn't get filename");
+
+            let entry: gtk::Entry =
+                builder.get_object("resample_output_entry")
+                .expect("Couldn't get decode_output_entry");
+
             entry.set_text(filename.to_str().unwrap());
         }
 
@@ -124,8 +144,10 @@ martin@mbernardi.com.ar", VERSION).as_str());
 
     // Connect start button
 
-    let input_file_chooser: gtk::FileChooserButton = builder.get_object("input_file_chooser")
-            .expect("Couldn't get input_file_chooser");
+    let input_file_chooser: gtk::FileChooserButton =
+        builder.get_object("input_file_chooser")
+        .expect("Couldn't get input_file_chooser");
+
     start_button.connect_clicked(clone!(builder, input_file_chooser, status_label => move |_| {
 
         // Check inputs
@@ -140,17 +162,22 @@ martin@mbernardi.com.ar", VERSION).as_str());
 
         // Check if we are decoding or resampling
 
-        let options_stack: gtk::Stack = builder.get_object("options_stack")
-                .expect("Couldn't get options_stack");
+        let options_stack: gtk::Stack =
+            builder.get_object("options_stack")
+            .expect("Couldn't get options_stack");
 
         match options_stack.get_visible_child_name()
-                .expect("Stack has no visible child").as_str() {
+            .expect("Stack has no visible child").as_str() {
 
             "decode_page" => {
-                let filename_entry: gtk::Entry = builder.get_object("decode_output_entry")
-                        .expect("Couldn't get decode_output_entry");
-                let output_filename = filename_entry.get_text()
-                        .expect("Couldn't get decode_output_entry text");
+
+                let filename_entry: gtk::Entry =
+                    builder.get_object("decode_output_entry")
+                    .expect("Couldn't get decode_output_entry");
+
+                let output_filename =
+                    filename_entry.get_text()
+                    .expect("Couldn't get decode_output_entry text");
 
                 if output_filename == "" {
                     status_label.set_markup("<b>Error: Select output filename</b>");
@@ -172,28 +199,36 @@ martin@mbernardi.com.ar", VERSION).as_str());
                         false, // wav_steps
                         true, // sync
                 ) {
-                    Ok(_) => status_label.set_markup("Finished"),
+                    Ok(_) => {
+                        status_label.set_markup("Finished");
+                    },
                     Err(e) => {
                         status_label.set_markup(
-                                format!("<b>Error: {}</b>", e).as_str());
+                            format!("<b>Error: {}</b>", e).as_str());
                         error!("{}", e);
                     },
                 }
             },
 
             "resample_page" => {
-                let filename_entry: gtk::Entry = builder.get_object("resample_output_entry")
-                        .expect("Couldn't get resample_output_entry");
-                let output_filename = filename_entry.get_text()
-                        .expect("Couldn't get resample_output_entry text");
+
+                let filename_entry: gtk::Entry =
+                    builder.get_object("resample_output_entry")
+                    .expect("Couldn't get resample_output_entry");
+
+                let output_filename =
+                    filename_entry.get_text()
+                    .expect("Couldn't get resample_output_entry text");
 
                 if output_filename == "" {
                     status_label.set_markup("<b>Error: Select output filename</b>");
                     return
                 }
 
-                let rate_spinner: gtk::SpinButton = builder.get_object("resample_rate_spinner")
-                        .expect("Couldn't get resample_rate_entry");
+                let rate_spinner: gtk::SpinButton =
+                    builder.get_object("resample_rate_spinner")
+                    .expect("Couldn't get resample_rate_entry");
+
                 let rate = rate_spinner.get_value_as_int() as u32;
 
                 status_label.set_markup("Processing");
@@ -211,7 +246,9 @@ martin@mbernardi.com.ar", VERSION).as_str());
                         Rate::hz(rate),
                         false
                 ) {
-                    Ok(_) => status_label.set_markup("Finished"),
+                    Ok(_) => {
+                        status_label.set_markup("Finished");
+                    },
                     Err(e) => {
                         status_label.set_markup(
                                 format!("<b>Error: {}</b>", e).as_str());
@@ -222,8 +259,6 @@ martin@mbernardi.com.ar", VERSION).as_str());
 
             x => panic!("Unexpected stack child name {}", x),
         }
-
-
     }));
 
     // Finish and show

@@ -10,13 +10,14 @@ use std::error::Error as StdError;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Error {
     Io(std::io::Error),
     WavOpen(String), // About WAV decoding/opening
     PngWrite(String), // About PNG encoding/writing
     Internal(String), // noaa-apt internal errors because of some bug
     FeatureNotAvailable(Vec<String>), // Functionality not available because the
-                                   // program was compiled without those features
+                                      // program was compiled without those features
 }
 
 impl std::fmt::Display for Error {
