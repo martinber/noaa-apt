@@ -30,7 +30,7 @@ cargo test
 
 - Improve syncing performance. Improve hardcoded sync frame.
 
-- Option for disabling syncing.
+- Improve the context module.
 
 - Separate thread for GUI.
 

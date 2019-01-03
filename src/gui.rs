@@ -169,7 +169,8 @@ martin@mbernardi.com.ar", VERSION).as_str());
                 match noaa_apt::decode(
                         input_filename.as_str(),
                         output_filename.as_str(),
-                        false,
+                        false, // wav_steps
+                        true, // sync
                 ) {
                     Ok(_) => status_label.set_markup("Finished"),
                     Err(e) => {

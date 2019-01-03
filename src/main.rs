@@ -33,6 +33,7 @@ fn main() -> err::Result<()> {
     let mut debug = false;
     let mut quiet = false;
     let mut wav_steps = false;
+    let mut sync = true;
     let mut print_version = false;
     let mut output_filename: Option<String> = None;
     let mut resample_output: Option<u32> = None;
@@ -55,8 +56,12 @@ fn main() -> err::Result<()> {
         parser.refer(&mut wav_steps)
             .add_option(&["--wav-steps"], argparse::StoreTrue,
             "Export a WAV for every step of the decoding process for debugging, \
-            the files will be located on the current folder with names \
-            noaa-apt_decoding_step_{number}_{description}.wav");
+            the files will be located on the current folder, named \
+            {number}_{description}.wav");
+        parser.refer(&mut sync)
+            .add_option(&["--no-sync"], argparse::StoreFalse,
+            "Disable syncing, useful when the sync frames are noisy and the \
+            syncing attempts do more harm than good.");
         parser.refer(&mut output_filename)
             .add_option(&["-o", "--output"], argparse::StoreOption,
             "Set output path. When decoding images the default is \
@@ -120,6 +125,7 @@ fn main() -> err::Result<()> {
                         input_filename.as_str(),
                         output.as_str(),
                         wav_steps,
+                        sync,
                     ) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),

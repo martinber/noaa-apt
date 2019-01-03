@@ -132,6 +132,7 @@ pub fn decode(
     input_filename: &str,
     output_filename: &str,
     export_wav: bool,
+    sync: bool,
 ) -> err::Result<()>{
 
     info!("Reading WAV file");
@@ -179,51 +180,65 @@ pub fn decode(
         atten: 20.,
         delta_w: cutout / 5.
     };
-    let signal = dsp::filter(&mut context, &signal, filter)?;
+    // mut because on sync the signal is going to be modified
+    let mut signal = dsp::filter(&mut context, &signal, filter)?;
 
-    info!("Syncing");
+    if sync {
+        info!("Syncing");
 
-    // Get list of sync frames positions
-    let sync_pos = find_sync(&signal)?;
+        // Get list of sync frames positions
+        let sync_pos = find_sync(&signal)?;
 
-    if sync_pos.len() < 5 {
-        return Err(err::Error::Internal(
-            "Found less than 5 sync frames, audio file is too short or too \
-            noisy".to_string())
+        if sync_pos.len() < 5 {
+            return Err(err::Error::Internal(
+                "Found less than 5 sync frames, audio file is too short or too \
+                noisy".to_string())
+            );
+        }
+
+        // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
+        // a found sync frame position
+        let mut aligned: Signal = Vec::new();
+
+        // For each sync position
+        for i in 0..sync_pos.len()-1 {
+            // Check if there are enough samples left to fill an image row
+            if (sync_pos[i] + SAMPLES_PER_WORK_ROW as usize) < signal.len() {
+
+                aligned.extend_from_slice(
+                    &signal[sync_pos[i] .. sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]
+                );
+            }
+        }
+
+        signal = aligned;
+    } else {
+        info!("Not syncing");
+
+        // Crop signal to multiple of SAMPLES_PER_WORK_ROW
+        let length = signal.len();
+        signal.truncate(length
+            / SAMPLES_PER_WORK_ROW as usize // Integer division
+            * SAMPLES_PER_WORK_ROW as usize
         );
     }
 
-    // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
-    // a found sync frame position
-    let mut aligned: Signal = Vec::new();
+    context.step(Step::Signal(&signal, Some(work_rate)))?;
 
-    // For each sync position
-    for i in 0..sync_pos.len()-1 {
-        // Check if there are enough samples left to fill an image row
-        if (sync_pos[i] + SAMPLES_PER_WORK_ROW as usize) < signal.len() {
+    info!("Resampling to 4160");
 
-            aligned.extend_from_slice(
-                &signal[sync_pos[i] .. sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]
-            );
-        }
-    }
-
-    context.step(Step::Signal(&aligned, Some(work_rate)))?;
-
-    debug!("Resampling to 4160");
-
-    let aligned = dsp::resample_with_filter(
-        &mut context, &aligned, work_rate, final_rate, filters::NoFilter)?;
-    let max = dsp::get_max(&aligned)?;
-    let min = dsp::get_min(&aligned)?;
+    let signal = dsp::resample_with_filter(
+        &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
+    let max = dsp::get_max(&signal)?;
+    let min = dsp::get_min(&signal)?;
     let range = max - min;
 
     debug!("Mapping samples from {}-{} to 0-255", min, max);
 
-    let aligned: Vec<u8> = aligned.iter()
+    let signal: Vec<u8> = signal.iter()
         .map(|x| ((x - min) / range * 255.) as u8).collect();
 
-    context.step(Step::Signal(&aligned.iter().map(|x| *x as f32).collect(), Some(final_rate)))?;
+    context.step(Step::Signal(&signal.iter().map(|x| *x as f32).collect(), Some(final_rate)))?;
 
     info!("Writing PNG to '{}'", output_filename);
 
@@ -234,13 +249,13 @@ pub fn decode(
     let file = std::fs::File::create(path)?;
     let ref mut buffer = std::io::BufWriter::new(file);
 
-    let height = aligned.len() as u32 / PX_PER_ROW;
+    let height = signal.len() as u32 / PX_PER_ROW;
 
     let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
 
-    writer.write_image_data(&aligned[..])?;
+    writer.write_image_data(&signal[..])?;
 
     Ok(())
 }
