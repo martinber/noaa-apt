@@ -1,5 +1,6 @@
 use noaa_apt;
 use dsp::Rate;
+use err;
 
 use gtk;
 use gdk;
@@ -7,6 +8,7 @@ use gio;
 
 use std::env::args;
 use std::rc::Rc;
+use std::sync::mpsc;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -204,6 +206,12 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
     }
     gdk::Window::process_all_updates();
 
+    let (tx, rx) = mpsc::channel();
+    enum Message {
+        Success,
+        Failed(err::Error),
+    }
+
     match action {
         Action::Decode => {
             debug!("Decode {} to {}", input_filename, output_filename);
@@ -215,16 +223,12 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         false, // wav_steps
                         true, // sync
                 ) {
-                    Ok(_) => {
-                        // status_label.set_markup("Finished");
-                    },
-                    Err(e) => {
-                        // status_label.set_markup(
-                            // format!("<b>Error: {}</b>", e).as_str());
-                        error!("{}", e);
-                    },
-                }
-            });
+                    Ok(_) => tx.send(Message::Success)
+                        .expect("Failed to send message to main thread"),
+                    Err(e) => tx.send(Message::Failed(e))
+                        .expect("Failed to send message to main thread"),
+                };
+            })
         }
         Action::Resample => {
             let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
@@ -237,16 +241,35 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         Rate::hz(rate),
                         false
                 ) {
-                    Ok(_) => {
-                        // widgets.status_label.set_markup("Finished");
-                    },
-                    Err(e) => {
-                        // widgets.status_label.set_markup(
-                                // format!("<b>Error: {}</b>", e).as_str());
-                        error!("{}", e);
-                    },
-                }
-            });
+                    Ok(_) => tx.send(Message::Success)
+                        .expect("Failed to send message to main thread"),
+                    Err(e) => tx.send(Message::Failed(e))
+                        .expect("Failed to send message to main thread"),
+                };
+            })
         }
-    }
+    };
+
+    // Wait until the thread ends, I can't figure out how to make a callback to
+    // thread.join() or a callback for when a message is ready on the rx
+    // channel. So I'm polling when the gtk thread is idle.
+    // I can't poll until the thread ends, so I poll until there are no more
+    // messages,
+
+    // Continue(false) stops this GTK+ task/thread whatever it is.
+    gtk::idle_add(move || {
+        match rx.try_recv() {
+            Ok(Message::Success) => {
+                widgets.status_label.set_markup("Finished");
+                gtk::Continue(true)
+            },
+            Ok(Message::Failed(e)) => {
+                widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
+                error!("{}", e);
+                gtk::Continue(true)
+            },
+            Err(mpsc::TryRecvError::Empty) => gtk::Continue(true),
+            Err(mpsc::TryRecvError::Disconnected) => gtk::Continue(false),
+        }
+    });
 }
