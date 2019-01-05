@@ -16,6 +16,7 @@ png = "*"
 log = "*"
 simple_logger = "*"
 argparse = "*"
+reqwest = "*"
 
 gtk = { version = "0.5.0", optional = true, features = ["v3_10"] }
 gdk = { version = "0.9.0", optional = true }

@@ -43,6 +43,8 @@ cargo test
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
   machine to work.
 
+- Check OSX build dependencies, now on Linux we need `libssl-dev`.
+
 - For some reason the `--debug` does not work when using the GUI.
 
 - Add a *Development* page to the website.

@@ -1,3 +1,16 @@
+//! I'm using two threads, one for the GTK+ GUI and another one that starts when
+//! decoding/resampling.
+//!
+//! GTK+ is not thread safe so everything GUI related is on the GTK+ thread that
+//! is also the main thread. When pressing the Start button, a temporary thread
+//! starts for decoding/resampling.
+//!
+//! I'm using a WidgetList struct for keeping track of every Widget I'm
+//! interested in. This struct is wrapped on the Rc smart pointer to allow
+//! multiple ownership of the struct. Previously I wrapped inside Rc and RefCell
+//! too to allow mutable access to everyone, but AFAIK having mutable access
+//! to a Widget is not neccesary.
+
 use noaa_apt;
 use dsp::Rate;
 use err;
@@ -103,7 +116,7 @@ fn build_ui(application: &gtk::Application) {
             ("Cancel", gtk::ResponseType::Cancel.into()),
         ]);
 
-        if file_chooser.run() == gtk::ResponseType::Ok.into() {
+        if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
             let filename = file_chooser.get_filename()
                 .expect("Couldn't get filename");
 
@@ -128,7 +141,7 @@ fn build_ui(application: &gtk::Application) {
             ("Cancel", gtk::ResponseType::Cancel.into()),
         ]);
 
-        if file_chooser.run() == gtk::ResponseType::Ok.into() {
+        if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
             let filename =
                 file_chooser.get_filename()
                 .expect("Couldn't get filename");
@@ -177,7 +190,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
 
     let input_filename = match widgets.input_file_chooser.get_filename() {
         Some(f) => {
-            String::from(f.to_str() .expect("Invalid character in input path"))
+            String::from(f.to_str().expect("Invalid character in input path"))
         }
         None => {
             widgets.status_label.set_markup("<b>Error: Select input file</b>");

@@ -5,6 +5,7 @@ extern crate png;
 #[macro_use] extern crate log;
 extern crate simple_logger;
 extern crate argparse;
+extern crate reqwest;
 
 mod noaa_apt;
 mod dsp;
@@ -75,17 +76,22 @@ fn main() -> err::Result<()> {
         parser.parse_args_or_exit();
     }
 
-    if print_version {
-        println!("noaa-apt image decoder version {}", VERSION);
-        std::process::exit(0);
-    }
-
     if debug {
         simple_logger::init_with_level(log::Level::Debug)?;
     } else if quiet {
         simple_logger::init_with_level(log::Level::Warn)?;
     } else {
         simple_logger::init_with_level(log::Level::Info)?;
+    }
+
+    if print_version {
+        println!("noaa-apt image decoder version {}", VERSION);
+        match noaa_apt::check_updates(VERSION.to_string()) {
+            Some((false, _latest)) => println!("You have the latest version available"),
+            Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
+            None => println!("Could not retrieve latest version available"),
+        }
+        std::process::exit(0);
     }
 
     info!("noaa-apt image decoder version {}", VERSION);

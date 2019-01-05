@@ -39,7 +39,7 @@ faster. Really, otherwise it takes FOREVER.**
 - Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
   1.27.0).
 
-- `sudo apt install libgtk-3-dev`.
+- `sudo apt install libgtk-3-dev libssl-dev`.
 
 - `cargo build --release`.
 
@@ -54,7 +54,7 @@ building, that's why I'm using a Debian Jessie docker image.
 
   - Install Docker.
 
-  - `sudo apt install libgtk-3-dev`.
+  - `sudo apt install libgtk-3-dev libssl-dev`.
 
   - Move to root folder.
 

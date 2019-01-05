@@ -7,6 +7,7 @@ use context::{Context, Step};
 use std;
 use hound;
 use png;
+use reqwest;
 
 // Working sample rate, used during demodulation and syncing, better if multiple
 // of the final sample rate. That way, the second resampling it's just a
@@ -258,4 +259,46 @@ pub fn decode(
     writer.write_image_data(&signal[..])?;
 
     Ok(())
+}
+
+/// Check if there is an update to this program.
+///
+/// Takes a String with the current version being used.
+///
+/// Returns a tuple of a bool idicating if there are new updates and a String
+/// with the latest version. Wrapped in Option, returns None if there were
+/// problems retrieving new versions and logs the error.
+pub fn check_updates(current: String) -> Option<(bool, String)> {
+    let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
+    println!("{}", addr);
+
+    let latest = match reqwest::get(addr.as_str()) {
+        Ok(mut response) => {
+            match response.text() {
+                Ok(text) => {
+                    Some(text)
+                }
+                Err(e) => {
+                    warn!("Error checking for updates: {}", e);
+                    None
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Error checking for updates: {}", e);
+            None
+        }
+    };
+
+    match latest {
+        Some(latest) => {
+            if latest.len() > 10 {
+                warn!("Error checking for updates: Response too long");
+                None
+            } else {
+                Some((latest != current, latest))
+            }
+        }
+        None => None,
+    }
 }
