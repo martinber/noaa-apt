@@ -7,7 +7,6 @@ use gio;
 
 use std::env::args;
 use std::rc::Rc;
-use std::cell::RefCell;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -67,8 +66,7 @@ fn build_ui(application: &gtk::Application) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
-    let widgets_rc = Rc::new(RefCell::new(WidgetList::create(&builder)));
-    let widgets: std::cell::RefMut<WidgetList> = widgets_rc.borrow_mut();
+    let widgets = Rc::new(WidgetList::create(&builder));
 
     widgets.window.set_application(application);
 
@@ -90,12 +88,11 @@ fn build_ui(application: &gtk::Application) {
 
     // Configure decode_output_entry file chooser
 
-    let widgets_rc_clone = Rc::clone(&widgets_rc);
+    let widgets_clone = Rc::clone(&widgets);
     widgets.decode_output_entry.connect_icon_press(move |_, _, _| {
-        let widgets = widgets_rc_clone.borrow_mut();
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Save file as"),
-            Some(&widgets.window),
+            Some(&widgets_clone.window),
             gtk::FileChooserAction::Save
         );
 
@@ -108,7 +105,7 @@ fn build_ui(application: &gtk::Application) {
             let filename = file_chooser.get_filename()
                 .expect("Couldn't get filename");
 
-            widgets.decode_output_entry.set_text(filename.to_str().unwrap());
+            widgets_clone.decode_output_entry.set_text(filename.to_str().unwrap());
         }
 
         file_chooser.destroy();
@@ -116,12 +113,11 @@ fn build_ui(application: &gtk::Application) {
 
     // Configure resample_output_entry file chooser
 
-    let widgets_rc_clone = Rc::clone(&widgets_rc);
+    let widgets_clone = Rc::clone(&widgets);
     widgets.resample_output_entry.connect_icon_press(move |_, _, _| {
-        let widgets = widgets_rc_clone.borrow_mut();
         let file_chooser = gtk::FileChooserDialog::new(
             Some("Save file as"),
-            Some(&widgets.window),
+            Some(&widgets_clone.window),
             gtk::FileChooserAction::Save
         );
 
@@ -135,7 +131,7 @@ fn build_ui(application: &gtk::Application) {
                 file_chooser.get_filename()
                 .expect("Couldn't get filename");
 
-            widgets.resample_output_entry.set_text(filename.to_str().unwrap());
+            widgets_clone.resample_output_entry.set_text(filename.to_str().unwrap());
         }
 
         file_chooser.destroy();
@@ -143,104 +139,16 @@ fn build_ui(application: &gtk::Application) {
 
     // Connect start button
 
-    let widgets_rc_clone = Rc::clone(&widgets_rc);
+    let widgets_clone = Rc::clone(&widgets);
     widgets.start_button.connect_clicked(move |_| {
-        let widgets = widgets_rc_clone.borrow_mut();
-
-        // Check inputs
-        let input_filename = match widgets.input_file_chooser.get_filename() {
-            Some(f) => {
-                String::from(f.to_str() .expect("Invalid character in input path"))
-            }
-            None => {
-                widgets.status_label.set_markup("<b>Error: Select input file</b>");
-                error!("Input file not selected");
-                return
-            },
-        };
 
         // Check if we are decoding or resampling
 
-        match widgets.options_stack.get_visible_child_name()
+        match widgets_clone.options_stack.get_visible_child_name()
             .expect("Stack has no visible child").as_str() {
 
-            "decode_page" => {
-
-                let output_filename =
-                    widgets.decode_output_entry.get_text()
-                    .expect("Couldn't get decode_output_entry text");
-
-                if output_filename == "" {
-                    widgets.status_label.set_markup("<b>Error: Select output filename</b>");
-                    return
-                }
-
-                widgets.status_label.set_markup("Processing");
-                debug!("Decode {} to {}", input_filename, output_filename);
-
-                // Hack to refresh the label
-                while gtk::events_pending() {
-                    gtk::main_iteration();
-                }
-                gdk::Window::process_all_updates();
-
-                std::thread::spawn(move || {
-                    match noaa_apt::decode(
-                            input_filename.as_str(),
-                            output_filename.as_str(),
-                            false, // wav_steps
-                            true, // sync
-                    ) {
-                        Ok(_) => {
-                            // status_label.set_markup("Finished");
-                        },
-                        Err(e) => {
-                            // status_label.set_markup(
-                                // format!("<b>Error: {}</b>", e).as_str());
-                            error!("{}", e);
-                        },
-                    }
-                });
-            },
-
-            "resample_page" => {
-
-                let output_filename =
-                    widgets.resample_output_entry.get_text()
-                    .expect("Couldn't get resample_output_entry text");
-
-                if output_filename == "" {
-                    widgets.status_label.set_markup("<b>Error: Select output filename</b>");
-                    return
-                }
-
-                let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
-
-                widgets.status_label.set_markup("Processing");
-                debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
-
-                // Hack to refresh the label
-                while gtk::events_pending() {
-                    gtk::main_iteration();
-                }
-                gdk::Window::process_all_updates();
-
-                match noaa_apt::resample_wav(
-                        input_filename.as_str(),
-                        output_filename.as_str(),
-                        Rate::hz(rate),
-                        false
-                ) {
-                    Ok(_) => {
-                        widgets.status_label.set_markup("Finished");
-                    },
-                    Err(e) => {
-                        widgets.status_label.set_markup(
-                                format!("<b>Error: {}</b>", e).as_str());
-                        error!("{}", e);
-                    },
-                }
-            },
+            "decode_page" => run_noaa_apt(Action::Decode, Rc::clone(&widgets_clone)),
+            "resample_page" => run_noaa_apt(Action::Resample, Rc::clone(&widgets_clone)),
 
             x => panic!("Unexpected stack child name {}", x),
         }
@@ -248,12 +156,97 @@ fn build_ui(application: &gtk::Application) {
 
     // Finish and show
 
-    let widgets_rc_clone = Rc::clone(&widgets_rc);
+    let widgets_clone = Rc::clone(&widgets);
     widgets.window.connect_delete_event(move |_, _| {
-        let widgets = widgets_rc_clone.borrow_mut();
-        widgets.window.destroy();
+        widgets_clone.window.destroy();
         Inhibit(false)
     });
 
     widgets.window.show_all();
+}
+
+enum Action {
+    Decode,
+    Resample,
+}
+
+/// Start decoding or resampling
+fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
+
+    let input_filename = match widgets.input_file_chooser.get_filename() {
+        Some(f) => {
+            String::from(f.to_str() .expect("Invalid character in input path"))
+        }
+        None => {
+            widgets.status_label.set_markup("<b>Error: Select input file</b>");
+            error!("Input file not selected");
+            return
+        },
+    };
+
+    let output_filename = match action {
+        Action::Decode => widgets.decode_output_entry.get_text()
+            .expect("Couldn't get decode_output_entry text"),
+        Action::Resample => widgets.resample_output_entry.get_text()
+            .expect("Couldn't get resample_output_entry text"),
+    };
+
+    if output_filename == "" {
+        widgets.status_label.set_markup("<b>Error: Select output filename</b>");
+        return
+    }
+
+    widgets.status_label.set_markup("Processing");
+
+    // Hack to refresh the label
+    while gtk::events_pending() {
+        gtk::main_iteration();
+    }
+    gdk::Window::process_all_updates();
+
+    match action {
+        Action::Decode => {
+            debug!("Decode {} to {}", input_filename, output_filename);
+
+            std::thread::spawn(move || {
+                match noaa_apt::decode(
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        false, // wav_steps
+                        true, // sync
+                ) {
+                    Ok(_) => {
+                        // status_label.set_markup("Finished");
+                    },
+                    Err(e) => {
+                        // status_label.set_markup(
+                            // format!("<b>Error: {}</b>", e).as_str());
+                        error!("{}", e);
+                    },
+                }
+            });
+        }
+        Action::Resample => {
+            let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
+            debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
+
+            std::thread::spawn(move || {
+                match noaa_apt::resample_wav(
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        Rate::hz(rate),
+                        false
+                ) {
+                    Ok(_) => {
+                        // widgets.status_label.set_markup("Finished");
+                    },
+                    Err(e) => {
+                        // widgets.status_label.set_markup(
+                                // format!("<b>Error: {}</b>", e).as_str());
+                        error!("{}", e);
+                    },
+                }
+            });
+        }
+    }
 }
