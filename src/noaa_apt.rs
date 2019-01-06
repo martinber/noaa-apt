@@ -270,13 +270,12 @@ pub fn decode(
 /// problems retrieving new versions and logs the error.
 pub fn check_updates(current: String) -> Option<(bool, String)> {
     let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
-    println!("{}", addr);
 
-    let latest = match reqwest::get(addr.as_str()) {
+    let latest: Option<String> = match reqwest::get(addr.as_str()) {
         Ok(mut response) => {
             match response.text() {
                 Ok(text) => {
-                    Some(text)
+                    Some(text.trim().to_string())
                 }
                 Err(e) => {
                     warn!("Error checking for updates: {}", e);
@@ -296,6 +295,7 @@ pub fn check_updates(current: String) -> Option<(bool, String)> {
                 warn!("Error checking for updates: Response too long");
                 None
             } else {
+                // Return true if there are updates
                 Some((latest != current, latest))
             }
         }
