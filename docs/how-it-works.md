@@ -28,17 +28,18 @@ cargo test
 
 ## Things to do
 
-- Improve syncing performance. Improve hardcoded sync frame.
+- Add a *Development* page to the website.
 
-- Improve the context module.
-
-- Separate thread for GUI.
+- Improve the context module. It's quite a mess, for example when using
+  `resample_with_filter()` the steps should be different depending if
+  `fast_resample()` or `decimate()` is used.
 
 - Export cross-correlation as WAV step.
 
-- Add update message.
+- Separate thread for GUI.
 
-- The parameters used for filter design are hardcoded.
+- The parameters used for filter design are hardcoded, maybe add a toml file
+  with constants?
 
 - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
   machine to work.
@@ -47,7 +48,7 @@ cargo test
 
 - For some reason the `--debug` does not work when using the GUI.
 
-- Add a *Development* page to the website.
+- Improve syncing performance. Improve hardcoded sync frame.
 
 ## How it works
 
