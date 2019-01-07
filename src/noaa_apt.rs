@@ -70,7 +70,7 @@ pub fn resample_wav(
 /// Find sync frame positions.
 ///
 /// Returns list of found sync frames positions.
-fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
+fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> {
 
     info!("Searching for sync frames");
 
@@ -99,6 +99,15 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
     let average: f32 = *dsp::get_max(&signal)? / 2.; // Not true but close enough.
     let signal: Signal = signal.iter().map(|x| x - average).collect();
 
+    // Save cross-correlation if wav-steps is enabled
+    let mut correlation;
+    if context.export_wav {
+        correlation = Vec::with_capacity(signal.len() - guard.len());
+    } else {
+        correlation = Vec::with_capacity(0); // Not going to be used
+    }
+
+
     for i in 0 .. signal.len() - guard.len() {
         let mut corr: f32 = 0.;
         for j in 0..guard.len() {
@@ -107,6 +116,10 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
                 -1 => corr -= signal[i + j],
                 _ => unreachable!(),
             }
+        }
+
+        if context.export_wav {
+            correlation.push(corr);
         }
 
         // If previous peak is too far, keep it and add this value to the
@@ -121,6 +134,10 @@ fn find_sync(signal: &Signal) -> err::Result<Vec<usize>> {
             peaks.pop();
             peaks.push((i, corr));
         }
+    }
+
+    if context.export_wav {
+        context.step(Step::Signal(&correlation, None))?;
     }
 
     info!("Found {} sync frames", peaks.len());
@@ -188,7 +205,7 @@ pub fn decode(
         info!("Syncing");
 
         // Get list of sync frames positions
-        let sync_pos = find_sync(&signal)?;
+        let sync_pos = find_sync(&mut context, &signal)?;
 
         if sync_pos.len() < 5 {
             return Err(err::Error::Internal(

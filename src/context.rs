@@ -55,7 +55,7 @@ struct StepMetadata {
 pub struct Context {
     /// Information about each step we expect to receive.
     steps_metadata: std::vec::IntoIter<StepMetadata>,
-    export_wav: bool,
+    pub export_wav: bool,
 }
 
 impl Context {
@@ -167,50 +167,68 @@ impl Context {
                     rate: None,
                 },
                 StepMetadata {
+                    description: "Expanded and filtered on first resample".to_string(),
+                    filename: "2_resample_filtered".to_string(),
+                    variant: "signal".to_string(),
+                    rate: None,
+                },
+                StepMetadata {
                     description: "Result of first resample".to_string(),
-                    filename: "2_resampled".to_string(),
+                    filename: "3_resample_decimated".to_string(),
                     variant: "signal".to_string(),
                     rate: None,
                 },
                 StepMetadata {
                     description: "Raw demodulated signal".to_string(),
-                    filename: "3_demodulated_unfiltered".to_string(),
+                    filename: "4_demodulated_unfiltered".to_string(),
                     variant: "signal".to_string(),
                     rate: Some(work_rate),
                 },
                 StepMetadata {
                     description: "Filter for demodulated signal".to_string(),
-                    filename: "4_demodulation_filter".to_string(),
+                    filename: "5_demodulation_filter".to_string(),
                     variant: "filter".to_string(),
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filtered demodulated signal".to_string(),
-                    filename: "5_demodulated".to_string(),
+                    filename: "6_demodulated".to_string(),
+                    variant: "signal".to_string(),
+                    rate: Some(work_rate),
+                },
+                StepMetadata {
+                    description: "Cross correlation used in syncing".to_string(),
+                    filename: "7_sync_correlation".to_string(),
                     variant: "signal".to_string(),
                     rate: Some(work_rate),
                 },
                 StepMetadata {
                     description: "Synced signal".to_string(),
-                    filename: "6_synced".to_string(),
+                    filename: "8_synced".to_string(),
                     variant: "signal".to_string(),
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filter used on second resample".to_string(),
-                    filename: "7_resample_filter".to_string(),
+                    filename: "9_resample_filter".to_string(),
                     variant: "filter".to_string(),
                     rate: None,
                 },
                 StepMetadata {
+                    description: "Expanded and filtered on second resample".to_string(),
+                    filename: "10_resample_filtered".to_string(),
+                    variant: "signal".to_string(),
+                    rate: Some(final_rate),
+                },
+                StepMetadata {
                     description: "Result of second resample".to_string(),
-                    filename: "8_resampled".to_string(),
+                    filename: "11_resample_decimated".to_string(),
                     variant: "signal".to_string(),
                     rate: Some(final_rate),
                 },
                 StepMetadata {
                     description: "Result of signal mapping, contrast check".to_string(),
-                    filename: "9_mapped".to_string(),
+                    filename: "12_mapped".to_string(),
                     variant: "signal".to_string(),
                     rate: None,
                 },

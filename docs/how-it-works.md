@@ -28,6 +28,12 @@ cargo test
 
 ## Things to do
 
+- Fix resampling problem.
+
+- Export expanded and filtered signal as WAV step.
+
+- Add version check to gui.
+
 - Add a *Development* page to the website.
 
 - Improve the context module. It's quite a mess, for example when using
