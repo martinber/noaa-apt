@@ -56,20 +56,17 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 /// Write signal to file.
 pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::Result<()> {
 
-    debug!("Normalizing samples");
+    debug!("Normalizing samples and writing WAV to '{}'", filename);
 
     let max = dsp::get_max(&signal)?;
     debug!("Max: {}", max);
-    let normalized: Signal = signal.iter().map(|x| x / max).collect();
-
-    debug!("Writing WAV to '{}'", filename);
 
     debug!("WAV specifications: {:?}", spec);
 
     let mut writer = hound::WavWriter::create(filename, spec)?;
 
-    for sample in normalized.iter() {
-        writer.write_sample(*sample)?;
+    for sample in signal.iter() {
+        writer.write_sample(*sample / max)?;
     }
     writer.finalize()?;
 
