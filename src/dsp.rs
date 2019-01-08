@@ -71,12 +71,23 @@ pub fn resample_with_filter(
         filt.resample(input_rate, input_rate * l);
         let coeff = filt.design();
 
-        context.step(Step::Filter(&coeff))?;
-        result = fast_resampling(&signal, l, m, &coeff);
-        context.step(Step::Signal(&result, Some(output_rate)))?;
+        context.step(Step::filter("resample_filter", &coeff))?;
+
+        result = fast_resampling(context, &signal, l, m, &coeff, input_rate)?;
+
+        context.step(Step::signal("resample_decimated", &result, Some(output_rate)))?;
+
     } else {
+
+        context.step(Step::filter("resample_filter", &filt.design()))?;
+
         let filtered = &filter(context, &signal, filt)?;
+
+        context.step(Step::signal("resample_filtered", &signal, Some(input_rate)))?;
+
         result = decimate(filtered, m);
+
+        context.step(Step::signal("resample_decimated", &result, Some(output_rate)))?;
     }
 
     Ok(result)
@@ -111,7 +122,14 @@ pub fn resample(
 /// The given filter coefficients should be designed for the signal after
 /// expansion by l, so you might want to divide every frequency by l when
 /// designing the filter.
-fn fast_resampling(signal: &Signal, l: u32, m: u32, coeff: &Signal) -> Signal {
+fn fast_resampling(
+    context: &mut Context,
+    signal: &Signal,
+    l: u32,
+    m: u32,
+    coeff: &Signal,
+    input_rate: Rate,
+) -> err::Result<Signal> {
 
     let l = l as usize;
     let m = m as usize;
@@ -124,6 +142,14 @@ fn fast_resampling(signal: &Signal, l: u32, m: u32, coeff: &Signal) -> Signal {
     debug!("Resampling by L/M: {}/{}", l, m);
 
     let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+
+    // Save expanded and filtered signal if wav-steps is enabled
+    let mut expanded_filtered;
+    if context.export {
+        expanded_filtered = Vec::with_capacity(signal.len() * l);
+    } else {
+        expanded_filtered = Vec::with_capacity(0); // Not going to be used
+    }
 
     let offset = (coeff.len() - 1) / 2; // Filter delay in the n axis, half
                                          // of filter width
@@ -164,13 +190,28 @@ fn fast_resampling(signal: &Signal, l: u32, m: u32, coeff: &Signal) -> Signal {
             x += 1;
             n += l;
         }
-        output.push(sum); // Store output sample
 
-        t += m; // Jump to next output sample
+        if context.export_resample_filtered {
+            expanded_filtered.push(sum);
+            t += 1;
+            if t % m == 0 {
+                output.push(sum);
+            }
+        } else {
+            output.push(sum); // Store output sample
+            t += m; // Jump to next output sample
+        }
+
     }
 
+    context.step(Step::signal(
+        "resample_filtered",
+        &expanded_filtered,
+        Some(input_rate * l as u32)
+    ))?;
+
     debug!("Resampling finished");
-    output
+    Ok(output)
 }
 
 /// Decimate without filtering
@@ -236,7 +277,7 @@ pub fn demodulate(
 
     debug!("Demodulation finished");
 
-    context.step(Step::Signal(&output, None))?;
+    context.step(Step::signal("demodulation_result", &output, None))?;
     Ok(output)
 }
 
@@ -263,7 +304,7 @@ pub fn filter(
     }
     debug!("Filtering finished");
 
-    context.step(Step::Filter(&coeff))?;
-    context.step(Step::Signal(&output, None))?;
+    context.step(Step::filter("filter_filter", &coeff))?;
+    context.step(Step::signal("filter_result", &output, None))?;
     Ok(output)
 }

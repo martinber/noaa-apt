@@ -22,24 +22,60 @@ use dsp::{Signal, Rate};
 use err;
 use wav;
 
+/// Different kinds of steps available.
+#[derive(Debug, PartialEq)]
+enum Variant {
+    Signal,
+    Filter,
+}
+
 /// Represents a step on the decoding process.
 ///
-/// Enum of every kind of step, some steps can happen twice or can not happen,
-/// the Context has information about the order in which the steps can ocurr.
+/// Some steps can happen twice or can not happen, the Context has information
+/// about the order in which the steps can ocurr.
 ///
 /// The Rate is optional because some functions on the dsp module don't know the
-/// sample rate. In those cases, the metadata should have it.
+/// sample rate. In those cases, the metadata should have it. Also, when saving
+/// filters, there is no rate.
+///
+/// The references only need to be valid until calling Context::step().
 #[derive(Debug)]
-pub enum Step<'a> {
-    Signal(&'a Signal, Option<Rate>),
-    Filter(&'a Signal),
+pub struct Step<'a> {
+    variant: Variant,
+    id: &'a str,
+    signal: &'a Signal,
+    rate: Option<Rate>,
+}
+
+impl<'a> Step<'a> {
+
+    /// Create a signal step.
+    pub fn signal(id: &'a str, signal: &'a Signal, rate: Option<Rate>) -> Step<'a> {
+        Step {
+            variant: Variant::Signal,
+            id,
+            signal,
+            rate,
+        }
+    }
+
+    /// Create a filter step.
+    pub fn filter(id: &'a str, filter: &'a Signal) -> Step<'a> {
+        Step {
+            variant: Variant::Filter,
+            id,
+            signal: filter,
+            rate: None,
+        }
+    }
 }
 
 /// Holds information about each step.
 struct StepMetadata {
     description: String,
+    id: String,
     filename: String,
-    variant: String,
+    variant: Variant,
     rate: Option<Rate>,
 }
 
@@ -54,8 +90,23 @@ struct StepMetadata {
 /// get when someone calls our step() function.
 pub struct Context {
     /// Information about each step we expect to receive.
-    steps_metadata: std::vec::IntoIter<StepMetadata>,
-    pub export_wav: bool,
+    steps_metadata: Vec<StepMetadata>,
+
+    /// If we are exporting something, functions like noaa_apt::find_sync()
+    /// check this to decide if they should do things fast or they should do
+    /// extra work and save intermediate signals.
+    pub export: bool,
+
+    /// If we are exporting the filtered signal on resample. When using
+    /// fast_resampling() this step es VERY slow and RAM heavy (gigabytes!), so
+    /// that function checks if this variable is set before doing extra work.
+    pub export_resample_filtered: bool,
+
+    /// Private field, if we are exporting to WAV.
+    export_wav: bool,
+
+    /// Current step index
+    index: usize,
 }
 
 impl Context {
@@ -63,21 +114,39 @@ impl Context {
     /// Store information about one step.
     pub fn step(&mut self, step: Step) -> err::Result<()> {
         if self.export_wav {
+
+            debug!("Got step: {}", step.id);
+
             // Metadata about the step we expect to receive
-            let metadata = match self.steps_metadata.next() {
+            let metadata = match self.steps_metadata.get(self.index) {
                 Some(e) => e,
-                None => return Err(err::Error::Internal(
-                    "Got too many steps".to_string())),
+                None => {
+                    debug!("Ignoring step \"{}\", no more steps expected", step.id);
+                    return Ok(())
+                },
             };
 
-            debug!("Got step: {}", metadata.description);
+            // We got an unexpected step, we should ignore it because sometimes
+            // the step we want comes after
+            if step.id != metadata.id {
+                debug!("Ignoring step \"{}\", expecting \"{}\"", step.id, metadata.id);
+                return Ok(())
+            } else {
+                self.index += 1;
+            }
 
-            match step {
-                Step::Filter(signal) => {
-                    if metadata.variant != "filter" {
-                        return Err(err::Error::Internal(format!(
-                            "Expected step {}, got {:?}", metadata.description, step)));
-                    }
+            if ! self.export_resample_filtered && step.id == "resample_filtered" {
+                debug!("Ignoring step \"resample_filtered\", disabled by options");
+                return Ok(())
+            }
+
+            if step.variant != metadata.variant {
+                return Err(err::Error::Internal(format!(
+                    "Expected variant {:?}, got {:?}", metadata.variant, step.variant)));
+            }
+
+            match step.variant {
+                Variant::Filter => {
 
                     let writer_spec = hound::WavSpec {
                         channels: 1,
@@ -86,23 +155,17 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    debug!("Writing WAV to '{}'", metadata.filename);
-
                     let mut filename = metadata.filename.clone();
                     filename.push_str(".wav");
 
-                    wav::write_wav(filename.as_str(), &signal, writer_spec)?;
+                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
                 },
-                Step::Signal(signal, rate) => {
-                    if metadata.variant != "signal" {
-                        return Err(err::Error::Internal(format!(
-                            "Expected step \"{}\", got {:?}", metadata.description, step)));
-                    }
+                Variant::Signal => {
 
-                    let unpacked_rate = match rate.or(metadata.rate) {
+                    let unpacked_rate = match step.rate.or(metadata.rate) {
                         Some(r) => r,
                         None => return Err(err::Error::Internal(format!(
-                            "Unknown rate for step \"{}\"", metadata.description))),
+                            "Unknown rate for step \"{}\"", step.id))),
                     };
 
                     let writer_spec = hound::WavSpec {
@@ -112,12 +175,11 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    debug!("Writing WAV to '{}'", metadata.filename);
-
-                    let mut filename = metadata.filename.clone();
+                    let mut filename = String::new();
+                    filename.push_str(metadata.filename.as_str());
                     filename.push_str(".wav");
 
-                    wav::write_wav(filename.as_str(), &signal, writer_spec)?;
+                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
                 },
             };
         }
@@ -125,115 +187,154 @@ impl Context {
         Ok(())
     }
 
-    pub fn resample(export_wav: bool) -> Context {
+    pub fn resample(
+        export_wav: bool,
+        export_resample_filtered: bool
+    ) -> Context {
+
         Context {
             steps_metadata: vec![
                 StepMetadata {
                     description: "Samples read from WAV".to_string(),
-                    filename: "0_input".to_string(),
-                    variant: "signal".to_string(),
+                    id: "input".to_string(),
+                    filename: "00_input".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filter used on resample".to_string(),
-                    filename: "1_resample_filter".to_string(),
-                    variant: "filter".to_string(),
+                    id: "resample_filter".to_string(),
+                    filename: "01_resample_filter".to_string(),
+                    variant: Variant::Filter,
+                    rate: None,
+                },
+                StepMetadata {
+                    description: "Expanded and filtered signal".to_string(),
+                    id: "resample_filtered".to_string(),
+                    filename: "02_resample_filtered".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Result of resample".to_string(),
-                    filename: "2_resampled".to_string(),
-                    variant: "signal".to_string(),
+                    id: "resample_decimated".to_string(),
+                    filename: "03_resample_result".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 }
-            ].into_iter(),
+            ],
+            export: export_wav,
+            export_resample_filtered,
             export_wav,
+            index: 0,
         }
     }
 
-    pub fn decode(work_rate: Rate, final_rate: Rate, export_wav: bool) -> Context {
+    pub fn decode(
+        work_rate: Rate,
+        final_rate: Rate,
+        export_wav: bool,
+        export_resample_filtered: bool
+    ) -> Context {
+
         Context {
             steps_metadata: vec![
                 StepMetadata {
                     description: "Samples read from WAV".to_string(),
-                    filename: "0_input".to_string(),
-                    variant: "signal".to_string(),
+                    id: "input".to_string(),
+                    filename: "00_input".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filter used on first resample".to_string(),
-                    filename: "1_resample_filter".to_string(),
-                    variant: "filter".to_string(),
+                    id: "resample_filter".to_string(),
+                    filename: "01_resample_filter".to_string(),
+                    variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Expanded and filtered on first resample".to_string(),
-                    filename: "2_resample_filtered".to_string(),
-                    variant: "signal".to_string(),
+                    id: "resample_filtered".to_string(),
+                    filename: "02_resample_filtered".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Result of first resample".to_string(),
-                    filename: "3_resample_decimated".to_string(),
-                    variant: "signal".to_string(),
+                    id: "resample_decimated".to_string(),
+                    filename: "03_resample_decimated".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Raw demodulated signal".to_string(),
-                    filename: "4_demodulated_unfiltered".to_string(),
-                    variant: "signal".to_string(),
+                    id: "demodulation_result".to_string(),
+                    filename: "04_demodulated_unfiltered".to_string(),
+                    variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
                     description: "Filter for demodulated signal".to_string(),
-                    filename: "5_demodulation_filter".to_string(),
-                    variant: "filter".to_string(),
+                    id: "filter_filter".to_string(),
+                    filename: "05_demodulation_filter".to_string(),
+                    variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filtered demodulated signal".to_string(),
-                    filename: "6_demodulated".to_string(),
-                    variant: "signal".to_string(),
+                    id: "filter_result".to_string(),
+                    filename: "06_demodulated".to_string(),
+                    variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
                     description: "Cross correlation used in syncing".to_string(),
-                    filename: "7_sync_correlation".to_string(),
-                    variant: "signal".to_string(),
+                    id: "sync_correlation".to_string(),
+                    filename: "07_sync_correlation".to_string(),
+                    variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
                     description: "Synced signal".to_string(),
-                    filename: "8_synced".to_string(),
-                    variant: "signal".to_string(),
+                    id: "sync_result".to_string(),
+                    filename: "08_synced".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Filter used on second resample".to_string(),
-                    filename: "9_resample_filter".to_string(),
-                    variant: "filter".to_string(),
+                    id: "resample_filter".to_string(),
+                    filename: "09_resample_filter".to_string(),
+                    variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
                     description: "Expanded and filtered on second resample".to_string(),
+                    id: "resample_filtered".to_string(),
                     filename: "10_resample_filtered".to_string(),
-                    variant: "signal".to_string(),
+                    variant: Variant::Signal,
                     rate: Some(final_rate),
                 },
                 StepMetadata {
                     description: "Result of second resample".to_string(),
+                    id: "resample_decimated".to_string(),
                     filename: "11_resample_decimated".to_string(),
-                    variant: "signal".to_string(),
+                    variant: Variant::Signal,
                     rate: Some(final_rate),
                 },
                 StepMetadata {
                     description: "Result of signal mapping, contrast check".to_string(),
+                    id: "mapped".to_string(),
                     filename: "12_mapped".to_string(),
-                    variant: "signal".to_string(),
+                    variant: Variant::Signal,
                     rate: None,
                 },
-            ].into_iter(),
+            ],
+            export: export_wav,
+            export_resample_filtered,
             export_wav,
+            index: 0,
         }
     }
 }

@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 
 
 /// Some kind of filter
-pub trait Filter {
+pub trait Filter: std::clone::Clone {
     /// Design filter from parameters.
     fn design(&self) -> Signal;
 
@@ -13,12 +13,14 @@ pub trait Filter {
 }
 
 /// No filter.
+#[derive(Clone)]
 pub struct NoFilter;
 
 /// Lowpass FIR filter, windowed by a kaiser window.
 ///
 /// Attenuation in positive decibels. The transition band goes from
 /// `cutout - delta_w / 2` to `cutout + delta_w / 2`.
+#[derive(Clone)]
 pub struct Lowpass {
     pub cutout: Freq,
     pub atten: f32,
@@ -31,6 +33,7 @@ pub struct Lowpass {
 /// transition bands, one is the same transition band that lowpass() has:
 /// `cutout - delta_w / 2` to `cutout + delta_w / 2`. The other transition band
 /// goes from `0` to `delta_w`.
+#[derive(Clone)]
 pub struct LowpassDcRemoval {
     pub cutout: Freq,
     pub atten: f32,

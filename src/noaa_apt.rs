@@ -32,14 +32,15 @@ pub fn resample_wav(
     output_filename: &str,
     output_rate: Rate,
     export_wav: bool,
+    export_resample_filtered: bool,
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
-    let mut context = Context::resample(export_wav);
+    let mut context = Context::resample(export_wav, export_resample_filtered);
 
-    context.step(Step::Signal(&input_signal, Some(input_rate)))?;
+    context.step(Step::signal("input", &input_signal, Some(input_rate)))?;
 
     info!("Resampling");
     let resampled = dsp::resample(
@@ -101,12 +102,11 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
 
     // Save cross-correlation if wav-steps is enabled
     let mut correlation;
-    if context.export_wav {
+    if context.export {
         correlation = Vec::with_capacity(signal.len() - guard.len());
     } else {
         correlation = Vec::with_capacity(0); // Not going to be used
     }
-
 
     for i in 0 .. signal.len() - guard.len() {
         let mut corr: f32 = 0.;
@@ -118,7 +118,7 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
             }
         }
 
-        if context.export_wav {
+        if context.export {
             correlation.push(corr);
         }
 
@@ -136,8 +136,8 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
         }
     }
 
-    if context.export_wav {
-        context.step(Step::Signal(&correlation, None))?;
+    if context.export {
+        context.step(Step::signal("sync_correlation", &correlation, None))?;
     }
 
     info!("Found {} sync frames", peaks.len());
@@ -150,6 +150,7 @@ pub fn decode(
     input_filename: &str,
     output_filename: &str,
     export_wav: bool,
+    export_resample_filtered: bool,
     sync: bool,
 ) -> err::Result<()>{
 
@@ -159,9 +160,10 @@ pub fn decode(
     let input_rate = Rate::hz(input_spec.sample_rate);
     let work_rate = Rate::hz(WORK_RATE);
     let final_rate = Rate::hz(FINAL_RATE);
-    let mut context = Context::decode(work_rate, final_rate, export_wav);
+    let mut context = Context::decode(
+        work_rate, final_rate, export_wav, export_resample_filtered);
 
-    context.step(Step::Signal(&signal, Some(input_rate)))?;
+    context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
     info!("Resampling to {}", WORK_RATE);
 
@@ -233,6 +235,9 @@ pub fn decode(
     } else {
         info!("Not syncing");
 
+        // If we are not syncing send a dummy correlation step
+        context.step(Step::signal("sync_correlation", &vec![], Some(work_rate)))?;
+
         // Crop signal to multiple of SAMPLES_PER_WORK_ROW
         let length = signal.len();
         signal.truncate(length
@@ -241,7 +246,7 @@ pub fn decode(
         );
     }
 
-    context.step(Step::Signal(&signal, Some(work_rate)))?;
+    context.step(Step::signal("sync_result", &signal, Some(work_rate)))?;
 
     info!("Resampling to 4160");
 
@@ -256,7 +261,11 @@ pub fn decode(
     let signal: Vec<u8> = signal.iter()
         .map(|x| ((x - min) / range * 255.) as u8).collect();
 
-    context.step(Step::Signal(&signal.iter().map(|x| *x as f32).collect(), Some(final_rate)))?;
+    context.step(Step::signal(
+            "mapped",
+            &signal.iter().map(|x| *x as f32).collect(),
+            Some(final_rate)
+    ))?;
 
     info!("Writing PNG to '{}'", output_filename);
 

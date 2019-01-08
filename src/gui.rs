@@ -242,6 +242,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         input_filename.as_str(),
                         output_filename.as_str(),
                         wav_steps,
+                        false, // TODO: add checkbubtton to gui
                         sync,
                 ) {
                     Ok(_) => tx.send(Message::Success)
@@ -262,6 +263,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         output_filename.as_str(),
                         Rate::hz(rate),
                         wav_steps,
+                        false, // TODO: add checkbubtton to gui
                 ) {
                     Ok(_) => tx.send(Message::Success)
                         .expect("Failed to send message to main thread"),

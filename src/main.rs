@@ -34,6 +34,7 @@ fn main() -> err::Result<()> {
     let mut debug = false;
     let mut quiet = false;
     let mut wav_steps = false;
+    let mut export_resample_filtered = false;
     let mut sync = true;
     let mut print_version = false;
     let mut output_filename: Option<String> = None;
@@ -59,6 +60,11 @@ fn main() -> err::Result<()> {
             "Export a WAV for every step of the decoding process for debugging, \
             the files will be located on the current folder, named \
             {number}_{description}.wav");
+        parser.refer(&mut export_resample_filtered)
+            .add_option(&["--export-resample-filtered"], argparse::StoreTrue,
+            "Export a WAV for the expanded and filtered signal on the resampling
+            step. Very expensive operation, can take several GiB of both RAM and
+            disk.");
         parser.refer(&mut sync)
             .add_option(&["--no-sync"], argparse::StoreFalse,
             "Disable syncing, useful when the sync frames are noisy and the \
@@ -114,6 +120,7 @@ fn main() -> err::Result<()> {
                         output.as_str(),
                         Rate::hz(rate),
                         wav_steps,
+                        export_resample_filtered,
                     ) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),
@@ -131,6 +138,7 @@ fn main() -> err::Result<()> {
                         input_filename.as_str(),
                         output.as_str(),
                         wav_steps,
+                        export_resample_filtered,
                         sync,
                     ) {
                         Ok(_) => (),
