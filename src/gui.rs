@@ -31,35 +31,39 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug)]
 struct WidgetList {
-    window:                   gtk::ApplicationWindow,
-    status_label:             gtk::Label,
-    footer_label:             gtk::Label,
-    start_button:             gtk::Button,
-    decode_output_entry:      gtk::Entry,
-    resample_output_entry:    gtk::Entry,
-    resample_rate_spinner:    gtk::SpinButton,
-    input_file_chooser:       gtk::FileChooserButton,
-    options_stack:            gtk::Stack,
-    decode_sync_check:        gtk::CheckButton,
-    decode_wav_steps_check:   gtk::CheckButton,
-    resample_wav_steps_check: gtk::CheckButton,
+    window:                       gtk::ApplicationWindow,
+    status_label:                 gtk::Label,
+    footer_label:                 gtk::Label,
+    start_button:                 gtk::Button,
+    decode_output_entry:          gtk::Entry,
+    resample_output_entry:        gtk::Entry,
+    resample_rate_spinner:        gtk::SpinButton,
+    input_file_chooser:           gtk::FileChooserButton,
+    options_stack:                gtk::Stack,
+    decode_sync_check:            gtk::CheckButton,
+    decode_wav_steps_check:       gtk::CheckButton,
+    resample_wav_steps_check:     gtk::CheckButton,
+    decode_resample_step_check:   gtk::CheckButton,
+    resample_resample_step_check: gtk::CheckButton,
 }
 
 impl WidgetList {
     fn create(builder: &gtk::Builder) -> WidgetList {
         WidgetList {
-            window:                   builder.get_object("window"                  ).expect("Couldn't get window"                  ),
-            status_label:             builder.get_object("status_label"            ).expect("Couldn't get status_label"            ),
-            footer_label:             builder.get_object("footer_label"            ).expect("Couldn't get footer_label"            ),
-            start_button:             builder.get_object("start_button"            ).expect("Couldn't get start_button"            ),
-            decode_output_entry:      builder.get_object("decode_output_entry"     ).expect("Couldn't get decode_output_entry"     ),
-            resample_output_entry:    builder.get_object("resample_output_entry"   ).expect("Couldn't get resample_output_entry"   ),
-            resample_rate_spinner:    builder.get_object("resample_rate_spinner"   ).expect("Couldn't get resample_rate_spinner"   ),
-            input_file_chooser:       builder.get_object("input_file_chooser"      ).expect("Couldn't get input_file_chooser"      ),
-            options_stack:            builder.get_object("options_stack"           ).expect("Couldn't get options_stack"           ),
-            decode_sync_check:        builder.get_object("decode_sync_check"       ).expect("Couldn't get decode_sync_check"       ),
-            decode_wav_steps_check:   builder.get_object("decode_wav_steps_check"  ).expect("Couldn't get decode_wav_steps_check"  ),
-            resample_wav_steps_check: builder.get_object("resample_wav_steps_check").expect("Couldn't get resample_wav_steps_check"),
+            window:                       builder.get_object("window"                      ).expect("Couldn't get window"                      ),
+            status_label:                 builder.get_object("status_label"                ).expect("Couldn't get status_label"                ),
+            footer_label:                 builder.get_object("footer_label"                ).expect("Couldn't get footer_label"                ),
+            start_button:                 builder.get_object("start_button"                ).expect("Couldn't get start_button"                ),
+            decode_output_entry:          builder.get_object("decode_output_entry"         ).expect("Couldn't get decode_output_entry"         ),
+            resample_output_entry:        builder.get_object("resample_output_entry"       ).expect("Couldn't get resample_output_entry"       ),
+            resample_rate_spinner:        builder.get_object("resample_rate_spinner"       ).expect("Couldn't get resample_rate_spinner"       ),
+            input_file_chooser:           builder.get_object("input_file_chooser"          ).expect("Couldn't get input_file_chooser"          ),
+            options_stack:                builder.get_object("options_stack"               ).expect("Couldn't get options_stack"               ),
+            decode_sync_check:            builder.get_object("decode_sync_check"           ).expect("Couldn't get decode_sync_check"           ),
+            decode_wav_steps_check:       builder.get_object("decode_wav_steps_check"      ).expect("Couldn't get decode_wav_steps_check"      ),
+            decode_resample_step_check:   builder.get_object("decode_resample_step_check"  ).expect("Couldn't get decode_resample_step_check"  ),
+            resample_wav_steps_check:     builder.get_object("resample_wav_steps_check"    ).expect("Couldn't get resample_wav_steps_check"    ),
+            resample_resample_step_check: builder.get_object("resample_resample_step_check").expect("Couldn't get resample_resample_step_check"),
         }
     }
 }
@@ -235,6 +239,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
         Action::Decode => {
             let sync = widgets.decode_sync_check.get_active();
             let wav_steps = widgets.decode_wav_steps_check.get_active();
+            let resample_step = widgets.decode_resample_step_check.get_active();
             debug!("Decode {} to {}", input_filename, output_filename);
 
             std::thread::spawn(move || {
@@ -242,7 +247,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         input_filename.as_str(),
                         output_filename.as_str(),
                         wav_steps,
-                        false, // TODO: add checkbubtton to gui
+                        resample_step,
                         sync,
                 ) {
                     Ok(_) => tx.send(Message::Success)
@@ -255,6 +260,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
         Action::Resample => {
             let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
             let wav_steps = widgets.resample_wav_steps_check.get_active();
+            let resample_step = widgets.resample_resample_step_check.get_active();
             debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
             std::thread::spawn(move || {
@@ -263,7 +269,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                         output_filename.as_str(),
                         Rate::hz(rate),
                         wav_steps,
-                        false, // TODO: add checkbubtton to gui
+                        resample_step,
                 ) {
                     Ok(_) => tx.send(Message::Success)
                         .expect("Failed to send message to main thread"),

@@ -2,11 +2,6 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.16"/>
-  <object class="GtkImage" id="decode_resample_step_check_image">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-help</property>
-  </object>
   <object class="GtkImage" id="decode_sync_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -22,11 +17,6 @@
     <property name="value">11025</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
-  </object>
-  <object class="GtkImage" id="resample_resample_step_check_image">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-help</property>
   </object>
   <object class="GtkImage" id="resample_wav_steps_check_image">
     <property name="visible">True</property>
@@ -214,23 +204,6 @@
                                         <property name="position">1</property>
                                       </packing>
                                     </child>
-                                    <child>
-                                      <object class="GtkCheckButton" id="decode_resample_step_check">
-                                        <property name="label" translatable="yes">Save resample "expanded_filtered" step</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">False</property>
-                                        <property name="tooltip_text" translatable="yes">Export the expanded and filtered signal on the resampling step. Very expensive operation, can take several GiB of both RAM and disk. WAV steps saving should be set.</property>
-                                        <property name="image">decode_resample_step_check_image</property>
-                                        <property name="image_position">right</property>
-                                        <property name="draw_indicator">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">True</property>
-                                        <property name="position">2</property>
-                                      </packing>
-                                    </child>
                                   </object>
                                 </child>
                                 <child type="label">
@@ -352,23 +325,6 @@
                                         <property name="receives_default">False</property>
                                         <property name="tooltip_text" translatable="yes">Export a WAV for every step of the decoding process for debugging, the files will be located on the current folder, named {number}_{description}.wav</property>
                                         <property name="image">resample_wav_steps_check_image</property>
-                                        <property name="image_position">right</property>
-                                        <property name="draw_indicator">True</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">True</property>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkCheckButton" id="resample_resample_step_check">
-                                        <property name="label" translatable="yes">Save resample "expanded_filtered" step</property>
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="receives_default">False</property>
-                                        <property name="tooltip_text" translatable="yes">Export the expanded and filtered signal on the resampling step. Very expensive operation, can take several GiB of both RAM and disk. WAV steps saving should be set.</property>
-                                        <property name="image">resample_resample_step_check_image</property>
                                         <property name="image_position">right</property>
                                         <property name="draw_indicator">True</property>
                                       </object>

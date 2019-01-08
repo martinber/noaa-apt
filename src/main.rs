@@ -64,7 +64,7 @@ fn main() -> err::Result<()> {
             .add_option(&["--export-resample-filtered"], argparse::StoreTrue,
             "Export a WAV for the expanded and filtered signal on the resampling
             step. Very expensive operation, can take several GiB of both RAM and
-            disk.");
+            disk. --wav-steps should be set.");
         parser.refer(&mut sync)
             .add_option(&["--no-sync"], argparse::StoreFalse,
             "Disable syncing, useful when the sync frames are noisy and the \
