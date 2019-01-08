@@ -83,7 +83,7 @@ pub fn resample_with_filter(
 
         let filtered = &filter(context, &signal, filt)?;
 
-        context.step(Step::signal("resample_filtered", &signal, Some(input_rate)))?;
+        context.step(Step::signal("resample_filtered", &filtered, Some(input_rate)))?;
 
         result = decimate(filtered, m);
 
@@ -105,9 +105,13 @@ pub fn resample(
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
+    // Just to prevent aliasing. We need the frequency referenced to the
+    // input_rate.
+    let cutout = Freq::hz(output_rate.get_hz() as f32 / 2., input_rate);
+
     resample_with_filter(context, &signal, input_rate, output_rate,
         filters::Lowpass {
-            cutout: Freq::pi_rad(1.),
+            cutout,
             atten: 40.,
             delta_w: delta_w
         }
