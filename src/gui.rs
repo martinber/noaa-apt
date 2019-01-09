@@ -10,18 +10,22 @@
 //! multiple ownership of the struct. Previously I wrapped inside Rc and RefCell
 //! too to allow mutable access to everyone, but AFAIK having mutable access
 //! to a Widget is not neccesary.
+//!
+//! When doing a callback from another thread I use ThreadGuard, lets you Send
+//! the Widgets to another thread but you cant use them there (panics in that
+//! case). So I use glib::idle_add() to execute code on the main thread from
+//! another thread. In the end, we send the widgets to another thread and back.
 
 use noaa_apt;
 use dsp::Rate;
-use err;
+use misc::ThreadGuard;
 
 use gtk;
-use gdk;
 use gio;
+use glib;
 
 use std::env::args;
 use std::rc::Rc;
-use std::sync::mpsc;
 
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -102,14 +106,9 @@ fn build_ui(application: &gtk::Application) {
     widgets.status_label.set_label("Ready");
     widgets.start_button.set_sensitive(true);
 
-    // Set version on footer
+    // Set footer
 
-    widgets.footer_label.set_label(format!(
-        "noaa-apt {}\n\
-        Martín Bernardi\n\
-        martin@mbernardi.com.ar",
-        VERSION
-    ).as_str());
+    update_footer(Rc::clone(&widgets));
 
     // Configure decode_output_entry file chooser
 
@@ -223,17 +222,24 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
 
     widgets.status_label.set_markup("Processing");
 
-    // Hack to refresh the label
-    while gtk::events_pending() {
-        gtk::main_iteration();
-    }
-    gdk::Window::process_all_updates();
-
-    let (tx, rx) = mpsc::channel();
-    enum Message {
-        Success,
-        Failed(err::Error),
-    }
+    // Callback called when decode/resample ends. Using ThreadGuard to send
+    // widgets to another thread and back
+    let widgets_cell = ThreadGuard::new(widgets.clone());
+    let callback = move |result| {
+        glib::idle_add(move || {
+            let widgets = widgets_cell.borrow();
+            match result {
+                Ok(()) => {
+                    widgets.status_label.set_markup("Finished");
+                },
+                Err(ref e) => {
+                    widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
+                    error!("{}", e);
+                },
+            }
+            gtk::Continue(false)
+        });
+    };
 
     match action {
         Action::Decode => {
@@ -243,20 +249,15 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             debug!("Decode {} to {}", input_filename, output_filename);
 
             std::thread::spawn(move || {
-                match noaa_apt::decode(
-                        input_filename.as_str(),
-                        output_filename.as_str(),
-                        wav_steps,
-                        resample_step,
-                        sync,
-                ) {
-                    Ok(_) => tx.send(Message::Success)
-                        .expect("Failed to send message to main thread"),
-                    Err(e) => tx.send(Message::Failed(e))
-                        .expect("Failed to send message to main thread"),
-                };
-            })
-        }
+                callback(noaa_apt::decode(
+                    input_filename.as_str(),
+                    output_filename.as_str(),
+                    wav_steps,
+                    resample_step,
+                    sync,
+                ));
+            });
+        },
         Action::Resample => {
             let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
             let wav_steps = widgets.resample_wav_steps_check.get_active();
@@ -264,44 +265,67 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
             std::thread::spawn(move || {
-                match noaa_apt::resample_wav(
-                        input_filename.as_str(),
-                        output_filename.as_str(),
-                        Rate::hz(rate),
-                        wav_steps,
-                        resample_step,
-                ) {
-                    Ok(_) => tx.send(Message::Success)
-                        .expect("Failed to send message to main thread"),
-                    Err(e) => tx.send(Message::Failed(e))
-                        .expect("Failed to send message to main thread"),
-                };
-            })
-        }
+                callback(noaa_apt::resample_wav(
+                    input_filename.as_str(),
+                    output_filename.as_str(),
+                    Rate::hz(rate),
+                    wav_steps,
+                    resample_step,
+                ));
+            });
+        },
+    };
+}
+
+/// Check for updates on another thread and show the result on the footer
+fn update_footer(widgets: Rc<WidgetList>) {
+
+    // Show this while we check for updates online
+
+    widgets.footer_label.set_label(format!(
+        "noaa-apt {}\n\
+        Martín Bernardi\n\
+        martin@mbernardi.com.ar",
+        VERSION
+    ).as_str());
+
+    let widgets_cell = ThreadGuard::new(widgets);
+
+    let callback = move |result| {
+        glib::idle_add(move || {
+            let widgets = widgets_cell.borrow();
+            match result {
+                Some((true, ref latest)) => {
+                    widgets.footer_label.set_markup(format!(
+                        "noaa-apt {} - <b>Version \"{}\" available for download!</b>\n\
+                        Martín Bernardi\n\
+                        martin@mbernardi.com.ar",
+                        VERSION, latest
+                    ).as_str());
+                },
+                Some((false, ref _latest)) => {
+                    widgets.footer_label.set_markup(format!(
+                        "noaa-apt {} - You have the latest version available\n\
+                        Martín Bernardi\n\
+                        martin@mbernardi.com.ar",
+                        VERSION
+                    ).as_str());
+                },
+                None => {
+                    widgets.footer_label.set_markup(format!(
+                        "noaa-apt {} - Error checking for updates\n\
+                        Martín Bernardi\n\
+                        martin@mbernardi.com.ar",
+                        VERSION
+                    ).as_str());
+                },
+            }
+            gtk::Continue(false)
+        });
     };
 
-    // Wait until the thread ends, I can't figure out how to make a callback to
-    // thread.join() or a callback for when a message is ready on the rx
-    // channel. So I'm polling when the gtk thread is idle.
-    // I can't poll until the thread ends, so I poll until there are no more
-    // messages,
-
-    // TODO: fix this, I'm using 100% CPU!
-
-    // Continue(false) stops this GTK+ task/thread whatever it is.
-    gtk::idle_add(move || {
-        match rx.try_recv() {
-            Ok(Message::Success) => {
-                widgets.status_label.set_markup("Finished");
-                gtk::Continue(true)
-            },
-            Ok(Message::Failed(e)) => {
-                widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
-                error!("{}", e);
-                gtk::Continue(true)
-            },
-            Err(mpsc::TryRecvError::Empty) => gtk::Continue(true),
-            Err(mpsc::TryRecvError::Disconnected) => gtk::Continue(false),
-        }
+    std::thread::spawn(move || {
+        callback(noaa_apt::check_updates(VERSION.to_string()));
     });
+
 }

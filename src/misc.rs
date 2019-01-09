@@ -1,3 +1,6 @@
+use std::cell::{Ref, RefCell, RefMut};
+use std::thread;
+
 // Lookup table for numbers used in Bessel function.
 // 1 / (n! * 2^n)^2
 const BESSEL_TABLE: [f32; 20] = [
@@ -38,6 +41,62 @@ pub fn bessel_i0(x: f32) -> f32 {
     result + 1.
 }
 
+/// TheardGuard is a _runtime_ thread guard for its internal data. It panics if
+/// data is being accessed from a thread other than the one that TheardGuard
+/// was initialized in.
+///
+/// Taken from https://github.com/vhakulinen/gnvim
+/// vhakulinen, MIT license
+pub struct ThreadGuard<T> {
+    thread_id: thread::ThreadId,
+    data: RefCell<T>,
+}
+
+unsafe impl<T> Send for ThreadGuard<T> {}
+unsafe impl<T> Sync for ThreadGuard<T> {}
+
+impl<T> ThreadGuard<T> {
+    pub fn new(data: T) -> Self {
+        ThreadGuard {
+            thread_id: thread::current().id(),
+            data: RefCell::new(data),
+        }
+    }
+
+    pub fn borrow(&self) -> Ref<T> {
+        match self.check_thread() {
+            Ok(_) => self.data.borrow(),
+            Err(_) => {
+                panic!(
+                    "Data is only accessible on thread {:?} (current is {:?})",
+                    self.thread_id,
+                    thread::current().id(),
+                );
+            }
+        }
+    }
+
+    pub fn borrow_mut(&self) -> RefMut<T> {
+        match self.check_thread() {
+            Ok(_) => self.data.borrow_mut(),
+            Err(_) => {
+                panic!(
+                    "Data is only accessible on thread {:?} (current is {:?})",
+                    self.thread_id,
+                    thread::current().id(),
+                );
+            }
+        }
+    }
+
+    fn check_thread(&self) -> Result<(), ()> {
+        if self.thread_id == thread::current().id() {
+            return Ok(());
+        }
+        Err(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -63,5 +122,39 @@ mod tests {
         assert_relative_eq!(bessel_i0(6.),  67.2344069764780, max_relative = tolerance);
         assert_relative_eq!(bessel_i0(6.5), 106.292858243996, max_relative = tolerance);
         assert_relative_eq!(bessel_i0(7.),  168.593908510290, max_relative = tolerance);
+    }
+
+    #[test]
+    #[should_panic]
+    fn access_denied_across_thread() {
+        let data = 1;
+        let guard = ThreadGuard::new(data);
+
+        thread::spawn(move || {
+            guard.borrow();
+        })
+        .join()
+        .unwrap();
+    }
+
+    #[test]
+    fn access_granted_from_correct_thread() {
+        let data = 1;
+        let guard = ThreadGuard::new(data);
+
+        guard.borrow();
+    }
+
+    #[test]
+    fn can_mutate() {
+        let data = 1;
+        let guard = ThreadGuard::new(data);
+
+        {
+            let mut data = guard.borrow_mut();
+            *data = 4;
+        }
+
+        assert_eq!(*guard.borrow(), 4);
     }
 }

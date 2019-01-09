@@ -22,6 +22,7 @@ mod context;
 #[cfg(feature = "gui")] extern crate gtk;
 #[cfg(feature = "gui")] extern crate gdk;
 #[cfg(feature = "gui")] extern crate gio;
+#[cfg(feature = "gui")] extern crate glib;
 
 
 use dsp::Rate;
