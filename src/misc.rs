@@ -55,6 +55,7 @@ pub struct ThreadGuard<T> {
 unsafe impl<T> Send for ThreadGuard<T> {}
 unsafe impl<T> Sync for ThreadGuard<T> {}
 
+#[allow(dead_code)]
 impl<T> ThreadGuard<T> {
     pub fn new(data: T) -> Self {
         ThreadGuard {

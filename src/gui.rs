@@ -31,7 +31,7 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Debug)]
 struct WidgetList {
@@ -194,7 +194,9 @@ enum Action {
     Resample,
 }
 
-/// Start decoding or resampling
+/// Start decoding or resampling.
+///
+/// Starts another working thread and updates the status_label when finished.
 fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
 
     let input_filename = match widgets.input_file_chooser.get_filename() {
@@ -289,8 +291,10 @@ fn update_footer(widgets: Rc<WidgetList>) {
         VERSION
     ).as_str());
 
-    let widgets_cell = ThreadGuard::new(widgets);
 
+    // Callback called when check_update ends. Using ThreadGuard to send
+    // widgets to another thread and back
+    let widgets_cell = ThreadGuard::new(widgets);
     let callback = move |result| {
         glib::idle_add(move || {
             let widgets = widgets_cell.borrow();
@@ -325,7 +329,7 @@ fn update_footer(widgets: Rc<WidgetList>) {
     };
 
     std::thread::spawn(move || {
-        callback(noaa_apt::check_updates(VERSION.to_string()));
+        callback(noaa_apt::check_updates(VERSION));
     });
 
 }

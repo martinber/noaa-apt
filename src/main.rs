@@ -27,7 +27,7 @@ mod context;
 
 use dsp::Rate;
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> err::Result<()> {
 
@@ -93,7 +93,7 @@ fn main() -> err::Result<()> {
 
     if print_version {
         println!("noaa-apt image decoder version {}", VERSION);
-        match noaa_apt::check_updates(VERSION.to_string()) {
+        match noaa_apt::check_updates(VERSION) {
             Some((false, _latest)) => println!("You have the latest version available"),
             Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
             None => println!("Could not retrieve latest version available"),

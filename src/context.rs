@@ -3,8 +3,8 @@
 //! by storing the samples as a WAV file.
 //!
 //! Meanwhile in the future maybe instead of saving the samples on WAV files I
-//! can plot them on the GUI. Also I don't want to add code on every function
-//! on the dsp module.
+//! can plot them on the GUI. Also I don't want clutter every function on the
+//! dsp and noaa_apt modules with code for WAV export.
 //!
 //! So every interesting function (on the dsp or noaa_apt module) should get an
 //! instance of Context, and send to it results of each step. Then the Context
@@ -72,9 +72,9 @@ impl<'a> Step<'a> {
 
 /// Holds information about each step.
 struct StepMetadata {
-    description: String,
-    id: String,
-    filename: String,
+    description: &'static str,
+    id: &'static str,
+    filename: &'static str,
     variant: Variant,
     rate: Option<Rate>,
 }
@@ -82,19 +82,15 @@ struct StepMetadata {
 /// Keep track of some settings and manage the results of each step of the
 /// decoding process.
 ///
-/// So every interesting function should get an instance of Context, and give it
-/// results of each steps. Then the Context will save them as WAV or do nothing
-/// depending on the user's settings.
-///
 /// Has a list of StepMetadata, with information about each step we expect to
 /// get when someone calls our step() function.
 pub struct Context {
-    /// Information about each step we expect to receive.
     steps_metadata: Vec<StepMetadata>,
 
     /// If we are exporting something, functions like noaa_apt::find_sync()
     /// check this to decide if they should do things fast or they should do
-    /// extra work and save intermediate signals.
+    /// extra work and save intermediate signals. Anyways, for now it's always
+    /// the same as export_wav.
     pub export: bool,
 
     /// If we are exporting the filtered signal on resample. When using
@@ -105,7 +101,7 @@ pub struct Context {
     /// Private field, if we are exporting to WAV.
     export_wav: bool,
 
-    /// Current step index
+    /// Current step index.
     index: usize,
 }
 
@@ -150,12 +146,12 @@ impl Context {
 
                     let writer_spec = hound::WavSpec {
                         channels: 1,
-                        sample_rate: 1,
+                        sample_rate: 1, // Could be anything
                         bits_per_sample: 32,
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = metadata.filename.clone();
+                    let mut filename = metadata.filename.to_string();
                     filename.push_str(".wav");
 
                     wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
@@ -175,8 +171,7 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = String::new();
-                    filename.push_str(metadata.filename.as_str());
+                    let mut filename = metadata.filename.to_string();
                     filename.push_str(".wav");
 
                     wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
@@ -195,30 +190,30 @@ impl Context {
         Context {
             steps_metadata: vec![
                 StepMetadata {
-                    description: "Samples read from WAV".to_string(),
-                    id: "input".to_string(),
-                    filename: "00_input".to_string(),
+                    description: "Samples read from WAV",
+                    id: "input",
+                    filename: "00_input",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Filter used on resample".to_string(),
-                    id: "resample_filter".to_string(),
-                    filename: "01_resample_filter".to_string(),
+                    description: "Filter used on resample",
+                    id: "resample_filter",
+                    filename: "01_resample_filter",
                     variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Expanded and filtered signal".to_string(),
-                    id: "resample_filtered".to_string(),
-                    filename: "02_resample_filtered".to_string(),
+                    description: "Expanded and filtered signal",
+                    id: "resample_filtered",
+                    filename: "02_resample_filtered",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Result of resample".to_string(),
-                    id: "resample_decimated".to_string(),
-                    filename: "03_resample_result".to_string(),
+                    description: "Result of resample",
+                    id: "resample_decimated",
+                    filename: "03_resample_result",
                     variant: Variant::Signal,
                     rate: None,
                 }
@@ -240,93 +235,93 @@ impl Context {
         Context {
             steps_metadata: vec![
                 StepMetadata {
-                    description: "Samples read from WAV".to_string(),
-                    id: "input".to_string(),
-                    filename: "00_input".to_string(),
+                    description: "Samples read from WAV",
+                    id: "input",
+                    filename: "00_input",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Filter used on first resample".to_string(),
-                    id: "resample_filter".to_string(),
-                    filename: "01_resample_filter".to_string(),
+                    description: "Filter used on first resample",
+                    id: "resample_filter",
+                    filename: "01_resample_filter",
                     variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Expanded and filtered on first resample".to_string(),
-                    id: "resample_filtered".to_string(),
-                    filename: "02_resample_filtered".to_string(),
+                    description: "Expanded and filtered on first resample",
+                    id: "resample_filtered",
+                    filename: "02_resample_filtered",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Result of first resample".to_string(),
-                    id: "resample_decimated".to_string(),
-                    filename: "03_resample_decimated".to_string(),
+                    description: "Result of first resample",
+                    id: "resample_decimated",
+                    filename: "03_resample_decimated",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Raw demodulated signal".to_string(),
-                    id: "demodulation_result".to_string(),
-                    filename: "04_demodulated_unfiltered".to_string(),
+                    description: "Raw demodulated signal",
+                    id: "demodulation_result",
+                    filename: "04_demodulated_unfiltered",
                     variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
-                    description: "Filter for demodulated signal".to_string(),
-                    id: "filter_filter".to_string(),
-                    filename: "05_demodulation_filter".to_string(),
+                    description: "Filter for demodulated signal",
+                    id: "filter_filter",
+                    filename: "05_demodulation_filter",
                     variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Filtered demodulated signal".to_string(),
-                    id: "filter_result".to_string(),
-                    filename: "06_demodulated".to_string(),
+                    description: "Filtered demodulated signal",
+                    id: "filter_result",
+                    filename: "06_demodulated",
                     variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
-                    description: "Cross correlation used in syncing".to_string(),
-                    id: "sync_correlation".to_string(),
-                    filename: "07_sync_correlation".to_string(),
+                    description: "Cross correlation used in syncing",
+                    id: "sync_correlation",
+                    filename: "07_sync_correlation",
                     variant: Variant::Signal,
                     rate: Some(work_rate),
                 },
                 StepMetadata {
-                    description: "Synced signal".to_string(),
-                    id: "sync_result".to_string(),
-                    filename: "08_synced".to_string(),
+                    description: "Synced signal",
+                    id: "sync_result",
+                    filename: "08_synced",
                     variant: Variant::Signal,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Filter used on second resample".to_string(),
-                    id: "resample_filter".to_string(),
-                    filename: "09_resample_filter".to_string(),
+                    description: "Filter used on second resample",
+                    id: "resample_filter",
+                    filename: "09_resample_filter",
                     variant: Variant::Filter,
                     rate: None,
                 },
                 StepMetadata {
-                    description: "Expanded and filtered on second resample".to_string(),
-                    id: "resample_filtered".to_string(),
-                    filename: "10_resample_filtered".to_string(),
+                    description: "Expanded and filtered on second resample",
+                    id: "resample_filtered",
+                    filename: "10_resample_filtered",
                     variant: Variant::Signal,
                     rate: Some(final_rate),
                 },
                 StepMetadata {
-                    description: "Result of second resample".to_string(),
-                    id: "resample_decimated".to_string(),
-                    filename: "11_resample_decimated".to_string(),
+                    description: "Result of second resample",
+                    id: "resample_decimated",
+                    filename: "11_resample_decimated",
                     variant: Variant::Signal,
                     rate: Some(final_rate),
                 },
                 StepMetadata {
-                    description: "Result of signal mapping, contrast check".to_string(),
-                    id: "mapped".to_string(),
-                    filename: "12_mapped".to_string(),
+                    description: "Result of signal mapping, contrast check",
+                    id: "mapped",
+                    filename: "12_mapped",
                     variant: Variant::Signal,
                     rate: None,
                 },

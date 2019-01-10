@@ -46,7 +46,7 @@ pub fn resample_wav(
     let resampled = dsp::resample(
         &mut context, &input_signal, input_rate, output_rate, Freq::pi_rad(0.1))?;
 
-    if resampled.len() == 0 {
+    if resampled.is_empty() {
         return Err(err::Error::Internal(
             "Got zero samples after resampling, audio file too short or \
             output sampling frequency too low".to_string())
@@ -101,12 +101,11 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     let signal: Signal = signal.iter().map(|x| x - average).collect();
 
     // Save cross-correlation if wav-steps is enabled
-    let mut correlation;
-    if context.export {
-        correlation = Vec::with_capacity(signal.len() - guard.len());
+    let mut correlation = if context.export {
+        Vec::with_capacity(signal.len() - guard.len())
     } else {
-        correlation = Vec::with_capacity(0); // Not going to be used
-    }
+        Vec::with_capacity(0) // Not going to be used
+    };
 
     for i in 0 .. signal.len() - guard.len() {
         let mut corr: f32 = 0.;
@@ -196,7 +195,7 @@ pub fn decode(
 
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let filter = filters::Lowpass {
-        cutout: cutout,
+        cutout,
         atten: 20.,
         delta_w: cutout / 5.
     };
@@ -274,7 +273,7 @@ pub fn decode(
 
     let path = std::path::Path::new(output_filename);
     let file = std::fs::File::create(path)?;
-    let ref mut buffer = std::io::BufWriter::new(file);
+    let buffer = &mut std::io::BufWriter::new(file);
 
     let height = signal.len() as u32 / PX_PER_ROW;
 
@@ -294,7 +293,7 @@ pub fn decode(
 /// Returns a tuple of a bool idicating if there are new updates and a String
 /// with the latest version. Wrapped in Option, returns None if there were
 /// problems retrieving new versions and logs the error.
-pub fn check_updates(current: String) -> Option<(bool, String)> {
+pub fn check_updates(current: &str) -> Option<(bool, String)> {
     let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
 
     let latest: Option<String> = match reqwest::get(addr.as_str()) {

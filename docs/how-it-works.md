@@ -28,21 +28,7 @@ cargo test
 
 ## Things to do
 
-- Fix resampling problem.
-
-- Export expanded and filtered signal as WAV step.
-
-- Add version check to gui.
-
 - Add a *Development* page to the website.
-
-- Improve the context module. It's quite a mess, for example when using
-  `resample_with_filter()` the steps should be different depending if
-  `fast_resample()` or `decimate()` is used.
-
-- Export cross-correlation as WAV step.
-
-- Separate thread for GUI.
 
 - The parameters used for filter design are hardcoded, maybe add a toml file
   with constants?
@@ -217,6 +203,18 @@ can't find anything about it on the web.
 
   - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
     change the address to `127.0.0.1`.
+
+  - Order of `use` in code:
+
+        extern crate thirdparty;
+        pub mod …;
+        mod …;
+        pub use std::…;
+        pub use thirdparty::…;
+        pub use internal::…;
+        use std::…;
+        use thirdparty::…;
+        use internal::…;
 
 Favicons generated using [RealFaviconGenerator](https://realfavicongenerator.net/)
 

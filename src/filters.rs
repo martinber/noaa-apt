@@ -176,7 +176,7 @@ pub fn product(mut v1: Signal, v2: &Signal) -> Signal {
     }
 
     for i in 0 .. v1.len() {
-        v1[i] = v1[i] * v2[i];
+        v1[i] *= v2[i];
     }
 
     v1

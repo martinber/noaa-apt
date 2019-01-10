@@ -10,7 +10,7 @@ pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
 pub fn get_max(vector: &Signal) -> err::Result<&f32> {
-    if vector.len() == 0 {
+    if vector.is_empty() {
         return Err(err::Error::Internal(
             "Can't get maximum of a zero length vector".to_string()));
     }
@@ -27,7 +27,7 @@ pub fn get_max(vector: &Signal) -> err::Result<&f32> {
 
 /// Get smallest sample in signal.
 pub fn get_min(vector: &Signal) -> err::Result<&f32> {
-    if vector.len() == 0 {
+    if vector.is_empty() {
         return Err(err::Error::Internal(
             "Can't get minimum of a zero length vector".to_string()));
     }
@@ -46,6 +46,8 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 ///
 /// Does both things at the same time, so it's faster than calling filter() and
 /// then resampling. Make sure that the filter prevents aliasing.
+///
+/// The filter should have the frequencies referenced to the input_rate.
 ///
 /// Takes a &Signal, the input rate, the output rate and the filter to use.
 pub fn resample_with_filter(
@@ -113,7 +115,7 @@ pub fn resample(
         filters::Lowpass {
             cutout,
             atten: 40.,
-            delta_w: delta_w
+            delta_w,
         }
     )
 }
@@ -148,12 +150,11 @@ fn fast_resampling(
     let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
     // Save expanded and filtered signal if wav-steps is enabled
-    let mut expanded_filtered;
-    if context.export {
-        expanded_filtered = Vec::with_capacity(signal.len() * l);
+    let mut expanded_filtered = if context.export {
+        Vec::with_capacity(signal.len() * l)
     } else {
-        expanded_filtered = Vec::with_capacity(0); // Not going to be used
-    }
+        Vec::with_capacity(0) // Not going to be used
+    };
 
     let offset = (coeff.len() - 1) / 2; // Filter delay in the n axis, half
                                          // of filter width
@@ -186,10 +187,9 @@ fn fast_resampling(
         while n <= t + offset {
             // Check if there is a sample in that index, in case that we
             // use an index bigger that signal.len()
-            match signal.get(x) {
+            if let Some(sample) = signal.get(x) {
                 // n+offset-t is equal to j
-                Some(sample) => sum += coeff[n + offset - t] * sample,
-                None => (),
+                sum += coeff[n + offset - t] * sample;
             }
             x += 1;
             n += l;
