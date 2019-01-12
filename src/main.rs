@@ -6,6 +6,11 @@ extern crate png;
 extern crate simple_logger;
 extern crate argparse;
 extern crate reqwest;
+#[cfg_attr(test, macro_use)] extern crate approx;
+#[cfg(feature = "gui")] extern crate gtk;
+#[cfg(feature = "gui")] extern crate gdk;
+#[cfg(feature = "gui")] extern crate gio;
+#[cfg(feature = "gui")] extern crate glib;
 
 mod noaa_apt;
 mod dsp;
@@ -15,17 +20,10 @@ mod misc;
 mod err;
 mod filters;
 mod context;
-
-#[cfg_attr(test, macro_use)] extern crate approx;
-
 #[cfg(feature = "gui")] mod gui;
-#[cfg(feature = "gui")] extern crate gtk;
-#[cfg(feature = "gui")] extern crate gdk;
-#[cfg(feature = "gui")] extern crate gio;
-#[cfg(feature = "gui")] extern crate glib;
-
 
 use dsp::Rate;
+
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

@@ -16,20 +16,20 @@
 //! case). So I use glib::idle_add() to execute code on the main thread from
 //! another thread. In the end, we send the widgets to another thread and back.
 
-use noaa_apt;
-use dsp::Rate;
-use misc::ThreadGuard;
+use std::env::args;
+use std::rc::Rc;
 
 use gtk;
 use gio;
 use glib;
-
-use std::env::args;
-use std::rc::Rc;
-
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
+
+use noaa_apt;
+use dsp::Rate;
+use misc::ThreadGuard;
+
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

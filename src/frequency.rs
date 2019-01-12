@@ -1,5 +1,6 @@
-use std::f32::consts::PI;
+//! Contains the Freq and Rate structs.
 
+use std::f32::consts::PI;
 use std::ops::Add;
 use std::ops::Sub;
 use std::ops::Mul;
@@ -9,11 +10,17 @@ use std::ops::SubAssign;
 use std::ops::MulAssign;
 use std::ops::DivAssign;
 
+
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Freq {
     pi_rad: f32
 }
 
+/// Represents a discrete-time frequency.
+///
+/// Keep in mind that this is a discrete-time frequency, stored internally as
+/// radians per second, not as Hertz. When resampling, the frequencies measured
+/// as Hertz stay the same, but measured as radians per second change.
 #[allow(dead_code)]
 impl Freq {
     /// Create frequency struct from radians per second.
@@ -52,6 +59,7 @@ pub struct Rate {
     hz: u32
 }
 
+/// Represents a sample rate, measured in Hertz.
 impl Rate {
     /// Create rate from Hertz.
     pub fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Rate {

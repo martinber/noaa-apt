@@ -1,13 +1,17 @@
+//! Core of the program.
+//!
+//! This module has the high-level functions for decoding APT.
+
+use hound;
+use png;
+use reqwest;
+
 use wav;
 use dsp::{self, Signal, Rate, Freq};
 use err;
 use filters;
 use context::{Context, Step};
 
-use std;
-use hound;
-use png;
-use reqwest;
 
 // Working sample rate, used during demodulation and syncing, better if multiple
 // of the final sample rate. That way, the second resampling it's just a
@@ -52,7 +56,6 @@ pub fn resample_wav(
             output sampling frequency too low".to_string())
         );
     }
-
 
     let writer_spec = hound::WavSpec {
         channels: 1,
@@ -249,6 +252,8 @@ pub fn decode(
 
     info!("Resampling to 4160");
 
+    // Resample without filter because we already filtered the signal before
+    // syncing
     let signal = dsp::resample_with_filter(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
     let max = dsp::get_max(&signal)?;
@@ -262,7 +267,7 @@ pub fn decode(
 
     context.step(Step::signal(
             "mapped",
-            &signal.iter().map(|x| *x as f32).collect(),
+            &signal.iter().map(|x| f32::from(*x)).collect(),
             Some(final_rate)
     ))?;
 

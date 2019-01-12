@@ -1,21 +1,19 @@
-use std;
+use std::error::Error as StdError;
+
 use hound;
 use png;
 use log;
 
-// So I can use std::error::Error::description(), but I don't want to shadow
-// Error in this scope
-use std::error::Error as StdError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Error {
-    Io(std::io::Error),
+    Io(std::io::Error), // Input/output
     WavOpen(String), // About WAV decoding/opening
     PngWrite(String), // About PNG encoding/writing
-    Internal(String), // noaa-apt internal errors because of some bug
+    Internal(String), // noaa-apt internal errors
     FeatureNotAvailable(Vec<String>), // Functionality not available because the
                                       // program was compiled without those features
 }

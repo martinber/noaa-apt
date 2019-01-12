@@ -1,8 +1,9 @@
+use hound;
+
 use dsp;
 use dsp::Signal;
 use err;
 
-use hound;
 
 /// Load wav file and return signal and specs.
 pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
@@ -19,6 +20,9 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 
     debug!("WAV specifications: {:?}", spec);
 
+    // Convert samples to float, also if there is more than one channel, the
+    // samples are interleaved so we drop samples from extra channels using
+    // filter_map()
     let input_samples: Signal = match spec.sample_format {
         hound::SampleFormat::Int => {
             reader.samples::<i32>()

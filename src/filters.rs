@@ -1,10 +1,10 @@
-use dsp::{Signal, Rate, Freq};
-
 use std::f32::consts::PI;
+
+use dsp::{Signal, Rate, Freq};
 
 
 /// Some kind of filter
-pub trait Filter: std::clone::Clone {
+pub trait Filter {
     /// Design filter from parameters.
     fn design(&self) -> Signal;
 

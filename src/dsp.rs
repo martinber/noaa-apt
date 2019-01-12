@@ -1,10 +1,13 @@
+//! Functions for digital signal processing.
+
+use num::Integer; // For u32.gcd(u32)
+
 pub use frequency::Freq;
 pub use frequency::Rate;
 use err;
 use filters;
 use context::{Context, Step};
 
-use num::Integer; // For u32.gcd(u32)
 
 pub type Signal = Vec<f32>;
 
@@ -48,8 +51,6 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 /// then resampling. Make sure that the filter prevents aliasing.
 ///
 /// The filter should have the frequencies referenced to the input_rate.
-///
-/// Takes a &Signal, the input rate, the output rate and the filter to use.
 pub fn resample_with_filter(
     context: &mut Context,
     signal: &Signal,
@@ -97,8 +98,7 @@ pub fn resample_with_filter(
 
 /// Resample signal.
 ///
-/// Takes a &Signal, the input rate, the output rate and the transition band of
-/// the lowpass filter to use.
+/// delta_w is the transition band of the lowpass filter to use.
 pub fn resample(
     context: &mut Context,
     signal: &Signal,
@@ -107,7 +107,7 @@ pub fn resample(
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
-    // Just to prevent aliasing. We need the frequency referenced to the
+    // Just enough to prevent aliasing. We need the frequency referenced to the
     // input_rate.
     let cutout = Freq::hz(output_rate.get_hz() as f32 / 2., input_rate);
 
@@ -121,6 +121,8 @@ pub fn resample(
 }
 
 /// Resample a signal using a given filter.
+///
+/// Low-level function used by resample_with_filter.
 ///
 /// Resamples by expansion by l, filtering and then decimation by m. The
 /// expansion is equivalent to the insertion of l-1 zeros between samples.
@@ -140,8 +142,10 @@ fn fast_resampling(
     let l = l as usize;
     let m = m as usize;
 
-    // This is the resampling algorithm, i've tried to make it faster
-    // several times, that's why it's so ugly
+    // This is the resampling algorithm, i've tried to make it faster several
+    // times, that's why it's so ugly. It's much more efficient than expanding,
+    // filtering and decimating, because skips computed values that otherwise
+    // would be dropped on decimation.
 
     // Check the diagram on the documentation to see what the letters mean
 
@@ -157,7 +161,7 @@ fn fast_resampling(
     };
 
     let offset = (coeff.len() - 1) / 2; // Filter delay in the n axis, half
-                                         // of filter width
+                                        // of filter width
 
     let mut n: usize; // Current working n
 
@@ -196,13 +200,17 @@ fn fast_resampling(
         }
 
         if context.export_resample_filtered {
+            // Iterate over every sample on the n axis, inefficient because we
+            // only need to push to the output the samples that would survive
+            // a decimation.
             expanded_filtered.push(sum);
             t += 1;
             if t % m == 0 {
                 output.push(sum);
             }
         } else {
-            output.push(sum); // Store output sample
+            // Iterate over the samples that would survive a decimation.
+            output.push(sum);
             t += m; // Jump to next output sample
         }
 

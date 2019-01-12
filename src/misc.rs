@@ -1,6 +1,7 @@
 use std::cell::{Ref, RefCell, RefMut};
 use std::thread;
 
+
 // Lookup table for numbers used in Bessel function.
 // 1 / (n! * 2^n)^2
 const BESSEL_TABLE: [f32; 20] = [

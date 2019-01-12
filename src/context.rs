@@ -22,6 +22,7 @@ use dsp::{Signal, Rate};
 use err;
 use wav;
 
+
 /// Different kinds of steps available.
 #[derive(Debug, PartialEq)]
 enum Variant {
