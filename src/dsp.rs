@@ -107,9 +107,16 @@ pub fn resample(
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
-    // Just enough to prevent aliasing. We need the frequency referenced to the
-    // input_rate.
-    let cutout = Freq::hz(output_rate.get_hz() as f32 / 2., input_rate);
+    let cutout = if output_rate > input_rate {
+        // Filter everything outside the original spectrum, so everything higher
+        // than input_rate/2.
+        // It's the same as Freq::pi_rad(1.).
+        Freq::hz(input_rate.get_hz() as f32 / 2., input_rate)
+    } else {
+        // We have to filter everything that is not going to fit on the new
+        // sample rate. So filter everything higher than output_rate/2.
+        Freq::hz(output_rate.get_hz() as f32 / 2., input_rate)
+    };
 
     resample_with_filter(context, &signal, input_rate, output_rate,
         filters::Lowpass {
