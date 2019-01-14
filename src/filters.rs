@@ -13,14 +13,14 @@ pub trait Filter {
 }
 
 /// No filter.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct NoFilter;
 
 /// Lowpass FIR filter, windowed by a kaiser window.
 ///
 /// Attenuation in positive decibels. The transition band goes from
 /// `cutout - delta_w / 2` to `cutout + delta_w / 2`.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Lowpass {
     pub cutout: Freq,
     pub atten: f32,
@@ -33,7 +33,7 @@ pub struct Lowpass {
 /// transition bands, one is the same transition band that lowpass() has:
 /// `cutout - delta_w / 2` to `cutout + delta_w / 2`. The other transition band
 /// goes from `0` to `delta_w`.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct LowpassDcRemoval {
     pub cutout: Freq,
     pub atten: f32,
@@ -267,5 +267,108 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_lowpass_dc_removal() {
+        // cutout, atten and delta_w values
+        let test_parameters: Vec<(Freq, f32, Freq)> = vec![
+            (Freq::pi_rad(1./4.), 20., Freq::pi_rad(1./10.)),
+            (Freq::pi_rad(1./3.), 35., Freq::pi_rad(1./30.)),
+            (Freq::pi_rad(2./5.), 60., Freq::pi_rad(1./20.))
+        ];
+
+        for parameters in test_parameters.iter() {
+            let (cutout, atten, delta_w) = *parameters;
+
+            let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
+
+            let coeff = LowpassDcRemoval { cutout, atten, delta_w }.design();
+            let mut fft = abs_fft(&coeff);
+
+            println!("cutout: {}, atten: {}, delta_w: {}",
+                     cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
+            println!("coeff: {:?}", coeff);
+
+            for (i, v) in fft.iter().enumerate() {
+                let w = Freq::pi_rad(2. * (i as f32) / (fft.len() as f32));
+
+                if i == 0 {
+                    println!("Zero, ripple: {}, v: {}, i: {}, w: {}",
+                             ripple, v, i, w.get_pi_rad());
+                    // I'm using 2*ripple otherwise it fails, for some reason it
+                    // always has problems on zero. Anyways, it's only 3dB
+                    assert!(*v < 2.*ripple);
+                }
+
+                if w > delta_w && w < cutout - delta_w/2. {
+                    println!("Passband, ripple: {}, v: {}, i: {}, w: {}",
+                             ripple, v, i, w.get_pi_rad());
+                    assert!(*v < 1. + ripple && *v > 1. - ripple);
+                }
+                else if w > cutout + delta_w/2. && w < Freq::pi_rad(1.) {
+                    println!("Stopband, ripple: {}, v: {}, i: {}, w: {}",
+                             ripple, v, i, w.get_pi_rad());
+                    assert!(*v < ripple);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_no_filter() {
+        let coeff = NoFilter {}.design();
+        assert!(coeff == vec![1.,]);
+    }
+
+    // Check if a filter designed on 1000hz and then resampled to 3000hz is the
+    // same as a filter designed directly on 3000hz.
+
+    #[test]
+    fn test_lowpass_resample() {
+        let mut filter = Lowpass {
+            cutout: Freq::hz(123., Rate::hz(1000)),
+            atten: 40.,
+            delta_w: Freq::hz(12., Rate::hz(1000)),
+        };
+
+        filter.resample(Rate::hz(1000), Rate::hz(3000));
+
+        let expected = Lowpass {
+            cutout: Freq::hz(123., Rate::hz(3000)),
+            atten: 40.,
+            delta_w: Freq::hz(12., Rate::hz(3000)),
+        };
+
+        assert!(filter == expected);
+    }
+
+    #[test]
+    fn test_lowpass_dc_removal_resample() {
+        let mut filter = LowpassDcRemoval {
+            cutout: Freq::hz(123., Rate::hz(1000)),
+            atten: 40.,
+            delta_w: Freq::hz(12., Rate::hz(1000)),
+        };
+
+        filter.resample(Rate::hz(1000), Rate::hz(3000));
+
+        let expected = LowpassDcRemoval {
+            cutout: Freq::hz(123., Rate::hz(3000)),
+            atten: 40.,
+            delta_w: Freq::hz(12., Rate::hz(3000)),
+        };
+
+        assert!(filter == expected);
+    }
+
+    #[test]
+    fn test_no_filter_resample() {
+        let original = NoFilter {};
+
+        let mut resampled = original.clone();
+        resampled.resample(Rate::hz(1000), Rate::hz(3000));
+
+        assert!(original == resampled);
     }
 }

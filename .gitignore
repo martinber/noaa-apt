@@ -1,8 +1,9 @@
 /target
 **/*.rs.bk
 _site/
+test/results/
 
-*.wav
+/*.wav
 output*.png
 salida*.png
 *~
