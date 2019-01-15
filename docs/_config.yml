@@ -1,3 +1,3 @@
 name: noaa-apt
 description: Image decoder for APT signals from NOAA satellites
-baseurl: 'https://noaa-apt.mbernardi.com.ar/'
+baseurl: 'https://noaa-apt.mbernardi.com.ar'

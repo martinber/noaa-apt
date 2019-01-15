@@ -6,42 +6,6 @@ layout: main
 - TOC
 {:toc}
 
-## Problems
-
-### Syncing
-
-This program starts a new line when it receives a sync frame (those seven white
-and black stripes), works well if the signal has clear sync frames.
-
-The first time I recorded a NOAA APT signal the bright parts had lot's of noise
-(I think the FM demodulator bandwith was too narrow and had saturation when
-receiving white), the sync frames were really low quality and the alignment was
-really bad.
-
-Every decoder I've tested, excluding [WXtoIMG], has the same problem.
-
-## Tests
-
-```
-cargo test
-```
-
-## Things to do
-
-- Add a *Development* page to the website.
-
-- The parameters used for filter design are hardcoded, maybe add a toml file
-  with constants?
-
-- Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
-  machine to work.
-
-- Check OSX build dependencies, now on Linux we need `libssl-dev`.
-
-- For some reason the `--debug` does not work when using the GUI.
-
-- Improve syncing performance. Improve hardcoded sync frame.
-
 ## How it works
 
 ### General
@@ -93,39 +57,6 @@ I made this drawing because I keep forgetting how to represent frequencies. Here
 you can see the frequency spectrum of some APT signal sampled at 11025Hz, the
 peak is the AM carrier at 2400Hz, and everything wraps around because we use
 discrete signals.
-
-I'm using the struct `Freq` to represent frequencies and convert from one
-unit to another:
-
-- `Freq::hertz()` and `Freq.get_hertz()`: On discrete systems it
-  doesn't make much sense to talk about frequency on terms of Hertz because it
-  depends on the sample rate used.
-
-- `Freq::radians()` and `Freq.get_radians()`: Measuring frequency on
-  radians per second is useful. For example pi radians per second is the maximum
-  frequency you can have on a discrete signal, then it wraps around so that 2
-  times pi radians per second is the same as 0 radians per second.
-
-- `Freq::pi_radians()` and `Freq.get_pi_radians()`: I think that
-  measuring in terms of fractions of pi radians per second is better, because
-  now the maximum frequency you can have is 1, you don't have to keep writing pi
-  everywhere.
-
-Also, in this program *frequency* is not the same as *rate*:
-
-- I represent *frequencies* as `Freq`, these are discrete-time frequencies,
-  that's why it makes sense to represent them on radians per second, and that's
-  why you need to set a sample rate when converting to hertz.
-
-- *Rates* instead are represented as `Rate` and, they are sample rates,
-  measured in Hertz.
-
-I made them different types so it's harder to confuse them.
-
-- Rates are integer because AFAIK nobody uses non-integer sample rates.
-
-- There are no direct operators between Freqs and Rates because they should
-  depend on the units you want to use.
 
 ### Resampling algorithm
 
@@ -198,25 +129,6 @@ can't find anything about it on the web.
     - Image B: Infrared.
 
     - Telemetry B: For calibration I think?
-
-- Misc
-
-  - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
-    change the address to `127.0.0.1`.
-
-  - Order of `use` in code:
-
-        extern crate thirdparty;
-        pub mod …;
-        mod …;
-        pub use std::…;
-        pub use thirdparty::…;
-        pub use internal::…;
-        use std::…;
-        use thirdparty::…;
-        use internal::…;
-
-Favicons generated using [RealFaviconGenerator](https://realfavicongenerator.net/)
 
 ## References
 

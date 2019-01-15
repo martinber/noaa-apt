@@ -3,7 +3,10 @@ title: Usage
 layout: main
 ---
 
-## Usage
+- TOC
+{:toc}
+
+## Program usage
 
 ### GUI
 
@@ -21,23 +24,72 @@ two things:
 
 ```
 $ ./noaa-apt --help
-
 Usage:
-    ./target/release/noaa-apt [OPTIONS] [INPUT_FILENAME]
+  ./target/release/noaa-apt [OPTIONS] [INPUT_FILENAME]
 
 Decode NOAA APT images from WAV files. Run without arguments to launch the GUI
 
-positional arguments:
+Positional arguments:
   input_filename        Input WAV file.
 
-optional arguments:
-  -h,--help             show this help message and exit
+Optional arguments:
+  -h,--help             Show this help message and exit
+  -v,--version          Show version and quit.
   -d,--debug            Print debugging messages.
   -q,--quiet            Don't print info messages.
+  --wav-steps           Export a WAV for every step of the decoding process for
+                        debugging, the files will be located on the current
+                        folder, named {number}_{description}.wav
+  --export-resample-filtered
+                        Export a WAV for the expanded and filtered signal on
+                        the resampling step. Very expensive operation, can take
+                        several GiB of both RAM and disk. --wav-steps should be
+                        set.
+  --no-sync             Disable syncing, useful when the sync frames are noisy
+                        and the syncing attempts do more harm than good.
   -o,--output FILENAME  Set output path. When decoding images the default is
                         './output.png', when resampling the default is
                         './output.wav'.
   -r,--resample SAMPLE_RATE
                         Resample WAV file to a given sample rate, no APT image
                         will be decoded.
+
 ```
+
+## Troubleshooting
+
+### Bad contrast, dark images
+
+Currently the program does not adjust the contrast of the image after
+demodulation, so you should edit the contrast with some editing software.
+
+I use GIMP and the tool _Colors > Levels_. You can pick a white spot and a black
+spot as you can see on this screenshot.
+
+![Contrast correction using GIMP]({{ site.baseurl }}/images/contrast.jpg)
+
+### Syncing
+
+This program starts a new line when it receives a sync frame (those seven white
+and black stripes), works well if the signal has clear sync frames.
+
+The first time I recorded a NOAA APT signal the bright parts had lot's of noise
+(I think the FM demodulator bandwith was too narrow and had saturation when
+receiving white), the sync frames were really low quality and the alignment was
+really bad.
+
+Every decoder I've tested, excluding [WXtoIMG], has the same problem.
+
+You can disable the syncing (on GUI there is a checkbox, for commandline the
+option is `--no-sync`). Then you should manually edit and straighten the image.
+
+![Example of syncing problems]({{ site.baseurl }}/images/disable_sync.jpg)
+
+### Noise
+
+Sometimes the reception is bad and you should try receiving another pass, maybe
+with a better antenna.
+
+![Example of noise]({{ site.baseurl }}/images/noise.jpg)
+
+[atp-dec/apt-dec]: https://github.com/csete/aptdec
