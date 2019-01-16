@@ -3,10 +3,24 @@ title: Usage
 layout: main
 ---
 
+---
+
+**Contents**
+
 - TOC
 {:toc}
 
+---
+
 ## Program usage
+
+Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
+Later you can rotate the image and adjust the contrast with something like GIMP
+or Photoshop.
+
+Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
+When loading audio files with more than one channel (stereo), only the first one
+is used.
 
 ### GUI
 
@@ -57,6 +71,10 @@ Optional arguments:
 ```
 
 ## Troubleshooting
+
+### Upside down images
+
+If the satellite went from south to north you should rotate the image.
 
 ### Bad contrast, dark images
 

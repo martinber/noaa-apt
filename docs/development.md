@@ -3,12 +3,18 @@ title: Development
 layout: main
 ---
 
+---
+
+**Contents**
+
 - TOC
 {:toc}
 
+---
+
 The documentation is everything on this website. This website is built from the
-`/docs` folder on the repository. Also there are a lot of comments on the code,
-I tend to forget everything very fast.
+`/docs` folder on the repository. Also there are a lot of comments on the code
+because I tend to forget everything quite fast.
 [The repository is available on GitHub](https://github.com/martinber/noaa-apt).
 
 ## Things to do
@@ -33,7 +39,6 @@ I tend to forget everything very fast.
 faster. Really, otherwise it takes FOREVER.**
 
 ### GNU/Linux
-
 
 - Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
   1.27.0).
@@ -72,8 +77,9 @@ building, that's why I'm using a Debian Jessie docker image.
 - Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
   1.27.0). The 'unix installer' is fine for Macs.
 
-- Install dependencies via [Homebrew](https://brew.sh/):
-  `brew install gtk+3 adwaita-icon-theme`.
+- Install dependencies via [Homebrew](https://brew.sh/). I'm not entirely sure
+  if these are enough:
+  `brew install gtk+3 adwaita-icon-theme openssl`. TODO
 
 - `cargo build --release`.
 
@@ -162,9 +168,9 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 - Edit release on GitHub. Leave "Release title" empty, check commits and leave
     changelog as description. Upload zip files.
 
-## Website
+- Edit the Downloads page on the website.
 
-Favicons generated using [RealFaviconGenerator](https://realfavicongenerator.net/)
+## Website
 
 I'm using Jekyll, the website is built automatically by GitHub from the `/docs`
 folder. These are the steps to build the website locally:
@@ -172,9 +178,22 @@ folder. These are the steps to build the website locally:
 ```
 sudo apt-get install ruby-dev
 gem install bundler jekyll
-cd docs
+cd docs # Important!
 jekyll build --baseurl "$(pwd)/_site/"
 ```
+
+Notes:
+
+- I'm using a modification of
+    [Horizons-Jekyll-Theme](https://github.com/old-jekyll-templates/Horizons-Jekyll-Theme).
+
+- Favicons generated using
+    [RealFaviconGenerator](https://realfavicongenerator.net/)
+
+- Apparently, the theme used _font-awesome_ to provide icons, I got rid of that.
+
+- Changed font to Open Sans and now I'm loading from `default.html` instead of
+  `style.css` because it's faster.
 
 ## Misc
 

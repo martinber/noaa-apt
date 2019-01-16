@@ -3,8 +3,14 @@ title: How it works
 layout: main
 ---
 
+---
+
+**Contents**
+
 - TOC
 {:toc}
+
+---
 
 ## How it works
 

@@ -3,8 +3,8 @@
 	templated.co @templatedco
 	Released for free under the Creative Commons Attribution 3.0 license (templated.co/license)
 */
-@import url("font-awesome.min.css");
-@import url("http://fonts.googleapis.com/css?family=Raleway:100,200,300,400,500,600,700,800,900");
+/* @import url("font-awesome.min.css"); */
+/* @import url("http://fonts.googleapis.com/css?family=Raleway:100,200,300,400,500,600,700,800,900"); */
 
 /* Basic */
 
@@ -748,4 +748,46 @@ code { /* Inline code too */
 #icon {
 	width: 60%;
 	max-width: 10em;
+}
+
+/* Darker text and Open Sans font */
+
+body, input, select, textarea {
+	color: #333333;
+	font-family: 'Open Sans', sans-serif;
+}
+
+/* Different hyperlinks */
+
+a {
+	color: #0645AD;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:visited {
+	color: #0B0080;
+}
+
+h1 a:visited, h2 a:visited, h3 a:visited, h4 a:visited, h5 a:visited, h6 a:visited {
+	color: inherit;
+}
+
+#footer a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+#footer a:hover {
+	text-decoration: none;
+}
+
+/* Horizontal ruler, used on contents on each page */
+
+hr {
+	border-top: solid 1px #DDD;
+	margin-bottom: 1.5em;
 }

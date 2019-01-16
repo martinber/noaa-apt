@@ -3,8 +3,14 @@ title: Guide
 layout: main
 ---
 
+---
+
+**Contents**
+
 - TOC
 {:toc}
+
+---
 
 **TODO**: Guide about antennas, GQRX, etc.
 

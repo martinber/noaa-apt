@@ -7,22 +7,29 @@ layout: main
 
 There is a GUI version and a no-GUI version available.
 
-You can download executables for GNU/Linux or Windows from the
-[releases page](https://github.com/martinber/noaa-apt/releases). Your options
-are:
+- [noaa-apt 0.9.7 GNU/Linux x86_64](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-linux-gnu.zip).
+
+- [noaa-apt 0.9.7 GNU/Linux x86_64 (no GUI)](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-linux-gnu-nogui.zip).
+
+- [noaa-apt 0.9.7 Windows x86_64](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-windows-gnu.zip).
+
+You can download those executables, or old ones from the
+[releases page on GitHub](https://github.com/martinber/noaa-apt/releases).
+
+Your options are:
 
 - GNU/Linux:
 
-    - Download the latest version with GUI, (needs GTK and GLIBC version at least
+    - Download executable with GUI, (needs GTK and GLIBC version at least
       2.19).
 
-    - Download the latest version without GUI.
+    - Download executable without GUI.
 
     - [Compile it yourself](./development.html#compilation).
 
 - Windows:
 
-    - Download the latest version. Has GUI.
+    - Download executable with GUI.
 
     - [Compile the GUI version yourself from GNU/Linux](./development.html#compilation).
 
@@ -39,3 +46,12 @@ are:
       there are no dependencies apart from GTK and a handful of pure Rust
       modules.
       [You should compile it yourself though](./development.html#compilation).
+
+## Dependencies
+
+On Windows there aren't any dependencies, on Linux you probably already have
+installed what you need:
+
+- GTK+ > 3.16
+
+- TODO
