@@ -54,4 +54,8 @@ installed what you need:
 
 - GTK+ > 3.16
 
-- TODO
+- libc
+
+- libgcc
+
+- libssl

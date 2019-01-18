@@ -58,19 +58,18 @@ building, that's why I'm using a Debian Jessie docker image.
 
   - Install Docker.
 
-  - `sudo apt install libgtk-3-dev libssl-dev`.
+  - Move to root folder on this repository.
 
-  - Move to root folder.
+  - `docker build ./build/linux-gnu-docker/ -t noaa-apt-linux-build-image`
 
-  - `docker build ./linux-docker/ -t noaa-apt-linux-build-image`.
+  - `docker create -v "$(pwd)":/home/rustacean/src --name noaa-apt-linux-build noaa-apt-linux-build-image`
 
-  - `docker create -v $(pwd):/src --name noaa-apt-linux-build noaa-apt-linux-build-image`.
+- Building the binaries:
 
-- Building the binary:
+  - `docker start -ai noaa-apt-linux-build`
 
-  - `docker start -ai noaa-apt-linux-build`.
-
-  - The build is on `./target/x86_64-unknown-linux-gnu/`.
+- The binaries are on `./target/x86_64-unknown-linux-gnu/package` and on
+    `./target/x86_64-unknown-linux-gnu/package`.
 
 ### Mac / OSX
 
@@ -94,11 +93,9 @@ success. So I use a Docker image I found
 
   - Install Docker.
 
-  - `sudo apt install libgtk-3-dev`.
+  - Move to root folder on this repository.
 
-  - Move to root folder.
-
-  - `docker build ./windows-docker/ -t noaa-apt-windows-build-image`.
+  - `docker build ./build/windows-gnu-docker/ -t noaa-apt-windows-build-image`
 
   - `docker create -v $(pwd):/home/rustacean/src --name noaa-apt-windows-build noaa-apt-windows-build-image`.
 
