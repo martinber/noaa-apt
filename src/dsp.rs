@@ -161,7 +161,7 @@ fn fast_resampling(
     let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
     // Save expanded and filtered signal if wav-steps is enabled
-    let mut expanded_filtered = if context.export {
+    let mut expanded_filtered = if context.export_resample_filtered  {
         Vec::with_capacity(signal.len() * l)
     } else {
         Vec::with_capacity(0) // Not going to be used
