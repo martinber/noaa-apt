@@ -230,7 +230,9 @@ overload!(trait Add, self: Rate, other: Rate, fn add {
     Rate { hz: self.hz + other.hz }
 });
 overload!(trait Sub, self: Rate, other: Rate, fn sub {
-    Rate { hz: self.hz - other.hz }
+    Rate {
+        hz: self.hz.checked_sub(other.hz).expect("Overflow on Rate substract")
+    }
 });
 overload!(trait Mul, self: Rate, other: Rate, fn mul {
     Rate { hz: self.hz * other.hz }
@@ -264,7 +266,7 @@ overload_assign!(trait AddAssign, self: Rate, other: Rate, fn add_assign {
 });
 
 overload_assign!(trait SubAssign, self: Rate, other: Rate, fn sub_assign {
-    self.hz -= other.hz;
+    self.hz = self.hz.checked_sub(other.hz).expect("Overflow on Rate substract");
 });
 
 overload_assign!(trait MulAssign, self: Rate, other: Rate, fn mul_assign {

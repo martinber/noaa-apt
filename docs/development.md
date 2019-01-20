@@ -19,19 +19,30 @@ because I tend to forget everything quite fast.
 
 ## Things to do
 
-- Image contrast from telemetry bands.
+- Roadmap for 1.0.0:
 
-- The parameters used for filter design are hardcoded, maybe add a toml file
-  with constants?
+    - Image contrast from telemetry bands.
 
-- Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
-  machine to work?.
+    - Add icons to executables.
 
-- Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
+- Someday:
 
-- For some reason the `--debug` does not work when using the GUI.
+    - The parameters used for filter design are hardcoded, maybe add a toml file
+      with constants?
 
-- Improve syncing performance. Improve hardcoded sync frame.
+    - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
+      machine to work?.
+
+    - Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
+
+    - For some reason the `--debug` does not work when using the GUI.
+
+    - Improve syncing performance. Improve hardcoded sync frame.
+
+    - Looks like the Windows version has some icons missing.
+
+    - Live decoding, from a TCP stream or using
+      [librtlsdr](https://github.com/steve-m/librtlsdr/blob/master/include/rtl-sdr.h)
 
 ## Compilation
 
@@ -69,7 +80,7 @@ building, that's why I'm using a Debian Jessie docker image.
   - `docker start -ai noaa-apt-linux-build`
 
 - The binaries are on `./target/x86_64-unknown-linux-gnu/package` and on
-    `./target/x86_64-unknown-linux-gnu/package`.
+    `./target/x86_64-unknown-linux-gnu/no-gui-package`.
 
 ### Mac / OSX
 
@@ -78,7 +89,7 @@ building, that's why I'm using a Debian Jessie docker image.
 
 - Install dependencies via [Homebrew](https://brew.sh/). I'm not entirely sure
   if these are enough:
-  `brew install gtk+3 adwaita-icon-theme openssl`. TODO
+  `brew install gtk+3 adwaita-icon-theme openssl`.
 
 - `cargo build --release`.
 
@@ -145,6 +156,9 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
     - Windows.
 
+- [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
+  should be less than the version shown on the Download page.
+
 - Compress with the `/test` folder. Delete `/test/test.sh` on the Windows
   archive. Names:
 
@@ -175,7 +189,7 @@ folder. These are the steps to build the website locally:
 ```
 sudo apt-get install ruby-dev
 gem install bundler jekyll
-cd docs # Important!
+cd docs
 jekyll build --baseurl "$(pwd)/_site/"
 ```
 
@@ -210,3 +224,21 @@ Notes:
     use thirdparty::...;
     use internal::...;
     ```
+
+## References
+
+- [Error Handling in Rust][1].
+
+- [Python GTK+ 3 Tutorial][2]: For Python but I like the Widget Gallery.
+
+- [Cross-compiling from Ubuntu to Windows with Rustup][3].
+
+- [How to compile C GTK3+ program in Ubuntu for windows?][4].
+
+- [rust-mingw64-gtk Docker image][5]: I took the Windows Dockerfile from there.
+
+[1]: https://blog.burntsushi.net/rust-error-handling/
+[2]: https://python-gtk-3-tutorial.readthedocs.io/en/latest/index.html
+[3]: https://www.reddit.com/r/rust/comments/5k8uab/crosscompiling_from_ubuntu_to_windows_with_rustup/
+[4]: https://askubuntu.com/questions/942010/how-to-compile-c-gtk3-program-in-ubuntu-for-windows
+[5]: https://github.com/LeoTindall/rust-mingw64-gtk-docker

@@ -163,25 +163,12 @@ can't find anything about it on the web.
   suggested an edit on the StackOverflow post and the author said me that I'm
   wrong, so now I'm confused.
 
-- [Error Handling in Rust][9].
+- [zacstewart/apt-decoder][9]: Easy to understand NOAA APT decoder.
 
-- [Python GTK+ 3 Tutorial][10]: For Python but I like the Widget Gallery.
-
-- [Cross-compiling from Ubuntu to Windows with Rustup][11].
-
-- [How to compile C GTK3+ program in Ubuntu for windows?][12].
-
-- [rust-mingw64-gtk Docker image][13]: I took the Windows Dockerfile from there.
-
-- [zacstewart/apt-decoder][14]: Easy to understand NOAA APT decoder.
-
-- [pietern/apt137][15]: The fastest NOAA APT decoder, I took the AM
+- [pietern/apt137][10]: The fastest NOAA APT decoder, I took the AM
   demodulation methid from there.
 
-- [APT on sigidwiki.com][16]: More about the APT format.
-
-- [github-markdown-toc generator][17]: I'm using that for the table of contents
-  generation.
+- [APT on sigidwiki.com][11]: More about the APT format.
 
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php
@@ -191,15 +178,9 @@ can't find anything about it on the web.
 [6]: https://ccrma.stanford.edu/~jos/sasp/Kaiser_Window.html
 [7]: https://tomroelandts.com/articles/how-to-create-a-configurable-filter-using-a-kaiser-window
 [8]: https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
-[9]: https://blog.burntsushi.net/rust-error-handling/
-[10]: https://python-gtk-3-tutorial.readthedocs.io/en/latest/index.html
-[11]: https://www.reddit.com/r/rust/comments/5k8uab/crosscompiling_from_ubuntu_to_windows_with_rustup/
-[12]: https://askubuntu.com/questions/942010/how-to-compile-c-gtk3-program-in-ubuntu-for-windows
-[13]: https://github.com/LeoTindall/rust-mingw64-gtk-docker
-[14]: https://github.com/zacstewart/apt-decoder
-[15]: https://github.com/pietern/apt137
-[16]: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)
-[17]: https://github.com/ekalinin/github-markdown-toc
+[9]: https://github.com/zacstewart/apt-decoder
+[10]: https://github.com/pietern/apt137
+[11]: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)
 
 [WXtoImg]: http://wxtoimg.com/
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal

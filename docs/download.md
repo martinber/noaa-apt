@@ -20,8 +20,7 @@ Your options are:
 
 - GNU/Linux:
 
-    - Download executable with GUI, (needs GTK and GLIBC version at least
-      2.19).
+    - Download executable with GUI.
 
     - Download executable without GUI.
 
@@ -52,10 +51,8 @@ Your options are:
 On Windows there aren't any dependencies, on Linux you probably already have
 installed what you need:
 
-- GTK+ > 3.16
+- GTK+ >= 3.16 (Only for the GUI version)
 
-- libc
+- glibc >= 2.19
 
 - libgcc
-
-- libssl

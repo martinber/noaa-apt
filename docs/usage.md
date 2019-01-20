@@ -110,4 +110,12 @@ with a better antenna.
 
 ![Example of noise]({{ site.baseurl }}/images/noise.jpg)
 
+### Something strange
+
+You can set the option to export a WAV file with the samples used in each step
+of the decoding process, then open each WAV on something like Audacity to see
+where things went wrong. I use Audacity because it shows the samples clearly and
+_Analyze > Plot Spectrum_ is really useful.
+
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
+[WXtoImg]: http://wxtoimg.com/
