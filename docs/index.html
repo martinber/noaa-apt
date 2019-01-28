@@ -18,26 +18,51 @@ layout: landing
 		<div id="content" class="8u skel-cell-important">
 			<header class="major">
 				<h2>Receive and decode images from weather satellites</h2>
-				<span class="byline">Free (GPLv3) and available for GNU/Linux, Windows and OSX</span>
+				<span class="byline">Free (GPLv3) NOAA APT decoder, available for GNU/Linux, Windows and OSX</span>
 			</header>
 
 			<p>
-				Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw
+				Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the
 				image. Later you can rotate the image and adjust the contrast with
 				something like GIMP or Photoshop.
 			</p>
+
+			<img src="images/gui.png" alt="GUI"/>
+
+			<h3>Why?</h3>
+
+			<p>
+				NOAA satellite reception is cheap and relatively easy. WXtoIMG, the
+				most popular software, it's propietary and
+				<a href="https://www.rtl-sdr.com/notice-wxtoimg-website-down/">no longer maintained</a>.
+				but you can get old recovered versions from an
+				<a href="https://wxtoimgrestored.xyz/">unofficial website</a>.
+			</p>
+
+			<p>
+				There are lots of really good
+				<a href="{{ site.baseurl }}/alternatives.html">Alternatives</a>, but all
+				of them require compilation, Python or don't provide graphical user
+				interfaces. So I wanted to create an easy to use alternative for Windows
+				users, being useful to advanced GNU/Linux users doing some kind of
+				automation too.
+			</p>
+
+			<h3>Disadvantages</h3>
+
+			<p>
+				WXtoIMG has lots of features you might want that noaa-apt does not have,
+				for example false-color images, live decoding, map overlay or contrast
+				adjustment. Anyways, the quality of the black and white image should be
+				the same.
+			</p>
+
 			<p>
 				If you get some kind of error or bad result don't hesitate to open a
-				Issue or to send me an email. The quality of the decoded image should
-				be very similar to what you get using WXtoIMG, but without colors and
-				country lines.
-			</p>
-			<p>
-				I'm not a native english speaker so please correct me. Both the code
-				and the website is on the
+				Issue or to send me an email. Also I'm not a native english speaker so
+				please correct me. Both the code and the website is on the
 				<a href="https://github.com/martinber/noaa-apt">GitHub repository</a>.
 			</p>
-			<img src="images/gui.png" alt="GUI"/>
 
 
 			<!-- Content -->

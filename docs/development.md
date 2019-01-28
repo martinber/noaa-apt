@@ -174,7 +174,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 - Create tag on git, e.g.: `git tag v0.9.2`.
 
-- Push tag, e.g.: `git tag v0.9.2`.
+- Push tag, e.g.: `git push origin v0.9.2`.
 
 - Edit release on GitHub. Leave "Release title" empty, check commits and leave
     changelog as description. Upload zip files.
@@ -205,6 +205,17 @@ Notes:
 
 - Changed font to Open Sans and now I'm loading from `default.html` instead of
   `style.css` because it's faster.
+
+## Check for updates
+
+The program sends a HTTP GET request and receives the latest version available,
+the URL is ``https://noaa-apt.mbernardi.com.ar/version_check?{current version}``.
+
+The currently installed version is sent just in case I want to track which
+versions are being used by people. Anyways, for now I delegated the ``noaa-apt``
+to Github and ``version_check`` is just a static file being served using Github
+pages, so currently I'm not logging any information. In the future I won't log
+anything other than the currently installed version.
 
 ## Misc
 

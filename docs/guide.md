@@ -12,14 +12,14 @@ layout: main
 
 ---
 
-**TODO**: Guide about antennas, GQRX, etc.
-
-<!--
-Keep in mind that the output is upside down if the satellite went from south to
-north instead of north to south that day.
--->
+**Work in progress**.
 
 ## Notes
+
+- Keep in mind that the output is upside down if the satellite went from south to
+	north instead of north to south that day.
+
+- Audio sample on [SigidWiki](https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT))
 
 - These satellites send images at realtime, line by line. Something like a
   1000x1 resolution video or like a flying scanner. These satellites fly on a
@@ -47,7 +47,8 @@ north instead of north to south that day.
 
     - Squelch: Disabled (-150dB).
 
-    - Maximum LNA gain slider.
+    - LNA gain: Max, but you can play with it and guess where it has the best
+			signal to noise ratio.
 
     - I don't use any of "DC remove", "I/Q Balance", etc.
 

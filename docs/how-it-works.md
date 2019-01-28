@@ -92,49 +92,144 @@ demodulation. I was able to reach that final expression (which is used by
 think it only works if the input AM signal is oversampled, maybe that's why I
 can't find anything about it on the web.
 
-## Notes
+## About APT images
 
-- Modulation:
+### Modulation
 
-  - The signal is modulated first on AM and then on FM.
+- The signal is modulated first on AM and then on FM.
 
-  - FM frequencies:
+- FM frequencies:
 
-    - NOAA 15: 137.62MHz.
+  - NOAA 15: 137.62MHz.
 
-    - NOAA 18: 137.9125MHz.
+  - NOAA 18: 137.9125MHz.
 
-    - NOAA 19: 137.1MHz.
+  - NOAA 19: 137.1MHz.
 
-  - AM carrier: 2400Hz.
+- AM carrier: 2400Hz.
 
-- APT signal:
+### Pixels
 
-  - 8 bits/pixel.
+- 8 bits/pixel.
 
-  - The signal amplitude represents the brightness of each pixel.
+- The signal amplitude represents the brightness of each pixel.
 
-  - Two lines per second, 4160 pixels per second.
+- Two lines per second, 4160 pixels per second.
 
-  - 2080 pixels per line, 909 useful pixels per line.
+- 2080 pixels per line, each channel has 909 useful pixels per line.
 
-  - Each line has:
+### Format
 
-    - Sync A: Seven black and seven white pixels.
+There are different imaging sensors, named as Channel 1, 2, 3A, 3B, 4 and 5.
+Two of them are chosen by the satellite operators to be shown on two portions
+of the image, named Channel A and B.
 
-    - Space A: Some black pixels (periodically white ones too).
+- Channel A: On daylight generally has images from the Channel 2 sensor
+  (almost visible light), at night generally has Channel 3A (infrared).
 
-    - Image A: Visible/Infrared.
+- Channel B: Generally always has Channel 4 (infrared).
 
-    - Telemetry A: For calibration I think?
+Each line has:
 
-    - Sync B: Some white and black pixels but I don't know the frequency.
+  - Channel A sync: 1040Hz square wave, seven cycles. This train of pulses appears
+    in the image as seven vertical black and white stripes, has slightly narrower
+    white stripes than the Channel B sync.
 
-    - Space B: Some white pixels (periodically black ones too).
+  - Channel A space: Scan of deep space with the Channel A sensor, on the image
+    looks like a wide black or white vertical bar, see below why. Once each
+    minute, the spacecraft clock inserts minute markers into this portion of the
+    image. These minute markers appear as thin, black or white horizontal lines to
+    provide a 60 second time reference in the image.
 
-    - Image B: Infrared.
+  - Channel A image: Earth as seen from the Channel A sensor.
 
-    - Telemetry B: For calibration I think?
+  - Channel A telemetry: Looks like gray-scale horizontal bars. See below.
+
+  - Channel B sync: Seven pulses, the frequency is 832 pulses per second. This
+    train of pulses appears in the image as seven vertical black and white
+    stripes, has slightly wider white stripes than the Channel A sync.
+
+  - Channel B space: Scan of deep space with the Channel B sensor, on the image
+    looks like a wide black or white vertical bar, see below why. Once each
+    minute, the spacecraft clock inserts minute markers into this portion of the
+    image. These minute markers appear as thin, black or white horizontal lines to
+    provide a 60 second time reference in the image.
+
+  - Channel B image: Earth as seen from the Channel B sensor.
+
+  - Channel A telemetry: Looks like gray-scale horizontal bars. See below.
+
+The Channel A sync frame and the Channel B sync make up the distinctive
+"tick-tock" sound on the received APT audio signal.
+
+Both Channel A space and Channel B space have a scan of deep space using the
+same sensor used to image earth. If the sensor is sensible to visible light
+this part looks black (Channel 2 and I guess Channel 1 too). The infrared
+channels represent cold as white, so this part of the image looks white
+instead (Channel 3A, 4 and I guess that 3B and 5 too).
+
+The telemetry bands have calibration data and information about the current
+channel being transmitted. Bars/wedges 1 to 9 are used for contrast adjustment
+and are fixed 10 to 16 can change. I think the temperatures and back scan are
+useful for thermal images calibration.
+
+### Telemetry wedges
+
+1. Value: 31/255.
+
+2. Value: 63/255.
+
+3. Value: 95/255.
+
+4. Value: 127/255.
+
+5. Value: 159/255.
+
+6. Value: 191/255.
+
+7. Value: 224/255.
+
+8. Value: 255/255.
+
+9. Value: 0/255.
+
+10. Black body radiator termometer #1.
+
+11. Black body radiator termometer #2.
+
+12. Black body radiator termometer #3.
+
+13. Black body radiator termometer #4.
+
+14. Patch temperature.
+
+15. Back scan: Temperature of the black body radiator observed by the imaging
+    sensor
+
+16. Channel identification: When compared to the values of the wedges 1 to 9
+    you can determine which Channel is being used. Both this wedge and the
+    back scan wedge is different on Channel A and B. See the list of channels
+    below.
+
+### Channels
+
+- 1: Visible. Equivalent wedge: 1. Wavelength: 0.58µm - 0.68µm. Daytime cloud
+  and surface mapping.
+
+- 2: Near-infrared. Equivalent wedge: 2. Wavelength: 0.725 - 1.00µm.
+  Land-water boundaries.
+
+- 3A: Infrared. Equivalent wedge: 3. Wavelength: 1.58µm - 1.64µm. Snow and ice
+  detection.
+
+- 3B: Infrared. Equivalent wedge: 6. Wavelength: 3.55µm - 3.93µm. Night cloud
+  mapping, sea surface temperature.
+
+- 4: Infrared. Equivalent wedge: 4. Wavelength: 10.30µm - 11.30µm. Night cloud
+  mapping, sea surface temperature.
+
+- 5: Infrared. Equivalent wedge: 5. Wavelength: 11.50µm - 12.50µm. Sea surface
+  temperature.
 
 ## References
 
@@ -170,6 +265,11 @@ can't find anything about it on the web.
 
 - [APT on sigidwiki.com][11]: More about the APT format.
 
+- [User's Guide for Building and Operating Environmental Satellite Receiving
+  Stations][12]: About the APT format and decoding.
+
+- [Advanced Very High Resolution Radiometer][13]: About the image sensor.
+
 [1]: https://www.researchgate.net/publication/247957486_NOAA_Signal_Decoding_And_Image_Processing_Using_GNU-Radio
 [2]: https://www.dsprelated.com/showarticle/938.php
 [3]: https://www.dsprelated.com/freebooks/sasp/Hilbert_Transform_Design_Example.html
@@ -181,6 +281,8 @@ can't find anything about it on the web.
 [9]: https://github.com/zacstewart/apt-decoder
 [10]: https://github.com/pietern/apt137
 [11]: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)
+[12]: https://noaasis.noaa.gov/NOAASIS/pubs/Users_Guide-Building_Receive_Stations_March_2009.pdf
+[13]: https://noaasis.noaa.gov/NOAASIS/ml/avhrr.html
 
 [WXtoImg]: http://wxtoimg.com/
 [analytic signal]: https://en.wikipedia.org/wiki/Analytic_signal

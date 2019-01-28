@@ -3,7 +3,8 @@ title: Alternatives
 layout: main
 ---
 
-These are the alternatives I found, as of August 2018:
+If [noaa-apt](./index.html) is not useful to you, these are the alternatives I
+found, as of August 2018:
 
 - [WXtoImg], by far the most popular, lots of features but the site looks dead
   forever.
