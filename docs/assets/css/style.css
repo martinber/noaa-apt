@@ -796,3 +796,12 @@ hr {
 	border-top: solid 1px #DDD;
 	margin-bottom: 1.5em;
 }
+
+/* Stop using FontAwesome for the mobile sidebar toggle */
+
+#titleBar .toggle::before {
+	content: "=" !important;
+	font-family: inherit !important;
+	font-size: 150% !important;
+	background: rgba(255, 255, 255, 0.1) !important;
+}
