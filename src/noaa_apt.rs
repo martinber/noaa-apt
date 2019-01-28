@@ -98,11 +98,6 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     // to the number of samples by line
     let min_distance: usize = SAMPLES_PER_WORK_ROW as usize * 8/10;
 
-    // Need to center signal on zero (remove DC) to get meaningful correlation
-    // values
-    let average: f32 = *dsp::get_max(&signal)? / 2.; // Not true but close enough.
-    let signal: Signal = signal.iter().map(|x| x - average).collect();
-
     // Save cross-correlation if wav-steps is enabled
     let mut correlation = if context.export {
         Vec::with_capacity(signal.len() - guard.len())
