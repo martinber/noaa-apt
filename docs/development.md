@@ -21,7 +21,11 @@ because I tend to forget everything quite fast.
 
 - Roadmap for 1.0.0:
 
-    - Image contrast from telemetry bands.
+    - Contrast adjustment by percentiles.
+
+    - Choose contrast adjustment method.
+
+    - Maybe store options on Context.
 
     - Add icons to executables.
 

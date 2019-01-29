@@ -147,95 +147,215 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
 /// Useful for wedges 15 and 16. They have different values on each band.
 ///
 /// Use the given index as the position of the first wedge.
-fn get_wedge_single(wedge: u32, telemetry: &Signal, index: usize) -> f32 {
+// fn get_wedge_single(wedge: u32, telemetry: &Signal, index: usize) -> f32 {
+//
+    // // Telemetry signals have 8 values per wedge
+    // // Substract one because wedge numbers start from 1 instead of 0
+    // let wedge_pos = index + (wedge - 1) as usize * 8;
+//
+    // // If this is a contrast wedge, better to use the next contrast wedge too
+    // if wedge <= 9 {
+        // let wedge_pos_2 = wedge_pos + 16*8; // 16 wedges of length 8
+//
+        // (telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() +
+         // telemetry[wedge_pos_2..(wedge_pos_2+8)].iter().sum::<f32>()) / 16.
+//
+    // } else {
+//
+        // telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() / 8.
+//
+    // }
+// }
+//
+// /// Get wedge value from two telemetry bands
+// ///
+// /// Useful for wedges 1 to 14. They have different values on each band.
+// ///
+// /// Use the given index as the position of the first wedge
+// fn get_wedge(wedge: u32, telemetry_a: &Signal, telemetry_b: &Signal, index: usize) -> f32 {
+//
+    // (get_wedge_single(wedge, telemetry_a, index) +
+     // get_wedge_single(wedge, telemetry_b, index)) / 2.
+// }
 
-    // Telemetry signals have 8 values per wedge
-    // Substract one because wedge numbers start from 1 instead of 0
-    let wedge_pos = index + (wedge - 1) as usize * 8;
-
-    // If this is a contrast wedge, better to use the next contrast wedge too
-    if wedge <= 9 {
-        let wedge_pos_2 = wedge_pos + 16*8; // 16 wedges of length 8
-
-        (telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() +
-         telemetry[wedge_pos_2..(wedge_pos_2+8)].iter().sum::<f32>()) / 16.
-
-    } else {
-
-        telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() / 8.
-
-    }
+enum Channel {
+    A,
+    B,
 }
 
-/// Get wedge value from two telemetry bands
-///
-/// Useful for wedges 1 to 14. They have different values on each band.
-///
-/// Use the given index as the position of the first wedge
-fn get_wedge(wedge: u32, telemetry_a: &Signal, telemetry_b: &Signal, index: usize) -> f32 {
+/// Contains the telemetry information
+struct Telemetry {
+    // One value for each wedge on each band
+    values_a: Vec<f32>,
+    values_b: Vec<f32>,
+}
 
-    (get_wedge_single(wedge, telemetry_a, index) +
-     get_wedge_single(wedge, telemetry_b, index)) / 2.
+impl Telemetry {
+
+    /// Read telemetry from received bands.
+    ///
+    /// Takes two signals containing the horizontal averages of each band, also
+    /// takes the row where to start reading the frame
+    pub fn from_bands(means_a: &Signal, means_b: &Signal, row: usize) -> Telemetry{
+
+        // Calculate the mean of contiguous 8 values, starting from the given
+        // until wedge 9 of the next frame
+        let means_a: Signal = means_a[row..]
+            .chunks_exact(8).map(|x| x.iter().sum::<f32>() / 8.).take(16 + 9).collect();
+        let means_b: Signal = means_b[row..]
+            .chunks_exact(8).map(|x| x.iter().sum::<f32>() / 8.).take(16 + 9).collect();
+
+        let telemetry = Telemetry {
+            values_a: (1..=16).map(|wedge|
+                // Contrast wedges are averaged to the ones on the next frame
+                if wedge <= 9 {
+                    (means_a[wedge - 1] + means_a[wedge + 16 - 1]) / 2.
+                } else {
+                    means_a[wedge - 1]
+                }
+            ).collect(),
+
+            values_b: (1..=16).map(|wedge|
+                // Contrast wedges are averaged to the ones on the next frame
+                if wedge <= 9 {
+                    (means_b[wedge - 1] + means_a[wedge + 16 - 1]) / 2.
+                } else {
+                    means_b[wedge - 1]
+                }
+            ).collect(),
+        };
+
+        debug!("Telemetry wedges_a: {:?}, wedges_b: {:?}",
+            telemetry.values_a, telemetry.values_b);
+
+        telemetry
+    }
+
+    /// Get value of wedge.
+    ///
+    /// Does not mean anything by itself, you should use it for comparison
+    /// against another wedge.
+    pub fn get_wedge_value(&self, wedge: u32, channel: Option<Channel>) -> f32 {
+
+        let wedge = wedge as usize;
+        match channel {
+            Some(Channel::A) => self.values_a[wedge - 1],
+            Some(Channel::B) => self.values_b[wedge - 1],
+            None => (self.values_a[wedge - 1] + self.values_b[wedge - 1]) / 2.,
+        }
+    }
+
+    /// Get channel name.
+    pub fn get_channel_name(&self, channel: Channel) -> &str {
+
+        // Take wedge 16 and compare to wedges 1 to 9 to determine the channel
+
+        let value = self.get_wedge_value(16, Some(channel));
+
+        let contrast_wedges = (1..=9).map(|i| self.get_wedge_value(i, None));
+
+        // let differences = (1..9)
+            // .map(|i| (self.get_wedge_value(i, None) - value).abs());
+
+        let channel_names = ["1", "2", "3a", "4", "5", "3b", "Unknown", "Unknown", "Unknown"];
+
+        // for name, diff in channel_names.iter().zip(differences).min_by(|t| t.1).0
+
+        let (name, _difference) = channel_names.iter().zip(contrast_wedges)
+            .min_by(|a, b|
+                (a.1 - value).abs().partial_cmp(&(b.1 - value).abs()).expect("Can't compare values")
+            ).expect("Empty zip");
+
+        name
+    }
 }
 
 /// Maps signal values to range 0-255
 fn map(context: &mut Context, signal: &Signal, sync: bool) -> err::Result<Vec<u8>> {
 
     // Sample of telemetry band used for correlation. Only contrast wedges
-    // (1 to 9) are given
+    // (1 to 9) are given. Each value is repeated 8 times because the height of
+    // the wedges is 8 pixels
     let telemetry_sample: Signal = [
-        31., 63., 95., 127., 159., 191., 224., 255., 0.,
-        0., 0., 0., 0., 0., 0., 0.,
-        31., 63., 95., 127., 159., 191., 224., 255., 0.
+        31., 63., 95., 127., 159., 191., 224., 255., 0., // For contrast
+        0., 0., 0., 0., 0., 0., 0.,                      // Variable
+        31., 63., 95., 127., 159., 191., 224., 255., 0.  // For contrast
     ].iter().flat_map(|x| std::iter::repeat(*x).take(8)).collect();
 
+    // Reserve vectors, length is the height of the image
+
     // Horizontal average of both bands
-    // Reserve a vector long as the height of the image
     let mut mean_a: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
     let mut mean_b: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
-
-    // Horizontal variance of the telemetry bands
-    // Shared with both bands
+    // Horizontal variance of both telemetry bands, indicates if there is noise
     let mut variance: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
 
-    // Iterate a row at a time (pixel row)
+    // Iterate a row at a time (each row is one pixel high)
     for line in signal.chunks_exact(PX_PER_ROW as usize) {
+
+        // Values on each bamd
         let a_values = &line[994..(994+44)];
         let b_values = &line[2034..(2034+44)];
 
-        // Horizontal mean
+        // Horizontal average
         let curr_mean_a: f32 = a_values.iter().sum::<f32>() / 44.;
         let curr_mean_b: f32 = b_values.iter().sum::<f32>() / 44.;
         mean_a.push(curr_mean_a);
         mean_b.push(curr_mean_b);
 
-        // Horizontal squared deviations
+        // Horizontal variance
         variance.push(
             (a_values.iter().map(|x| (x - curr_mean_a).powi(2)).sum::<f32>() +
-            b_values.iter().map(|x| (x - curr_mean_b).powi(2)).sum::<f32>()) / 88.
+             b_values.iter().map(|x| (x - curr_mean_b).powi(2)).sum::<f32>()) / 88.
         );
     }
 
+    // Cross correlation between telemetry band averages and the telemetry
+    // sample, has peaks where telemetry frames start
+    let mut corr: Signal = Vec::new();
 
-    let mut corr: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
-    let mut quality: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
-    let mut best: (usize, f32) = (0, 0.);
+    // Cross correlation divided by the standard deviation, has peaks where
+    // telemetry frames with low standard deviation start
+    let mut quality: Signal = Vec::new();
 
-    // Cross correlation of both telemetry bands horizontal means with a sample
+    // These will be used only if the steps are exported
+    if context.export {
+        corr.reserve(signal.len() / PX_PER_ROW as usize);
+        quality.reserve(signal.len() / PX_PER_ROW as usize)
+    };
+
+    // Row with the best quality
+    let mut best: (usize, f32) = (0, 0.); // (row, quality)
+
+    // Cross correlation of both telemetry bands with a sample
     for i in 0 .. mean_a.len() - telemetry_sample.len() {
         let mut sum: f32 = 0.;
         for j in 0..telemetry_sample.len() {
             sum += telemetry_sample[j] * mean_a[i + j];
             sum += telemetry_sample[j] * mean_b[i + j];
         }
-        corr.push(sum);
 
-        let q = sum / variance[i..(i + telemetry_sample.len())].iter().map(|x| x.sqrt()).sum::<f32>();
-        quality.push(q);
+        // sqrt() for standard deviation instead of variance, otherwise variance
+        // is too big and noise affects the quality estimation too much compared
+        // to the correlation
+        // Check standard deviation on the same places where we cross correlate,
+        // that's why I use telemetry_sample.len()
+        let q = sum / variance[i..(i + telemetry_sample.len())].iter()
+            .map(|x| x.sqrt()).sum::<f32>();
+
         if q > best.1 {
             best = (i, q);
         }
+
+        if context.export {
+            corr.push(sum);
+            quality.push(q);
+        }
     }
+
+    let telemetry = Telemetry::from_bands(&mean_a, &mean_b, best.0);
+    info!("Channel A: {}, Channel B: {}",
+        telemetry.get_channel_name(Channel::A), telemetry.get_channel_name(Channel::B));
 
     context.step(Step::signal("telemetry_a", &mean_a, None))?;
     context.step(Step::signal("telemetry_b", &mean_b, None))?;
@@ -243,38 +363,8 @@ fn map(context: &mut Context, signal: &Signal, sync: bool) -> err::Result<Vec<u8
     context.step(Step::signal("telemetry_variance", &variance, None))?;
     context.step(Step::signal("telemetry_quality", &quality, None))?;
 
-    // Take wedge 16 and compare to wedges 1 to 9 to determine the channel
-
-    let contrast_wedges: Vec<f32> =
-        (1..9).map(|i| get_wedge(i, &mean_a, &mean_b, best.0)).collect();
-
-    let channel_a_wedge: f32 = get_wedge_single(16, &mean_a, best.0);
-
-    println!("{:?}, {}", contrast_wedges, channel_a_wedge);
-    let mut closest: (usize, f32) = (0, 0.); // wedge, difference
-    for (i, value) in contrast_wedges.iter().enumerate() {
-        let difference = (channel_a_wedge - value).abs();
-        if closest.0 == 0 {
-            closest = (i + 1, difference);
-        }
-        if difference < closest.1 {
-            // Add one because i starts at zero
-            closest = (i + 1, difference);
-        }
-    }
-    println!("{}", closest.0);
-    let channel_a = match closest.0 {
-        1 => info!("Channel A: 1"),
-        2 => info!("Channel A: 2"),
-        3 => info!("Channel A: 3a"),
-        6 => info!("Channel A: 3b"),
-        4 => info!("Channel A: 4"),
-        5 => info!("Channel A: 5"),
-        _ => info!("Channel A: Unknown"),
-    };
-
-    let max = get_wedge(8, &mean_a, &mean_b, best.0);
-    let min = get_wedge(9, &mean_a, &mean_b, best.0);
+    let max = telemetry.get_wedge_value(8, None);
+    let min = telemetry.get_wedge_value(9, None);
     let range = max - min;
     let signal: Vec<u8> = signal.iter()
         .map(|x|
@@ -396,7 +486,7 @@ pub fn decode(
     let signal = dsp::resample_with_filter(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
 
-    info!("Mapping image colors");
+    info!("Reading telemetry and mapping colors");
 
     let signal = map(&mut context, &signal, sync)?;
     context.step(Step::signal(
