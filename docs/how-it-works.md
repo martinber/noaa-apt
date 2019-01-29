@@ -96,21 +96,56 @@ can't find anything about it on the web.
 
 Read first below what does the telemetry mean.
 
-I can sweep over the telemetry band on the final image, something similar to
-[pietern/apt137].
+The hardest part is to determine where the telemetry wedges are located.
+Horizontally, the telemetry bands are always on the same place. By looking at a
+decoded image I get:
 
-![Telemetry bands averages]({{ site.baseurl }}/images/telemetry_average.png)
+- Telemetry A position: 994 pixels
+- Telemetry B position: 2034 pixels
+- Both have a width of 44 pixels
 
-I can determine the values of the wedges without knowing where they are located
-vertically, by looking at the values of the pixels on the telemetry band and
-clustering (e.g. k-means). You can check that doing an histogram on GIMP of the
-telemetry band:
+Now the problem is to know where the telemetry starts vertically, I thought of
+doing some kind of edge detection but then I realized that we can take advantage
+of the fact that wedges 1 to 9 are always the same. So I use the
+following sample:
+
+![Telemetry bands]({{ site.baseurl }}/images/telemetry_sample.png)
+
+The variable part contains temperatures and a channel identifier. To determine
+the start of the telemetry frame I cross correlate the received telemetry band
+against that sample (excluding wedges 10 to 16). The peaks of the cross
+correlation show where the frames start.
+
+To avoid noise I do the following:
+
+- As a sample I use frames 1 to 9 two times.
+
+- Each telemetry band has a width of 44 pixels, so I calculate the mean of
+  these 44 pixels. Wedges 1 to 14 are the same in both A and B, so we use the
+  mean of 88 pixels.
+
+- To measure noise I calculate the variance of the same 88 pixels I use to
+  calculate the mean.
+
+- There is more than one telemetry frame on each image, I want to select the
+  best one (less noise). So I divide the cross correlation against the variance
+  to get a quality estimation (actually I'm using the standard deviation instead
+  of variance). The remaining peaks are both starts of frames and low noise
+  frames.
+
+The following image shows an example:
+
+![Telemetry bands]({{ site.baseurl }}/images/telemetry_steps.png)
+
+I can also determine the values of the wedges without knowing where they are
+located vertically, by looking at the values of the pixels on the telemetry band
+and clustering (e.g. k-means). You can check that doing an histogram on GIMP of
+the telemetry band:
 
 ![Telemetry band histogram on GIMP]({{ site.baseurl }}/images/telemetry_histogram.png)
 
-- Telemetry A position: 994
-- Telemetry B position: 2034
-- Telemetry band width: 44
+Useful for contrast adjustment but I'm not doing this because I can't know the
+value of wedge 16 (channel ID).
 
 ## About APT images
 

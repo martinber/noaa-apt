@@ -142,38 +142,145 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     Ok(peaks.iter().map(|(index, _value)| *index).collect())
 }
 
+/// Get wedge value from one telemetry band.
+///
+/// Useful for wedges 15 and 16. They have different values on each band.
+///
+/// Use the given index as the position of the first wedge.
+fn get_wedge_single(wedge: u32, telemetry: &Signal, index: usize) -> f32 {
+
+    // Telemetry signals have 8 values per wedge
+    // Substract one because wedge numbers start from 1 instead of 0
+    let wedge_pos = index + (wedge - 1) as usize * 8;
+
+    // If this is a contrast wedge, better to use the next contrast wedge too
+    if wedge <= 9 {
+        let wedge_pos_2 = wedge_pos + 16*8; // 16 wedges of length 8
+
+        (telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() +
+         telemetry[wedge_pos_2..(wedge_pos_2+8)].iter().sum::<f32>()) / 16.
+
+    } else {
+
+        telemetry[wedge_pos..(wedge_pos+8)].iter().sum::<f32>() / 8.
+
+    }
+}
+
+/// Get wedge value from two telemetry bands
+///
+/// Useful for wedges 1 to 14. They have different values on each band.
+///
+/// Use the given index as the position of the first wedge
+fn get_wedge(wedge: u32, telemetry_a: &Signal, telemetry_b: &Signal, index: usize) -> f32 {
+
+    (get_wedge_single(wedge, telemetry_a, index) +
+     get_wedge_single(wedge, telemetry_b, index)) / 2.
+}
+
 /// Maps signal values to range 0-255
 fn map(context: &mut Context, signal: &Signal, sync: bool) -> err::Result<Vec<u8>> {
 
-    if sync {
-        // Telemetry
+    // Sample of telemetry band used for correlation. Only contrast wedges
+    // (1 to 9) are given
+    let telemetry_sample: Signal = [
+        31., 63., 95., 127., 159., 191., 224., 255., 0.,
+        0., 0., 0., 0., 0., 0., 0.,
+        31., 63., 95., 127., 159., 191., 224., 255., 0.
+    ].iter().flat_map(|x| std::iter::repeat(*x).take(8)).collect();
 
-        // Horizontal average of each row of both bands
-        // Reserve a vector long as the height of the image
-        let mut telemetry_a: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
-        let mut telemetry_b: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+    // Horizontal average of both bands
+    // Reserve a vector long as the height of the image
+    let mut mean_a: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+    let mut mean_b: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
 
-        // Iterate a line at a time
-        for line in signal.chunks_exact(PX_PER_ROW as usize) {
-            telemetry_a.push(
-                line[994..(994+44)].iter().sum::<f32>() / 44.
-            );
-            telemetry_b.push(
-                line[2034..(2034+44)].iter().sum::<f32>() / 88.
-            );
-        }
-        context.step(Step::signal("telemetry_a", &telemetry_a, None))?;
-        context.step(Step::signal("telemetry_b", &telemetry_b, None))?;
+    // Horizontal variance of the telemetry bands
+    // Shared with both bands
+    let mut variance: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
 
+    // Iterate a row at a time (pixel row)
+    for line in signal.chunks_exact(PX_PER_ROW as usize) {
+        let a_values = &line[994..(994+44)];
+        let b_values = &line[2034..(2034+44)];
+
+        // Horizontal mean
+        let curr_mean_a: f32 = a_values.iter().sum::<f32>() / 44.;
+        let curr_mean_b: f32 = b_values.iter().sum::<f32>() / 44.;
+        mean_a.push(curr_mean_a);
+        mean_b.push(curr_mean_b);
+
+        // Horizontal squared deviations
+        variance.push(
+            (a_values.iter().map(|x| (x - curr_mean_a).powi(2)).sum::<f32>() +
+            b_values.iter().map(|x| (x - curr_mean_b).powi(2)).sum::<f32>()) / 88.
+        );
     }
 
-    // Min Max
 
-    let max = dsp::get_max(&signal)?;
-    let min = dsp::get_min(&signal)?;
+    let mut corr: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+    let mut quality: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+    let mut best: (usize, f32) = (0, 0.);
+
+    // Cross correlation of both telemetry bands horizontal means with a sample
+    for i in 0 .. mean_a.len() - telemetry_sample.len() {
+        let mut sum: f32 = 0.;
+        for j in 0..telemetry_sample.len() {
+            sum += telemetry_sample[j] * mean_a[i + j];
+            sum += telemetry_sample[j] * mean_b[i + j];
+        }
+        corr.push(sum);
+
+        let q = sum / variance[i..(i + telemetry_sample.len())].iter().map(|x| x.sqrt()).sum::<f32>();
+        quality.push(q);
+        if q > best.1 {
+            best = (i, q);
+        }
+    }
+
+    context.step(Step::signal("telemetry_a", &mean_a, None))?;
+    context.step(Step::signal("telemetry_b", &mean_b, None))?;
+    context.step(Step::signal("telemetry_correlation", &corr, None))?;
+    context.step(Step::signal("telemetry_variance", &variance, None))?;
+    context.step(Step::signal("telemetry_quality", &quality, None))?;
+
+    // Take wedge 16 and compare to wedges 1 to 9 to determine the channel
+
+    let contrast_wedges: Vec<f32> =
+        (1..9).map(|i| get_wedge(i, &mean_a, &mean_b, best.0)).collect();
+
+    let channel_a_wedge: f32 = get_wedge_single(16, &mean_a, best.0);
+
+    println!("{:?}, {}", contrast_wedges, channel_a_wedge);
+    let mut closest: (usize, f32) = (0, 0.); // wedge, difference
+    for (i, value) in contrast_wedges.iter().enumerate() {
+        let difference = (channel_a_wedge - value).abs();
+        if closest.0 == 0 {
+            closest = (i + 1, difference);
+        }
+        if difference < closest.1 {
+            // Add one because i starts at zero
+            closest = (i + 1, difference);
+        }
+    }
+    println!("{}", closest.0);
+    let channel_a = match closest.0 {
+        1 => info!("Channel A: 1"),
+        2 => info!("Channel A: 2"),
+        3 => info!("Channel A: 3a"),
+        6 => info!("Channel A: 3b"),
+        4 => info!("Channel A: 4"),
+        5 => info!("Channel A: 5"),
+        _ => info!("Channel A: Unknown"),
+    };
+
+    let max = get_wedge(8, &mean_a, &mean_b, best.0);
+    let min = get_wedge(9, &mean_a, &mean_b, best.0);
     let range = max - min;
     let signal: Vec<u8> = signal.iter()
-        .map(|x| ((x - min) / range * 255.) as u8).collect();
+        .map(|x|
+             // Map and clamp between 0 and 255 using min() and max()
+             ((x - min) / range * 255.).max(0.).min(255.) as u8
+        ).collect();
 
     Ok(signal)
 }
