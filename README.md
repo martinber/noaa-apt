@@ -8,5 +8,4 @@ NOAA APT image decoder. Runs on GNU/Linux, Windows and OSX.
 
 Those docker images you are seeing are the environments I use to build
 cross-platform binaries. Don't be afraid, you don't need docker for building for
-yourself. Anyways you yould use the pre built binaries, no dependencies apart
-from GTK+3.
+yourself. Anyways you should use the pre built binaries.
