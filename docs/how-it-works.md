@@ -92,6 +92,26 @@ demodulation. I was able to reach that final expression (which is used by
 think it only works if the input AM signal is oversampled, maybe that's why I
 can't find anything about it on the web.
 
+### Telemetry
+
+Read first below what does the telemetry mean.
+
+I can sweep over the telemetry band on the final image, something similar to
+[pietern/apt137].
+
+![Telemetry bands averages]({{ site.baseurl }}/images/telemetry_average.png)
+
+I can determine the values of the wedges without knowing where they are located
+vertically, by looking at the values of the pixels on the telemetry band and
+clustering (e.g. k-means). You can check that doing an histogram on GIMP of the
+telemetry band:
+
+![Telemetry band histogram on GIMP]({{ site.baseurl }}/images/telemetry_histogram.png)
+
+- Telemetry A position: 994
+- Telemetry B position: 2034
+- Telemetry band width: 44
+
 ## About APT images
 
 ### Modulation

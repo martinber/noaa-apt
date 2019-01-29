@@ -22,7 +22,7 @@ const WORK_RATE: u32 = 20800;
 const FINAL_RATE: u32 = 4160;
 
 // Pixels per row
-const PX_PER_ROW: u32 = 2080;
+pub const PX_PER_ROW: u32 = 2080;
 
 // AM carrier frequency
 const CARRIER_FREQ: u32 = 2400;
@@ -142,6 +142,42 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     Ok(peaks.iter().map(|(index, _value)| *index).collect())
 }
 
+/// Maps signal values to range 0-255
+fn map(context: &mut Context, signal: &Signal, sync: bool) -> err::Result<Vec<u8>> {
+
+    if sync {
+        // Telemetry
+
+        // Horizontal average of each row of both bands
+        // Reserve a vector long as the height of the image
+        let mut telemetry_a: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+        let mut telemetry_b: Signal = Vec::with_capacity(signal.len() / PX_PER_ROW as usize);
+
+        // Iterate a line at a time
+        for line in signal.chunks_exact(PX_PER_ROW as usize) {
+            telemetry_a.push(
+                line[994..(994+44)].iter().sum::<f32>() / 44.
+            );
+            telemetry_b.push(
+                line[2034..(2034+44)].iter().sum::<f32>() / 88.
+            );
+        }
+        context.step(Step::signal("telemetry_a", &telemetry_a, None))?;
+        context.step(Step::signal("telemetry_b", &telemetry_b, None))?;
+
+    }
+
+    // Min Max
+
+    let max = dsp::get_max(&signal)?;
+    let min = dsp::get_min(&signal)?;
+    let range = max - min;
+    let signal: Vec<u8> = signal.iter()
+        .map(|x| ((x - min) / range * 255.) as u8).collect();
+
+    Ok(signal)
+}
+
 /// Decode APT image from WAV file.
 pub fn decode(
     input_filename: &str,
@@ -229,6 +265,7 @@ pub fn decode(
         }
 
         signal = aligned;
+
     } else {
         info!("Not syncing");
 
@@ -251,15 +288,10 @@ pub fn decode(
     // syncing
     let signal = dsp::resample_with_filter(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
-    let max = dsp::get_max(&signal)?;
-    let min = dsp::get_min(&signal)?;
-    let range = max - min;
 
-    debug!("Mapping samples from {}-{} to 0-255", min, max);
+    info!("Mapping image colors");
 
-    let signal: Vec<u8> = signal.iter()
-        .map(|x| ((x - min) / range * 255.) as u8).collect();
-
+    let signal = map(&mut context, &signal, sync)?;
     context.step(Step::signal(
             "mapped",
             &signal.iter().map(|x| f32::from(*x)).collect(),

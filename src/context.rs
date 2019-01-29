@@ -19,6 +19,7 @@
 //! metadata the sample rate.
 
 use dsp::{Signal, Rate};
+use noaa_apt::PX_PER_ROW;
 use err;
 use wav;
 
@@ -320,9 +321,23 @@ impl Context {
                     rate: Some(final_rate),
                 },
                 StepMetadata {
+                    description: "Telemetry A horizontal averages",
+                    id: "telemetry_a",
+                    filename: "12_telemetry_a",
+                    variant: Variant::Signal,
+                    rate: Some(final_rate / PX_PER_ROW),
+                },
+                StepMetadata {
+                    description: "Telemetry B horizontal averages",
+                    id: "telemetry_b",
+                    filename: "13_telemetry_b",
+                    variant: Variant::Signal,
+                    rate: Some(final_rate / PX_PER_ROW),
+                },
+                StepMetadata {
                     description: "Result of signal mapping, contrast check",
                     id: "mapped",
-                    filename: "12_mapped",
+                    filename: "14_mapped",
                     variant: Variant::Signal,
                     rate: None,
                 },
