@@ -20,6 +20,7 @@ mod misc;
 mod err;
 mod filters;
 mod context;
+mod telemetry;
 #[cfg(feature = "gui")] mod gui;
 
 use dsp::Rate;
@@ -91,7 +92,7 @@ fn main() -> err::Result<()> {
 
     if print_version {
         println!("noaa-apt image decoder version {}", VERSION);
-        match noaa_apt::check_updates(VERSION) {
+        match misc::check_updates(VERSION) {
             Some((false, _latest)) => println!("You have the latest version available"),
             Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
             None => println!("Could not retrieve latest version available"),

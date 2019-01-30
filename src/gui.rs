@@ -27,6 +27,7 @@ use gtk::prelude::*;
 use gtk::Builder;
 
 use noaa_apt;
+use misc;
 use dsp::Rate;
 use misc::ThreadGuard;
 
@@ -329,7 +330,7 @@ fn update_footer(widgets: Rc<WidgetList>) {
     };
 
     std::thread::spawn(move || {
-        callback(noaa_apt::check_updates(VERSION));
+        callback(misc::check_updates(VERSION));
     });
 
 }

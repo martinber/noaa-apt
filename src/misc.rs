@@ -1,6 +1,8 @@
 use std::cell::{Ref, RefCell, RefMut};
 use std::thread;
 
+use reqwest;
+
 
 // Lookup table for numbers used in Bessel function.
 // 1 / (n! * 2^n)^2
@@ -40,6 +42,48 @@ pub fn bessel_i0(x: f32) -> f32 {
     }
 
     result + 1.
+}
+
+/// Check if there is an update to this program.
+///
+/// Takes a String with the current version being used.
+///
+/// Returns a tuple of a bool idicating if there are new updates and a String
+/// with the latest version. Wrapped in Option, returns None if there were
+/// problems retrieving new versions and logs the error.
+pub fn check_updates(current: &str) -> Option<(bool, String)> {
+    let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
+
+    let latest: Option<String> = match reqwest::get(addr.as_str()) {
+        Ok(mut response) => {
+            match response.text() {
+                Ok(text) => {
+                    Some(text.trim().to_string())
+                }
+                Err(e) => {
+                    warn!("Error checking for updates: {}", e);
+                    None
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Error checking for updates: {}", e);
+            None
+        }
+    };
+
+    match latest {
+        Some(latest) => {
+            if latest.len() > 10 {
+                warn!("Error checking for updates: Response too long");
+                None
+            } else {
+                // Return true if there are updates
+                Some((latest != current, latest))
+            }
+        }
+        None => None,
+    }
 }
 
 /// TheardGuard is a _runtime_ thread guard for its internal data. It panics if

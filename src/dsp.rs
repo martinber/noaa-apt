@@ -12,6 +12,7 @@ use context::{Context, Step};
 pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
+#[allow(dead_code)]
 pub fn get_max(vector: &Signal) -> err::Result<&f32> {
     if vector.is_empty() {
         return Err(err::Error::Internal(
@@ -29,6 +30,7 @@ pub fn get_max(vector: &Signal) -> err::Result<&f32> {
 }
 
 /// Get smallest sample in signal.
+#[allow(dead_code)]
 pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     if vector.is_empty() {
         return Err(err::Error::Internal(
