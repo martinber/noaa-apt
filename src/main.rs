@@ -1,3 +1,5 @@
+//! NOAA APT image decoder
+
 extern crate num;
 extern crate hound;
 extern crate rustfft;
@@ -26,8 +28,10 @@ mod telemetry;
 use dsp::Rate;
 
 
+/// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Application entry point
 fn main() -> err::Result<()> {
 
     let mut input_filename: Option<String> = None;

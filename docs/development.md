@@ -12,10 +12,66 @@ layout: main
 
 ---
 
-The documentation is everything on this website. This website is built from the
-`/docs` folder on the repository. Also there are a lot of comments on the code
-because I tend to forget everything quite fast.
 [The repository is available on GitHub](https://github.com/martinber/noaa-apt).
+
+The available documentation is:
+
+- Everything on this website, built from the `/docs` folder on the repository.
+
+- Rustdoc documentation, generated from docstrings, built using `cargo doc
+  --document-private-items` and available on `/target/doc/noaa-apt/index.html`
+
+- Also there are a lot of comments on the code because I tend to forget
+  everything quite fast.
+
+## Code style
+
+- Should follow the [Style guidelines] but 80 characters as line width.
+
+- Docstrings: Try to document everything, follow [RFC-1574] without using links
+  or examples.
+
+- Order of `use` in code:
+
+    ```
+    extern crate thirdparty;
+    pub mod ...;
+    mod ...;
+    pub use std::...;
+    pub use thirdparty::...;
+    pub use internal::...;
+    use std::...;
+    use thirdparty::...;
+    use internal::...;
+    ```
+
+[Style guidelines]: https://doc.rust-lang.org/1.0.0/style/
+[RFC-1574]: https://rust-lang.github.io/rfcs/1574-more-api-documentation-conventions.html#appendix-a-full-conventions-text
+
+## Website
+
+I'm using Jekyll, the website is built automatically by GitHub from the `/docs`
+folder. These are the steps to build the website locally:
+
+```
+sudo apt-get install ruby-dev
+gem install bundler jekyll
+cd docs
+jekyll build --baseurl "$(pwd)/_site/"
+```
+
+Notes:
+
+- I'm using a modification of
+    [Horizons-Jekyll-Theme](https://github.com/old-jekyll-templates/Horizons-Jekyll-Theme).
+
+- Favicons generated using
+    [RealFaviconGenerator](https://realfavicongenerator.net/)
+
+- Apparently, the theme used _font-awesome_ to provide icons, I got rid of that.
+
+- Changed font to Open Sans and now I'm loading from `default.html` instead of
+  `style.css` because it's faster.
 
 ## Things to do
 
@@ -185,31 +241,6 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 - Edit the Downloads page on the website.
 
-## Website
-
-I'm using Jekyll, the website is built automatically by GitHub from the `/docs`
-folder. These are the steps to build the website locally:
-
-```
-sudo apt-get install ruby-dev
-gem install bundler jekyll
-cd docs
-jekyll build --baseurl "$(pwd)/_site/"
-```
-
-Notes:
-
-- I'm using a modification of
-    [Horizons-Jekyll-Theme](https://github.com/old-jekyll-templates/Horizons-Jekyll-Theme).
-
-- Favicons generated using
-    [RealFaviconGenerator](https://realfavicongenerator.net/)
-
-- Apparently, the theme used _font-awesome_ to provide icons, I got rid of that.
-
-- Changed font to Open Sans and now I'm loading from `default.html` instead of
-  `style.css` because it's faster.
-
 ## Check for updates
 
 The program sends a HTTP GET request and receives the latest version available,
@@ -225,20 +256,6 @@ anything other than the currently installed version.
 
 - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
     change the address to `127.0.0.1`.
-
-- Order of `use` in code:
-
-    ```
-    extern crate thirdparty;
-    pub mod ...;
-    mod ...;
-    pub use std::...;
-    pub use thirdparty::...;
-    pub use internal::...;
-    use std::...;
-    use thirdparty::...;
-    use internal::...;
-    ```
 
 ## References
 

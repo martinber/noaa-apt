@@ -1,22 +1,4 @@
-//! I wanted to keep track of some settings and manage the results of each step
-//! of the decoding process, because I want to debug every step of the decode,
-//! by storing the samples as a WAV file.
-//!
-//! Meanwhile in the future maybe instead of saving the samples on WAV files I
-//! can plot them on the GUI. Also I don't want clutter every function on the
-//! dsp and noaa_apt modules with code for WAV export.
-//!
-//! So every interesting function (on the dsp or noaa_apt module) should get an
-//! instance of Context, and send to it results of each step. Then the Context
-//! will save them as WAV or do nothing depending on the user's settings.
-//!
-//! Also the Context has information (Metadata) about each Step like a
-//! description and filename to use when saving to disk.
-//!
-//! One problem I had is that some functions on module dsp don't know the
-//! sample rate of the signal they are working on. The Context needs the sample
-//! rates of every signal for correct WAV export. So some steps have in their
-//! metadata the sample rate.
+//! Contains the Context struct.
 
 use dsp::{Signal, Rate};
 use noaa_apt::PX_PER_ROW;
@@ -33,14 +15,14 @@ enum Variant {
 
 /// Represents a step on the decoding process.
 ///
-/// Some steps can happen twice or can not happen, the Context has information
+/// Some steps can happen twice or can not happen, the `Context` has information
 /// about the order in which the steps can ocurr.
 ///
-/// The Rate is optional because some functions on the dsp module don't know the
-/// sample rate. In those cases, the metadata should have it. Also, when saving
-/// filters, there is no rate.
+/// The `Rate` is optional because some functions on the dsp module don't know
+/// the sample rate. In those cases, the metadata should have it. Also, when
+/// saving filters, there is no rate.
 ///
-/// The references only need to be valid until calling Context::step().
+/// The references only need to be valid until calling `Context::step()`.
 #[derive(Debug)]
 pub struct Step<'a> {
     variant: Variant,
@@ -81,23 +63,43 @@ struct StepMetadata {
     rate: Option<Rate>,
 }
 
-/// Keep track of some settings and manage the results of each step of the
-/// decoding process.
+/// Keep track of settings and export the results of each step of the decoding
+/// process.
 ///
-/// Has a list of StepMetadata, with information about each step we expect to
-/// get when someone calls our step() function.
+/// I wanted to keep track of settings and manage the results of each step of
+/// the decoding process, because I want to debug every step of the decode by
+/// storing the samples as a WAV file.
+///
+/// Meanwhile in the future maybe instead of saving the samples on WAV files I
+/// can plot them on the GUI. Also I don't want clutter every function on the
+/// `dsp` and `noaa_apt` modules with code for WAV export.
+///
+/// So every interesting function (on the `dsp` or `noaa_apt` module) should get
+/// an instance of `Context`, and send to it results of each step. Then the
+/// `Context` will save them as WAV or do nothing depending on the user's
+/// settings.
+///
+/// Also the `Context` has information (`StepMetadata`) about each Step: like a
+/// description and filename to use when saving to disk.
+///
+/// One problem I had is that the Context needs the sample rates of every signal
+/// for correct WAV export, so the `Rate` is given when calling
+/// `Context.step()`.
+/// Some functions on module `dsp` don't know the sample rate of the signal they
+/// are working on and pass `None` instead of a valid `Rate`  so those steps
+/// have in their metadata the sample rate.
 pub struct Context {
     steps_metadata: Vec<StepMetadata>,
 
-    /// If we are exporting something, functions like noaa_apt::find_sync()
+    /// If we are exporting something, functions like `noaa_apt::find_sync()`
     /// check this to decide if they should do things fast or they should do
     /// extra work and save intermediate signals. Anyways, for now it's always
-    /// the same as export_wav.
+    /// the same as `export_wav`.
     pub export: bool,
 
     /// If we are exporting the filtered signal on resample. When using
-    /// fast_resampling() this step es VERY slow and RAM heavy (gigabytes!), so
-    /// that function checks if this variable is set before doing extra work.
+    /// `fast_resampling()` this step es VERY slow and RAM heavy (gigabytes!),
+    /// so that function checks if this variable is set before doing extra work.
     pub export_resample_filtered: bool,
 
     /// Private field, if we are exporting to WAV.
@@ -109,7 +111,7 @@ pub struct Context {
 
 impl Context {
 
-    /// Store information about one step.
+    /// Export step.
     pub fn step(&mut self, step: Step) -> err::Result<()> {
         if self.export_wav {
 
@@ -184,6 +186,7 @@ impl Context {
         Ok(())
     }
 
+    /// Create `Context` for a resampling process.
     pub fn resample(
         export_wav: bool,
         export_resample_filtered: bool
@@ -227,6 +230,7 @@ impl Context {
         }
     }
 
+    /// Create `Context` for a decoding process.
     pub fn decode(
         work_rate: Rate,
         final_rate: Rate,

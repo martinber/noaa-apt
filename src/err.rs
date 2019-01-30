@@ -1,3 +1,5 @@
+//! Contains my Error type.
+
 use std::error::Error as StdError;
 
 use hound;
@@ -5,17 +7,29 @@ use png;
 use log;
 
 
+/// Uses my custom error type.
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Custom error type.
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Error {
-    Io(std::io::Error), // Input/output
-    WavOpen(String), // About WAV decoding/opening
-    PngWrite(String), // About PNG encoding/writing
-    Internal(String), // noaa-apt internal errors
-    FeatureNotAvailable(Vec<String>), // Functionality not available because the
-                                      // program was compiled without those features
+
+    /// Input/output.
+    Io(std::io::Error),
+
+    /// About WAV decoding/opening.
+    WavOpen(String),
+
+    /// About PNG encoding/writing.
+    PngWrite(String),
+
+    /// `noaa-apt` internal errors.
+    Internal(String),
+
+    /// Functionality not available because the program was compiled without
+    /// those features
+    FeatureNotAvailable(Vec<String>),
 }
 
 impl std::fmt::Display for Error {

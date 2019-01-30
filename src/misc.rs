@@ -1,11 +1,14 @@
+//! Small things that don't fit anywhere else.
+
 use std::cell::{Ref, RefCell, RefMut};
 use std::thread;
 
 use reqwest;
 
 
-// Lookup table for numbers used in Bessel function.
-// 1 / (n! * 2^n)^2
+/// Lookup table for numbers used in `bessel_i0()`
+///
+/// 1 / (n! * 2^n)^2
 const BESSEL_TABLE: [f32; 20] = [
     1.0,
     0.25,
@@ -31,7 +34,8 @@ const BESSEL_TABLE: [f32; 20] = [
 
 /// First Kind modified Bessel function of order zero.
 ///
-/// From https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715
+/// From this
+/// [post](https://dsp.stackexchange.com/questions/37714/kaiser-window-approximation/37715#37715).
 pub fn bessel_i0(x: f32) -> f32 {
     let mut result: f32 = 0.;
     let limit: usize = 8;
@@ -46,11 +50,11 @@ pub fn bessel_i0(x: f32) -> f32 {
 
 /// Check if there is an update to this program.
 ///
-/// Takes a String with the current version being used.
+/// Takes a `String` with the current version being used.
 ///
-/// Returns a tuple of a bool idicating if there are new updates and a String
-/// with the latest version. Wrapped in Option, returns None if there were
-/// problems retrieving new versions and logs the error.
+/// Returns a tuple of a `bool` idicating if there are new updates and a
+/// `String` with the latest version. Wrapped in `Option`, returns `None` if
+/// there was a problem retrieving new versions and logs the error.
 pub fn check_updates(current: &str) -> Option<(bool, String)> {
     let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
 
@@ -86,12 +90,13 @@ pub fn check_updates(current: &str) -> Option<(bool, String)> {
     }
 }
 
-/// TheardGuard is a _runtime_ thread guard for its internal data. It panics if
-/// data is being accessed from a thread other than the one that TheardGuard
-/// was initialized in.
+/// Runtime thread guard for its internal data. It panics if data is being
+/// accessed from a thread other than the one that `TheardGuard` was initialized
+/// in.
 ///
-/// Taken from https://github.com/vhakulinen/gnvim
-/// vhakulinen, MIT license
+/// Taken from [gnvim](https://github.com/vhakulinen/gnvim).
+///
+/// By _vhakulinen_, MIT license.
 pub struct ThreadGuard<T> {
     thread_id: thread::ThreadId,
     data: RefCell<T>,

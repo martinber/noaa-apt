@@ -1,3 +1,5 @@
+//! GUI code.
+//!
 //! I'm using two threads, one for the GTK+ GUI and another one that starts when
 //! decoding/resampling.
 //!
@@ -5,16 +7,17 @@
 //! is also the main thread. When pressing the Start button, a temporary thread
 //! starts for decoding/resampling.
 //!
-//! I'm using a WidgetList struct for keeping track of every Widget I'm
-//! interested in. This struct is wrapped on the Rc smart pointer to allow
-//! multiple ownership of the struct. Previously I wrapped inside Rc and RefCell
-//! too to allow mutable access to everyone, but AFAIK having mutable access
-//! to a Widget is not neccesary.
+//! I'm using a `WidgetList` struct for keeping track of every Widget I'm
+//! interested in. This struct is wrapped on the `Rc` smart pointer to allow
+//! multiple ownership of the struct. Previously I wrapped inside `Rc` and
+//! `RefCell` too to allow mutable access to everyone, but AFAIK having mutable
+//! access to a Widget is not neccesary.
 //!
-//! When doing a callback from another thread I use ThreadGuard, lets you Send
-//! the Widgets to another thread but you cant use them there (panics in that
-//! case). So I use glib::idle_add() to execute code on the main thread from
-//! another thread. In the end, we send the widgets to another thread and back.
+//! When doing a callback from another thread I use `ThreadGuard`, lets you
+//! `Send` the Widgets to another thread but you cant use them there (panics in
+//! that case). So I use `glib::idle_add()` to execute code on the main thread
+//! from another thread. In the end, we send the widgets to another thread and
+//! back.
 
 use std::env::args;
 use std::rc::Rc;
@@ -32,8 +35,10 @@ use dsp::Rate;
 use misc::ThreadGuard;
 
 
+/// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Contains references to widgets, so I can pass them together around.
 #[derive(Debug)]
 struct WidgetList {
     window:                       gtk::ApplicationWindow,
@@ -53,6 +58,7 @@ struct WidgetList {
 }
 
 impl WidgetList {
+    /// Create and load widgets from `gtk::Builder`.
     fn create(builder: &gtk::Builder) -> WidgetList {
         WidgetList {
             window:                       builder.get_object("window"                      ).expect("Couldn't get window"                      ),
@@ -89,6 +95,8 @@ pub fn main() {
 }
 
 /// Build GUI from .glade file and get everything ready.
+///
+/// Connect signals to Widgets.
 fn build_ui(application: &gtk::Application) {
 
     // Build GUI
@@ -190,6 +198,7 @@ fn build_ui(application: &gtk::Application) {
     widgets.window.show_all();
 }
 
+/// If the user wants to decode or resample.
 enum Action {
     Decode,
     Resample,
@@ -197,7 +206,7 @@ enum Action {
 
 /// Start decoding or resampling.
 ///
-/// Starts another working thread and updates the status_label when finished.
+/// Starts another working thread and updates the `status_label` when finished.
 fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
 
     let input_filename = match widgets.input_file_chooser.get_filename() {
@@ -280,7 +289,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
     };
 }
 
-/// Check for updates on another thread and show the result on the footer
+/// Check for updates on another thread and show the result on the footer.
 fn update_footer(widgets: Rc<WidgetList>) {
 
     // Show this while we check for updates online

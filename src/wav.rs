@@ -1,3 +1,5 @@
+//! Functions for loading and saving WAV files.
+
 use hound;
 
 use dsp;
@@ -5,7 +7,7 @@ use dsp::Signal;
 use err;
 
 
-/// Load wav file and return signal and specs.
+/// Load wav file, return `Signal` and specs.
 pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 
     debug!("Loading WAV: {}", filename);

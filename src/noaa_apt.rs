@@ -1,6 +1,4 @@
-//! Core of the program.
-//!
-//! This module has the high-level functions for decoding APT.
+//! High-level functions for decoding APT.
 
 use hound;
 use png;
@@ -13,24 +11,27 @@ use context::{Context, Step};
 use telemetry;
 
 
-// Working sample rate, used during demodulation and syncing, better if multiple
-// of the final sample rate. That way, the second resampling it's just a
-// decimation
+/// Working sample rate, used during demodulation and syncing.
+///
+/// Better if multiple of the final sample rate. That way, the second resampling
+/// it's just a decimation.
 const WORK_RATE: u32 = 20800;
 
-// Final signal (with has one sample per pixel) sample rate
+/// Final signal sample rate.
+///
+/// This signal has one sample per pixel.
 const FINAL_RATE: u32 = 4160;
 
-// Pixels per row
+/// Pixels per image row.
 pub const PX_PER_ROW: u32 = 2080;
 
-// AM carrier frequency
+/// AM carrier frequency in Hz.
 const CARRIER_FREQ: u32 = 2400;
 
-// Samples on each image row when at WORK_RATE
+/// Samples on each image row when at WORK_RATE.
 const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
 
-/// Resample wav file
+/// Load and resample WAV file.
 pub fn resample_wav(
     input_filename: &str,
     output_filename: &str,
@@ -142,14 +143,17 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     Ok(peaks.iter().map(|(index, _value)| *index).collect())
 }
 
-/// Maps signal values from min-max to 0-255.
+/// Maps float signal values to `u8`.
+///
+/// `min` becomes 0 and `max` becomes 255. Values are clamped to prevent `u8`
+/// overflow.
 fn map(signal: &Signal, min: f32, max: f32) -> Vec<u8> {
 
     let range = max - min;
     let signal: Vec<u8> = signal.iter()
         .map(|x|
              // Map and clamp between 0 and 255 using min() and max()
-             ((x - min) / range * 255.).max(0.).min(255.) as u8
+             ((x - min) / range * 255.).max(0.).min(255.).round() as u8
         ).collect();
 
     signal
@@ -301,3 +305,31 @@ pub fn decode(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    /// Check if two floats are equal given some margin of precision
+    fn assert_roughly_equal(a: f32, b: f32) {
+        assert_ulps_eq!(a, b, max_ulps = 10)
+    }
+
+    #[test]
+    fn test_map() {
+        let expected: Vec<u8> = vec![
+            0, 0, 0, 0, 1, 2, 50, 120, 200, 255, 255, 255];
+        let test_values: Signal = vec![
+            -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.];
+
+        // Shift values somewhere
+        let shifted_values: Signal =
+            test_values.iter().map(|x| x * 123.123 - 234.234).collect();
+
+        // See where 0 and 255 end up after that
+        let min = 0. * 123.123 - 234.234;
+        let max = 255. * 123.123 - 234.234;
+
+        assert_eq!(expected, map(&shifted_values, min, max));
+    }
+}

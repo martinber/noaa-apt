@@ -9,6 +9,7 @@ use filters;
 use context::{Context, Step};
 
 
+/// Represents a signal, it's just a `Vec<f32>`.
 pub type Signal = Vec<f32>;
 
 /// Get biggest sample in signal.
@@ -49,10 +50,10 @@ pub fn get_min(vector: &Signal) -> err::Result<&f32> {
 
 /// Filter and then resample.
 ///
-/// Does both things at the same time, so it's faster than calling filter() and
-/// then resampling. Make sure that the filter prevents aliasing.
+/// Does both things at the same time, so it's faster than calling `filter()`
+/// and then resampling. Make sure that the filter prevents aliasing.
 ///
-/// The filter should have the frequencies referenced to the input_rate.
+/// The filter should have the frequencies referenced to the `input_rate`.
 pub fn resample_with_filter(
     context: &mut Context,
     signal: &Signal,
@@ -100,7 +101,7 @@ pub fn resample_with_filter(
 
 /// Resample signal.
 ///
-/// delta_w is the transition band of the lowpass filter to use.
+/// `delta_w` is the transition band of the lowpass filter to use.
 pub fn resample(
     context: &mut Context,
     signal: &Signal,
@@ -131,14 +132,19 @@ pub fn resample(
 
 /// Resample a signal using a given filter.
 ///
-/// Low-level function used by resample_with_filter.
+/// Low-level function used by `resample_with_filter`.
 ///
-/// Resamples by expansion by l, filtering and then decimation by m. The
-/// expansion is equivalent to the insertion of l-1 zeros between samples.
+/// Resamples by expansion by `l`, filtering and then decimation by `m`. The
+/// expansion is equivalent to the insertion of `l-1` zeros between samples.
 ///
 /// The given filter coefficients should be designed for the signal after
-/// expansion by l, so you might want to divide every frequency by l when
+/// expansion by `l`, so you might want to divide every frequency by `l` when
 /// designing the filter.
+///
+/// I've tried to make it faster several times, that's why it's so ugly. It's
+/// much more efficient than expanding, filtering and decimating, because skips
+/// computed values that otherwise would be dropped on decimation.
+
 fn fast_resampling(
     context: &mut Context,
     signal: &Signal,
@@ -150,11 +156,6 @@ fn fast_resampling(
 
     let l = l as usize;
     let m = m as usize;
-
-    // This is the resampling algorithm, i've tried to make it faster several
-    // times, that's why it's so ugly. It's much more efficient than expanding,
-    // filtering and decimating, because skips computed values that otherwise
-    // would be dropped on decimation.
 
     // Check the diagram on the documentation to see what the letters mean
 
@@ -235,7 +236,7 @@ fn fast_resampling(
     Ok(output)
 }
 
-/// Decimate without filtering
+/// Decimate without filtering.
 ///
 /// The signal should be accordingly bandlimited previously to avoid aliasing.
 fn decimate(signal: &Signal, m: u32) -> Signal {
@@ -256,6 +257,23 @@ fn decimate(signal: &Signal, m: u32) -> Signal {
 }
 
 /// Demodulate AM signal.
+///
+/// Demodulate from two consecutive samples, by the calculation of:
+///
+/// ```
+/// y[i] = sqrt(x[i-1]^2 + x[i]^2 - x[i-1]*x[i]*2*cos(phi)) / sin(phi)
+/// ```
+///
+/// Where:
+///
+/// ```
+/// phi = 2 * pi * (carrier_freq / sampling_freq)
+/// ```
+///
+/// Take a look at the documentation.
+///
+/// Expression taken from
+/// [apt137](https://github.com/pietern/apt137/blob/master/decoder.c).
 pub fn demodulate(
     context: &mut Context,
     signal: &Signal,
@@ -265,16 +283,6 @@ pub fn demodulate(
     debug!("Demodulating signal");
 
     let mut output: Signal = vec![0_f32; signal.len()];
-
-    // Demodulate from two consecutive samples, by the calculation of:
-    // y[i] = sqrt(x[i-1]^2 + x[i]^2 - x[i-1]*x[i]*2*cos(phi)) / sin(phi)
-    // Where:
-    // phi = 2 * pi * (carrier_freq / sampling_freq)
-    //
-    // Take a look at the documentation
-    //
-    // Taken from:
-    // https://github.com/pietern/apt137/blob/master/decoder.c
 
     // Shortcut to 2 * pi * (carrier_freq.get_hz() / sample_rate.get_hz())
     let phi = 2. * carrier_freq.get_rad();
@@ -302,7 +310,7 @@ pub fn demodulate(
     Ok(output)
 }
 
-/// Filter a signal,
+/// Filter a signal.
 pub fn filter(
     context: &mut Context,
     signal: &Signal,

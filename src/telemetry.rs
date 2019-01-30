@@ -1,9 +1,12 @@
+//! Code for telemetry decoding.
+
 use noaa_apt::PX_PER_ROW;
 use dsp::Signal;
 use err;
 use context::{Context, Step};
 
 
+/// Determines if working channel A or B.
 pub enum Channel {
     A,
     B,

@@ -1,3 +1,5 @@
+//! Filter definitions.
+
 use std::f32::consts::PI;
 
 use dsp::{Signal, Rate, Freq};
@@ -8,11 +10,13 @@ pub trait Filter {
     /// Design filter from parameters.
     fn design(&self) -> Signal;
 
-    /// Resample filter.
+    /// Resample filter to a new `Rate`.
     fn resample(&mut self, input_rate: Rate, output_rate: Rate);
 }
 
 /// No filter.
+///
+/// Impulse response is an impulse.
 #[derive(Clone, PartialEq)]
 pub struct NoFilter;
 
@@ -30,7 +34,7 @@ pub struct Lowpass {
 /// Lowpass and DC removal FIR filter, windowed by a kaiser window.
 ///
 /// Attenuation in positive decibels. It's actually a bandpass filter so has two
-/// transition bands, one is the same transition band that lowpass() has:
+/// transition bands, one is the same transition band that `lowpass()` has:
 /// `cutout - delta_w / 2` to `cutout + delta_w / 2`. The other transition band
 /// goes from `0` to `delta_w`.
 #[derive(Clone, PartialEq)]
@@ -132,7 +136,6 @@ impl Filter for LowpassDcRemoval {
 /// Design Kaiser window from parameters.
 ///
 /// The length depends on the parameters given, and it's always odd.
-/// Frequency in fractions of pi radians per second.
 fn kaiser(atten: f32, delta_w: Freq) -> Signal {
 
     debug!("Designing Kaiser window, \
