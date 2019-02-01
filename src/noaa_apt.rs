@@ -13,8 +13,8 @@ use telemetry;
 
 /// Working sample rate, used during demodulation and syncing.
 ///
-/// Better if multiple of the final sample rate. That way, the second resampling
-/// it's just a decimation.
+/// Should be multiple of the final sample rate. Because the syncing needs that,
+/// also that way the final resampling it's just a decimation.
 const WORK_RATE: u32 = 20800;
 
 /// Final signal sample rate.
@@ -72,6 +72,41 @@ pub fn resample_wav(
     Ok(())
 }
 
+/// Generate sample sync frame.
+///
+/// Generates sync A frame, a square wave which has a pulse width of 2 pixels,
+/// and period of 4 pixels. Only has values 0 and 1.
+///
+/// Used for cross correlation against the received signal to find the sync
+/// frames positions.
+fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
+
+    if work_rate.get_hz() % FINAL_RATE != 0 {
+        return Err(err::Error::Internal(
+            "work_rate is not multiple of FINAL_RATE".to_string()));
+    }
+
+    // Width of pixels at the work_rate.
+    let pixel_width = (work_rate.get_hz() / FINAL_RATE) as usize;
+
+    // Width of pulses at work_rate
+    let sync_pulse_width = pixel_width * 2;
+
+    // Tried to use iterators, it's horrible
+
+    use std::iter::repeat;
+
+    Ok(
+        (
+            repeat(-1).take(sync_pulse_width).chain(
+            repeat(1).take(sync_pulse_width))
+            .cycle().take(7 * 2 * sync_pulse_width)
+        ).chain(
+        repeat(-1).take(8 * pixel_width)).collect()
+    )
+}
+
+
 /// Find sync frame positions.
 ///
 /// Returns list of found sync frames positions.
@@ -79,17 +114,7 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
 
     info!("Searching for sync frames");
 
-    // TODO define and resample to WORK_RATE
-    // Sync frame to find: seven impulses and some black pixels (some lines
-    // have something like 8 black pixels and then white ones)
-    let mut guard: Vec<i32> = Vec::with_capacity(20*7 + 35);
-    for _i in 0..7 {
-        guard.extend_from_slice(&[-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
-    }
-    for _i in 0..35 {
-        guard.push(-1);
-    }
+    let guard = generate_sync_frame(Rate::hz(WORK_RATE))?;
 
     // list of maximum correlations found: (index, value)
     let mut peaks: Vec<(usize, f32)> = Vec::new();
@@ -313,6 +338,54 @@ mod tests {
     /// Check if two floats are equal given some margin of precision
     fn assert_roughly_equal(a: f32, b: f32) {
         assert_ulps_eq!(a, b, max_ulps = 10)
+    }
+
+    #[test]
+    fn test_sample_sync_frame() {
+
+        assert_eq!(
+            vec![-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,],
+            generate_sync_frame(Rate::hz(FINAL_RATE * 5)).unwrap()
+        );
+
+        assert_eq!(
+            vec![-1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                  1,  1,  1,  1,
+                 -1, -1, -1, -1,
+                 -1, -1, -1, -1,
+                 -1, -1, -1, -1,
+                 -1, -1, -1, -1,],
+            generate_sync_frame(Rate::hz(FINAL_RATE * 2)).unwrap()
+        );
     }
 
     #[test]

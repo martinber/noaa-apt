@@ -83,6 +83,8 @@ Notes:
 
     - Maybe store options on Context.
 
+    - Add warnings for short images when reading telemetry.
+
     - Add icons to executables.
 
 - Someday:

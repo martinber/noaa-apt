@@ -78,8 +78,7 @@ If the satellite went from south to north you should rotate the image.
 
 ### Bad contrast, dark images
 
-Currently the program does not adjust the contrast of the image after
-demodulation, so you should edit the contrast with some editing software.
+TODO: Now the program automatically adjusts the contrast.
 
 I use GIMP and the tool _Colors > Levels_. You can pick a white spot and a black
 spot as you can see on this screenshot.
@@ -91,10 +90,10 @@ spot as you can see on this screenshot.
 This program starts a new line when it receives a sync frame (those seven white
 and black stripes), works well if the signal has clear sync frames.
 
-The first time I recorded a NOAA APT signal the bright parts had lot's of noise
-(I think the FM demodulator bandwith was too narrow and had saturation when
-receiving white), the sync frames were really low quality and the alignment was
-really bad.
+The first time I recorded a NOAA APT signal using a FM amateur radio the bright
+parts had lot's of noise (had saturation when receiving white, I don't know
+why), the sync frames were really low quality and the alignment was really bad.
+Anyways, when using SDR that doesn't happen.
 
 Every decoder I've tested, excluding [WXtoIMG], has the same problem.
 

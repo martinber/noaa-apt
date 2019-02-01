@@ -131,7 +131,7 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     // Iterate a row at a time (each row is one pixel high)
     for line in signal.chunks_exact(PX_PER_ROW as usize) {
 
-        // Values on each bamd
+        // Values on each band
         let a_values = &line[994..(994+44)];
         let b_values = &line[2034..(2034+44)];
 
@@ -164,6 +164,12 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
 
     // Row with the best quality
     let mut best: (usize, f32) = (0, 0.); // (row, quality)
+
+    // Check if image is long enough
+    if mean_a.len() < telemetry_sample.len() {
+        return Err(err::Error::Internal(
+            "Recording too short for telemetry decoding".to_string()));
+    }
 
     // Cross correlation of both telemetry bands with a sample
     for i in 0 .. mean_a.len() - telemetry_sample.len() {

@@ -92,6 +92,36 @@ demodulation. I was able to reach that final expression (which is used by
 think it only works if the input AM signal is oversampled, maybe that's why I
 can't find anything about it on the web.
 
+### Syncing
+
+I do a cross correlation between the received signal against a sample sync frame
+(Channel A sync). As a sample sync frame I use the sequence:
+
+```
+.: Black
+W: White
+
+[..WW..WW..WW..WW..WW..WW..WW........]
+```
+
+Here you can see some examples.
+
+![Sync cross correlation]({{ site.baseurl }}/images/syncing_normalized.png)
+
+The first signal is the APT signal after AM demodulation, the next three are
+results of the cross correlation using slightly different samples, they should
+have peaks where the sync frames are in the original image.
+
+The first one uses on the sample `-1` for black and `1` for white. The second
+one is wrong, uses `0` for black and `1` for white. The third has the same
+sample as the first one but removes the DC component of the APT signal before
+doing the cross correlation.
+
+Here you can see close up of a peak.
+
+![Sync cross correlation peak]({{ site.baseurl }}/images/syncing_zoom.png)
+
+
 ### Telemetry
 
 Read first below what does the telemetry mean.
@@ -225,8 +255,8 @@ instead (Channel 3A, 4 and I guess that 3B and 5 too).
 
 The telemetry bands have calibration data and information about the current
 channel being transmitted. Bars/wedges 1 to 9 are used for contrast adjustment
-and are fixed 10 to 16 can change. I think the temperatures and back scan are
-useful for thermal images calibration.
+and are fixed, wedges 10 to 16 can change because they show temperatures
+used for infrared images calibration.
 
 ### Telemetry wedges
 
@@ -262,11 +292,14 @@ useful for thermal images calibration.
     sensor
 
 16. Channel identification: When compared to the values of the wedges 1 to 9
-    you can determine which Channel is being used. Both this wedge and the
+    you can determine which channel is being used. Both this wedge and the
     back scan wedge is different on Channel A and B. See the list of channels
     below.
 
 ### Channels
+
+Channel A is the left part of the image, channel B is the right one. Each one
+can show any of the following sensors (also called channels).
 
 - 1: Visible. Equivalent wedge: 1. Wavelength: 0.58µm - 0.68µm. Daytime cloud
   and surface mapping.
