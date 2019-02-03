@@ -163,7 +163,7 @@ fn fast_resampling(
 
     let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
 
-    // Save expanded and filtered signal if wav-steps is enabled
+    // Save expanded and filtered signal if we need to export that step
     let mut expanded_filtered = if context.export_resample_filtered  {
         Vec::with_capacity(signal.len() * l)
     } else {
@@ -211,7 +211,7 @@ fn fast_resampling(
 
         if context.export_resample_filtered {
             // Iterate over every sample on the n axis, inefficient because we
-            // only need to push to the output the samples that would survive
+            // only need to push to `output` the samples that would survive
             // a decimation.
             expanded_filtered.push(sum);
             t += 1;

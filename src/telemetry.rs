@@ -157,7 +157,7 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     let mut quality: Signal = Vec::new();
 
     // These will be used only if the steps are exported
-    if context.export {
+    if context.export_steps {
         corr.reserve(signal.len() / PX_PER_ROW as usize);
         quality.reserve(signal.len() / PX_PER_ROW as usize)
     };
@@ -191,7 +191,7 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
             best = (i, q);
         }
 
-        if context.export {
+        if context.export_steps {
             corr.push(sum);
             quality.push(q);
         }

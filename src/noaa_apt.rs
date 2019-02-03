@@ -9,6 +9,7 @@ use err;
 use filters;
 use context::{Context, Step};
 use telemetry;
+use misc;
 
 
 /// Working sample rate, used during demodulation and syncing.
@@ -124,8 +125,8 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
     // to the number of samples by line
     let min_distance: usize = SAMPLES_PER_WORK_ROW as usize * 8/10;
 
-    // Save cross-correlation if wav-steps is enabled
-    let mut correlation = if context.export {
+    // Save cross-correlation if exporting steps
+    let mut correlation = if context.export_steps {
         Vec::with_capacity(signal.len() - guard.len())
     } else {
         Vec::with_capacity(0) // Not going to be used
@@ -141,7 +142,7 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
             }
         }
 
-        if context.export {
+        if context.export_steps {
             correlation.push(corr);
         }
 
@@ -159,7 +160,7 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
         }
     }
 
-    if context.export {
+    if context.export_steps {
         context.step(Step::signal("sync_correlation", &correlation, None))?;
     }
 
@@ -170,15 +171,15 @@ fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> 
 
 /// Maps float signal values to `u8`.
 ///
-/// `min` becomes 0 and `max` becomes 255. Values are clamped to prevent `u8`
+/// `low` becomes 0 and `high` becomes 255. Values are clamped to prevent `u8`
 /// overflow.
-fn map(signal: &Signal, min: f32, max: f32) -> Vec<u8> {
+fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
 
-    let range = max - min;
+    let range = high - low;
     let signal: Vec<u8> = signal.iter()
         .map(|x|
              // Map and clamp between 0 and 255 using min() and max()
-             ((x - min) / range * 255.).max(0.).min(255.).round() as u8
+             ((x - low) / range * 255.).max(0.).min(255.).round() as u8
         ).collect();
 
     signal
@@ -295,14 +296,32 @@ pub fn decode(
     let signal = dsp::resample_with_filter(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
 
-    info!("Reading telemetry and mapping colors");
+    info!("Adjusting contrast");
 
-    let telemetry = telemetry::read_telemetry(&mut context, &signal)?;
+    /*
+    let (low, high) = match context.contrast_adjustment {
+        Contrast::Telemetry => {
+            let telemetry = telemetry::read_telemetry(&mut context, &signal)?;
 
-    let max = telemetry.get_wedge_value(8, None);
-    let min = telemetry.get_wedge_value(9, None);
+            let low = telemetry.get_wedge_value(9, None);
+            let high = telemetry.get_wedge_value(8, None);
 
-    let signal = map(&signal, min, max);
+            (low, high)
+        },
+        contrast::Percent => {
+            misc::percent(&signal, 0.98)?
+        },
+        contrast::MinMax => {
+            let low: f32 = dsp::get_min(&signal)?;
+            let high: f32 = dsp::get_max(&signal)?;
+
+            (low, high)
+        }
+    };
+    */
+    let (low, high) = misc::percent(&signal, 0.98)?;
+
+    let signal = map(&signal, low, high);
 
     context.step(Step::signal(
             "mapped",
@@ -400,9 +419,9 @@ mod tests {
             test_values.iter().map(|x| x * 123.123 - 234.234).collect();
 
         // See where 0 and 255 end up after that
-        let min = 0. * 123.123 - 234.234;
-        let max = 255. * 123.123 - 234.234;
+        let low = 0. * 123.123 - 234.234;
+        let high = 255. * 123.123 - 234.234;
 
-        assert_eq!(expected, map(&shifted_values, min, max));
+        assert_eq!(expected, map(&shifted_values, low, high));
     }
 }

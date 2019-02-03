@@ -5,6 +5,9 @@ use std::thread;
 
 use reqwest;
 
+use dsp::{self, Signal};
+use err;
+
 
 /// Lookup table for numbers used in `bessel_i0()`
 ///
@@ -148,6 +151,97 @@ impl<T> ThreadGuard<T> {
     }
 }
 
+/// Returns lowest and highest values that fall inside the percent given.
+///
+/// Returns tuple of `(low, high)`. The values returned are approximate. The
+/// percent given should be between 0 and 1.
+///
+/// Means that `percent` samples of the `Signal` are bigger than `low` and
+/// smaller than `high`. Also, `(1 - percent) / 2` are smaller than `low` and
+/// `(1 - percent) / 2` are bigger than `high`.
+///
+/// For example
+/// -----------
+///
+/// - If the signal has values uniformly distributed between 0 and 1 and the
+///   percent given is `0.50`, `low` will be 0.25 and `high` 0.75.
+///
+/// - If the signal has values uniformly distributed between 1 and 2 and the
+///   percent given is `0.90`, `low` will be 1.05 and `high` 1.95.
+///
+/// How it works
+/// ------------
+///
+/// Creates 1000 buckets, uniformly distributed from the minimum and maximum
+/// values on `signal`. For each sample, increment one on the bucket the sample
+/// falls in.
+///
+/// Finally count the values on each bucket and return an approximate value for
+/// `low` and `high`
+pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
+
+    if percent < 0. || percent > 1. {
+        return Err(err::Error::Internal(
+            "Percent given should be between 0 and 1".to_string())
+        );
+    }
+
+    let remainder = (1. - percent) / 2.;
+
+    // Amount of buckets
+    let num_buckets: usize = 1000;
+
+    // Count on samples that fall on each bucket
+    let mut buckets: Vec<u32> = vec![0; num_buckets];
+
+    // Range of input samples
+    let min = dsp::get_min(&signal)?;
+    let max = dsp::get_max(&signal)?;
+    let total_range = max - min;
+
+    // Get the index of the bucket where the sample falls in
+    let get_bucket = |x: &f32| {
+        (((x - min) / total_range * num_buckets as f32)
+            .trunc() as usize)
+            .max(0).min(num_buckets - 1) // Avoid going to an invalid bucket
+    };
+
+    // Count samples on each bucket
+    for sample in signal {
+        buckets[get_bucket(sample)] += 1;
+    }
+
+    // Find `low` and high`
+    let mut accum = 0;
+    let mut low_bucket = None;
+    let mut high_bucket = None;
+    for (bucket, count) in buckets.iter().enumerate() {
+        accum += count;
+
+        if low_bucket.is_none()
+            && (accum as f32 / signal.len() as f32) > remainder {
+
+            low_bucket = Some(bucket);
+
+        } else if high_bucket.is_none()
+            && (accum as f32 / signal.len() as f32) > 1. - remainder {
+
+            high_bucket = Some(bucket);
+
+        }
+    }
+
+    if high_bucket.is_none() {
+        // Can happen if remainder is too close to zero, so the high_bucket
+        // should be the last one.
+        high_bucket = Some(num_buckets - 1);
+    }
+
+    Ok((low_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min,
+        high_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min))
+
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -207,5 +301,36 @@ mod tests {
         }
 
         assert_eq!(*guard.borrow(), 4);
+    }
+
+    #[test]
+    fn test_percent() {
+
+        use std::iter::Iterator;
+
+        // Use a vector integers from 0 to 10000. It's a quite bad test signal
+        // because it has a uniform distribution. In practice signals have a
+        // distribution closer to bell shape.
+        let test_signal: Signal = (0..10000).map(|x| x as f32).collect();
+
+        // Percent values to use
+        let test_values: Vec<f32> = vec![1., 0.95, 0.90, 0.80, 0.50];
+
+        for value in test_values {
+            let (min, max) = percent(&test_signal, value).unwrap();
+
+            // Percent of values that fall below min or fall above max
+            let remainder = (1. - value) / 2.;
+
+            // Allow 1% of error
+            let min_remainder = remainder - 0.005;
+            let max_remainder = remainder + 0.005;
+
+            assert!(min / 10000. > min_remainder);
+            assert!(min / 10000. < max_remainder);
+
+            assert!(max / 10000. > 1. - max_remainder);
+            assert!(max / 10000. < 1. - min_remainder);
+        }
     }
 }

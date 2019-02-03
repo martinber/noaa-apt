@@ -31,6 +31,8 @@ layout: main
 
 - For satellite tracking I use gpredict. Otherwise I use the Heavens-Above Android App/Website.
 
+- You don't have to compensate doppler shift.
+
 - For NOAA, first I record a WAV file on GQRX using the following settings. I
   don't know if these are the best settings, but it should work.
 

@@ -87,6 +87,16 @@ Notes:
 
     - Add icons to executables.
 
+    - Check things that can panic/can fail:
+
+        - Integer substraction.
+
+        - Slicing/indexing.
+
+        - Functions that can panic.
+
+        - Something else?.
+
 - Someday:
 
     - The parameters used for filter design are hardcoded, maybe add a toml file
