@@ -3,6 +3,9 @@ name = "noaa-apt"
 version = "0.9.7-dev"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 
+[profile.dev]
+opt-level = 3
+
 [features]
 default = ["gui"]
 gui = ["gtk", "gdk", "gio", "glib"]

@@ -16,35 +16,33 @@ use misc;
 ///
 /// Should be multiple of the final sample rate. Because the syncing needs that,
 /// also that way the final resampling it's just a decimation.
-const WORK_RATE: u32 = 20800;
+pub const WORK_RATE: u32 = 20800;
 
 /// Final signal sample rate.
 ///
 /// This signal has one sample per pixel.
-const FINAL_RATE: u32 = 4160;
+pub const FINAL_RATE: u32 = 4160;
 
 /// Pixels per image row.
 pub const PX_PER_ROW: u32 = 2080;
 
 /// AM carrier frequency in Hz.
-const CARRIER_FREQ: u32 = 2400;
+pub const CARRIER_FREQ: u32 = 2400;
 
 /// Samples on each image row when at WORK_RATE.
-const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
+pub const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
 
 /// Load and resample WAV file.
 pub fn resample_wav(
+    mut context: Context,
     input_filename: &str,
     output_filename: &str,
     output_rate: Rate,
-    export_wav: bool,
-    export_resample_filtered: bool,
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
     let (input_signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
-    let mut context = Context::resample(export_wav, export_resample_filtered);
 
     context.step(Step::signal("input", &input_signal, Some(input_rate)))?;
 
@@ -185,12 +183,26 @@ fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
     signal
 }
 
+/// Available settings for contrast adjustment.
+pub enum Contrast {
+    /// From telemetry bands, requires that syncing is enabled.
+    Telemetry,
+
+    /// Takes only a given percent of the samples, clamping the rest. Something
+    /// like a percentile.
+    Percent(f32),
+
+    /// Don't do anything, map the minimum value to zero and the maximum value
+    /// to 255
+    MinMax,
+}
+
 /// Decode APT image from WAV file.
 pub fn decode(
+    mut context: Context,
     input_filename: &str,
     output_filename: &str,
-    export_wav: bool,
-    export_resample_filtered: bool,
+    contrast_adjustment: Contrast,
     sync: bool,
 ) -> err::Result<()>{
 
@@ -200,9 +212,6 @@ pub fn decode(
     let input_rate = Rate::hz(input_spec.sample_rate);
     let work_rate = Rate::hz(WORK_RATE);
     let final_rate = Rate::hz(FINAL_RATE);
-    let mut context = Context::decode(
-        work_rate, final_rate, export_wav, export_resample_filtered);
-
     context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
     info!("Resampling to {}", WORK_RATE);
@@ -298,8 +307,7 @@ pub fn decode(
 
     info!("Adjusting contrast");
 
-    /*
-    let (low, high) = match context.contrast_adjustment {
+    let (low, high) = match contrast_adjustment {
         Contrast::Telemetry => {
             let telemetry = telemetry::read_telemetry(&mut context, &signal)?;
 
@@ -308,18 +316,16 @@ pub fn decode(
 
             (low, high)
         },
-        contrast::Percent => {
-            misc::percent(&signal, 0.98)?
+        Contrast::Percent(p) => {
+            misc::percent(&signal, p)?
         },
-        contrast::MinMax => {
-            let low: f32 = dsp::get_min(&signal)?;
-            let high: f32 = dsp::get_max(&signal)?;
+        Contrast::MinMax => {
+            let low: f32 = *dsp::get_min(&signal)?;
+            let high: f32 = *dsp::get_max(&signal)?;
 
             (low, high)
         }
     };
-    */
-    let (low, high) = misc::percent(&signal, 0.98)?;
 
     let signal = map(&signal, low, high);
 
@@ -353,11 +359,6 @@ pub fn decode(
 mod tests {
 
     use super::*;
-
-    /// Check if two floats are equal given some margin of precision
-    fn assert_roughly_equal(a: f32, b: f32) {
-        assert_ulps_eq!(a, b, max_ulps = 10)
-    }
 
     #[test]
     fn test_sample_sync_frame() {

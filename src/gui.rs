@@ -29,7 +29,8 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
 
-use noaa_apt;
+use noaa_apt::{self, Contrast};
+use context::Context;
 use misc;
 use dsp::Rate;
 use misc::ThreadGuard;
@@ -261,11 +262,18 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             debug!("Decode {} to {}", input_filename, output_filename);
 
             std::thread::spawn(move || {
-                callback(noaa_apt::decode(
-                    input_filename.as_str(),
-                    output_filename.as_str(),
+                let context = Context::decode(
+                    Rate::hz(noaa_apt::WORK_RATE),
+                    Rate::hz(noaa_apt::FINAL_RATE),
                     wav_steps,
                     resample_step,
+                );
+
+                callback(noaa_apt::decode(
+                    context,
+                    input_filename.as_str(),
+                    output_filename.as_str(),
+                    Contrast::MinMax,
                     sync,
                 ));
             });
@@ -277,12 +285,16 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
             std::thread::spawn(move || {
+                let context = Context::resample(
+                    wav_steps,
+                    resample_step,
+                );
+
                 callback(noaa_apt::resample_wav(
+                    context,
                     input_filename.as_str(),
                     output_filename.as_str(),
                     Rate::hz(rate),
-                    wav_steps,
-                    resample_step,
                 ));
             });
         },

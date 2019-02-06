@@ -63,21 +63,6 @@ struct StepMetadata {
     rate: Option<Rate>,
 }
 
-/// Available settings for contrast adjustment.
-pub enum Contrast {
-    /// From telemetry bands, requires that syncing is enabled.
-    Telemetry,
-
-    /// Takes only a given percent of the samples, clamping the rest. Something
-    /// like a percentile.
-    Percent(f32),
-
-    /// Don't do anything, map the minimum value to zero and the maximum value
-    /// to 255
-    MinMax,
-
-}
-
 /// Keep track of settings and export the results of each step of the decoding
 /// process.
 ///
@@ -101,7 +86,7 @@ pub enum Contrast {
 /// for correct WAV export, so the `Rate` is given when calling
 /// `Context.step()`.
 /// Some functions on module `dsp` don't know the sample rate of the signal they
-/// are working on and pass `None` instead of a valid `Rate`  so those steps
+/// are working on and pass `None` instead of a valid `Rate` so those steps
 /// have in their metadata the sample rate.
 pub struct Context {
     steps_metadata: Vec<StepMetadata>,
@@ -114,11 +99,9 @@ pub struct Context {
     pub export_steps: bool,
 
     /// If we are exporting the filtered signal on resample. When using
-    /// `fast_resampling()` this step es VERY slow and RAM heavy (gigabytes!),
+    /// `fast_resampling()` this step is VERY slow and RAM heavy (gigabytes!),
     /// so that function checks if this variable is set before doing extra work.
     pub export_resample_filtered: bool,
-
-    pub contrast_adjustment: Contrast,
 
     /// Private field, if we are exporting to WAV.
     export_wav: bool,
@@ -245,7 +228,6 @@ impl Context {
             export_resample_filtered,
             export_wav,
             index: 0,
-            contrast_adjustment: Contrast::Telemetry,
         }
     }
 
@@ -390,7 +372,6 @@ impl Context {
             export_resample_filtered,
             export_wav,
             index: 0,
-            contrast_adjustment: Contrast::Telemetry,
         }
     }
 }

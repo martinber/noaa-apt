@@ -26,6 +26,8 @@ mod telemetry;
 #[cfg(feature = "gui")] mod gui;
 
 use dsp::Rate;
+use context::Context;
+use noaa_apt::Contrast;
 
 
 /// Defined by Cargo.toml
@@ -119,12 +121,16 @@ fn main() -> err::Result<()> {
                         None => String::from("./output.wav"),
                     };
 
+                    let context = Context::resample(
+                        wav_steps,
+                        export_resample_filtered
+                    );
+
                     match noaa_apt::resample_wav(
+                        context,
                         input_filename.as_str(),
                         output.as_str(),
                         Rate::hz(rate),
-                        wav_steps,
-                        export_resample_filtered,
                     ) {
                         Ok(_) => (),
                         Err(e) => error!("{}", e),
@@ -138,11 +144,18 @@ fn main() -> err::Result<()> {
                         None => String::from("./output.png"),
                     };
 
-                    match noaa_apt::decode(
-                        input_filename.as_str(),
-                        output.as_str(),
+                    let context = Context::decode(
+                        Rate::hz(noaa_apt::WORK_RATE),
+                        Rate::hz(noaa_apt::FINAL_RATE),
                         wav_steps,
                         export_resample_filtered,
+                    );
+
+                    match noaa_apt::decode(
+                        context,
+                        input_filename.as_str(),
+                        output.as_str(),
+                        Contrast::MinMax,
                         sync,
                     ) {
                         Ok(_) => (),

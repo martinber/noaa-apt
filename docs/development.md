@@ -118,8 +118,7 @@ Notes:
 
 ## Compilation
 
-**Build with `--release`, Rust does some optimizations and it works MUCH
-faster. Really, otherwise it takes FOREVER.**
+Build with `--release`, Rust does some optimizations and it works faster.
 
 ### GNU/Linux
 
