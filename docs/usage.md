@@ -39,7 +39,7 @@ two things:
 ```
 $ ./noaa-apt --help
 Usage:
-  ./target/release/noaa-apt [OPTIONS] [INPUT_FILENAME]
+  ./target/debug/noaa-apt [OPTIONS] [INPUT_FILENAME]
 
 Decode NOAA APT images from WAV files. Run without arguments to launch the GUI
 
@@ -61,14 +61,21 @@ Optional arguments:
                         set.
   --no-sync             Disable syncing, useful when the sync frames are noisy
                         and the syncing attempts do more harm than good.
+  -c,--contrast CONTRAST
+                        Contrast adjustment method for decode. Possible values:
+                        "98_percent", "telemetry" or "disable". 98 Percent used
+                        by default.
   -o,--output FILENAME  Set output path. When decoding images the default is
                         './output.png', when resampling the default is
                         './output.wav'.
   -r,--resample SAMPLE_RATE
                         Resample WAV file to a given sample rate, no APT image
                         will be decoded.
-
 ```
+
+## Advanced settings
+
+TODO
 
 ## Troubleshooting
 
@@ -78,8 +85,10 @@ If the satellite went from south to north you should rotate the image.
 
 ### Bad contrast, dark images
 
-TODO: Now the program automatically adjusts the contrast.
+The program tries to adjust the contrast with a conservative method, you can try
+another one, check the advanced settings.
 
+Also if the image needs more contrast you can adjust it with an image editor.
 I use GIMP and the tool _Colors > Levels_. You can pick a white spot and a black
 spot as you can see on this screenshot.
 

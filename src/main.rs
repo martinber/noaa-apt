@@ -42,6 +42,7 @@ fn main() -> err::Result<()> {
     let mut wav_steps = false;
     let mut export_resample_filtered = false;
     let mut sync = true;
+    let mut contrast_adjustment: Option<String> = None;
     let mut print_version = false;
     let mut output_filename: Option<String> = None;
     let mut resample_output: Option<u32> = None;
@@ -75,6 +76,11 @@ fn main() -> err::Result<()> {
             .add_option(&["--no-sync"], argparse::StoreFalse,
             "Disable syncing, useful when the sync frames are noisy and the \
             syncing attempts do more harm than good.");
+        parser.refer(&mut contrast_adjustment)
+            .add_option(&["-c", "--contrast"], argparse::StoreOption,
+            "Contrast adjustment method for decode. Possible values: \
+            \"98_percent\", \"telemetry\" or \"disable\". 98 Percent used by \
+            default.");
         parser.refer(&mut output_filename)
             .add_option(&["-o", "--output"], argparse::StoreOption,
             "Set output path. When decoding images the default is \
@@ -107,6 +113,21 @@ fn main() -> err::Result<()> {
     }
 
     info!("noaa-apt image decoder version {}", VERSION);
+
+    // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
+    let contrast_adjustment: Contrast = match contrast_adjustment
+        .as_ref()
+        .map(|s| s.as_str())
+    {
+        Some("98_percent") => Contrast::Percent(0.98),
+        Some("telemetry") => Contrast::Telemetry,
+        Some("disable") => Contrast::MinMax,
+        Some(_) => {
+            println!("Invalid contrast adjustment argument");
+            std::process::exit(0);
+        },
+        None => Contrast::Percent(0.98),
+    };
 
     match input_filename {
 
@@ -155,7 +176,7 @@ fn main() -> err::Result<()> {
                         context,
                         input_filename.as_str(),
                         output.as_str(),
-                        Contrast::MinMax,
+                        contrast_adjustment,
                         sync,
                     ) {
                         Ok(_) => (),

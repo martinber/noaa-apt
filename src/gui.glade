@@ -5,16 +5,19 @@
   <object class="GtkImage" id="decode_resample_step_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">10</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkImage" id="decode_sync_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">10</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkImage" id="decode_wav_steps_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">10</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkAdjustment" id="rate_adjustment">
@@ -26,11 +29,13 @@
   <object class="GtkImage" id="resample_resample_step_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">10</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkImage" id="resample_wav_steps_check_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="margin_left">10</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkImage" id="start_button_image">
@@ -229,6 +234,60 @@
                                         <property name="expand">False</property>
                                         <property name="fill">True</property>
                                         <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox" id="decode_contrast_box">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="tooltip_text" translatable="yes">Contrast adjustment method to use on the decoded image.</property>
+                                        <property name="spacing">10</property>
+                                        <child>
+                                          <object class="GtkLabel" id="decode_contrast_label">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">Contrast adjustment:</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkComboBoxText" id="decode_contrast_combo">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="active">0</property>
+                                            <items>
+                                              <item id="98_percent" translatable="yes">Keep 98 percent</item>
+                                              <item id="telemetry" translatable="yes">From telemetry</item>
+                                              <item id="minmax" translatable="yes">Disable</item>
+                                            </items>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkImage" id="decode_contrast_combo_image">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="stock">gtk-help</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
                                       </packing>
                                     </child>
                                   </object>

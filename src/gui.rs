@@ -29,6 +29,7 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
 
+use err;
 use noaa_apt::{self, Contrast};
 use context::Context;
 use misc;
@@ -56,6 +57,7 @@ struct WidgetList {
     resample_wav_steps_check:     gtk::CheckButton,
     decode_resample_step_check:   gtk::CheckButton,
     resample_resample_step_check: gtk::CheckButton,
+    decode_contrast_combo:        gtk::ComboBoxText,
 }
 
 impl WidgetList {
@@ -76,6 +78,7 @@ impl WidgetList {
             decode_resample_step_check:   builder.get_object("decode_resample_step_check"  ).expect("Couldn't get decode_resample_step_check"  ),
             resample_wav_steps_check:     builder.get_object("resample_wav_steps_check"    ).expect("Couldn't get resample_wav_steps_check"    ),
             resample_resample_step_check: builder.get_object("resample_resample_step_check").expect("Couldn't get resample_resample_step_check"),
+            decode_contrast_combo:        builder.get_object("decode_contrast_combo"       ).expect("Couldn't get decode_contrast_combo"       ),
         }
     }
 }
@@ -185,7 +188,12 @@ fn build_ui(application: &gtk::Application) {
             "resample_page" => run_noaa_apt(Action::Resample, Rc::clone(&widgets_clone)),
 
             x => panic!("Unexpected stack child name {}", x),
-        }
+        }.unwrap_or_else(|string| {
+            widgets_clone.status_label.set_markup(
+                format!("<b>Error: {}</b>", string).as_str()
+            );
+            error!("{}", string);
+        });
     });
 
     // Finish and show
@@ -208,18 +216,17 @@ enum Action {
 /// Start decoding or resampling.
 ///
 /// Starts another working thread and updates the `status_label` when finished.
-fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
+fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
 
-    let input_filename = match widgets.input_file_chooser.get_filename() {
-        Some(f) => {
-            String::from(f.to_str().expect("Invalid character in input path"))
-        }
-        None => {
-            widgets.status_label.set_markup("<b>Error: Select input file</b>");
-            error!("Input file not selected");
-            return
-        },
-    };
+    let input_filename: String = widgets
+        .input_file_chooser
+        .get_filename() // Option<std::path::PathBuf>
+        .ok_or(err::Error::Internal("Select input file".to_string()))
+        .and_then(|path: std::path::PathBuf| {
+             path.to_str()
+                 .ok_or(err::Error::Internal("Invalid character on input path".to_string()))
+                 .map(|s: &str| s.to_string())
+        })?;
 
     let output_filename = match action {
         Action::Decode => widgets.decode_output_entry.get_text()
@@ -229,8 +236,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
     };
 
     if output_filename == "" {
-        widgets.status_label.set_markup("<b>Error: Select output filename</b>");
-        return
+        return Err(err::Error::Internal("Select output filename".to_string()))
     }
 
     widgets.status_label.set_markup("Processing");
@@ -259,6 +265,24 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             let sync = widgets.decode_sync_check.get_active();
             let wav_steps = widgets.decode_wav_steps_check.get_active();
             let resample_step = widgets.decode_resample_step_check.get_active();
+
+            // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
+            let contrast_adjustment = match widgets
+                .decode_contrast_combo
+                .get_active_text()
+                .as_ref()
+                .map(|s| s.as_str())
+            {
+                Some("Keep 98 percent") => Ok(Contrast::Percent(0.98)),
+                Some("From telemetry") => Ok(Contrast::Telemetry),
+                Some("Disable") => Ok(Contrast::MinMax),
+                Some(id) => Err(err::Error::Internal(
+                    format!("Unknown contrast adjustment \"{}\"", id)
+                )),
+                None => Err(err::Error::Internal(
+                    "Select contrast adjustment".to_string()
+                )),
+            }?;
             debug!("Decode {} to {}", input_filename, output_filename);
 
             std::thread::spawn(move || {
@@ -273,7 +297,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
                     context,
                     input_filename.as_str(),
                     output_filename.as_str(),
-                    Contrast::MinMax,
+                    contrast_adjustment,
                     sync,
                 ));
             });
@@ -299,6 +323,8 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) {
             });
         },
     };
+
+    Ok(())
 }
 
 /// Check for updates on another thread and show the result on the footer.

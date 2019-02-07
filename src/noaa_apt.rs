@@ -305,10 +305,14 @@ pub fn decode(
     let signal = dsp::resample_with_filter(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
 
-    info!("Adjusting contrast");
 
     let (low, high) = match contrast_adjustment {
         Contrast::Telemetry => {
+            info!("Adjusting contrast from telemetry");
+            if !sync {
+                warn!("Reading telemetry without syncing, expect horrible results!");
+            }
+
             let telemetry = telemetry::read_telemetry(&mut context, &signal)?;
 
             let low = telemetry.get_wedge_value(9, None);
@@ -317,9 +321,11 @@ pub fn decode(
             (low, high)
         },
         Contrast::Percent(p) => {
+            info!("Adjusting contrast using {} percent", p * 100.);
             misc::percent(&signal, p)?
         },
         Contrast::MinMax => {
+            info!("Mapping values (no contrast adjustment)");
             let low: f32 = *dsp::get_min(&signal)?;
             let high: f32 = *dsp::get_max(&signal)?;
 
