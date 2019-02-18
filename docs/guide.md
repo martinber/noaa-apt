@@ -65,3 +65,19 @@ layout: main
 - NOAA 18: 137.9125MHz.
 
 - NOAA 19: 137.1MHz.
+
+### WXtoIMG guide
+
+- Resample the recording to 11025Hz.
+- Enable _Expert mode_, on _Options > GUI Options_.
+- Restart WXtoIMG.
+- _File > Load_ audio file.
+- Select _Satellite > NOAA_.
+- Select _Options > Disable map overlay_ because it's going to be wrong unless you correct the timestamp of the file.
+- _File > Decode_.
+
+- _Options > Resync_.
+- _Options > Disable PLL_.
+- _Options > Illumination Compensation_.
+
+https://www.wraase.de/download/wxtoimg/wxgui.pdf

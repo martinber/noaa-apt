@@ -77,12 +77,6 @@ Notes:
 
 - Roadmap for 1.0.0:
 
-    - Contrast adjustment by percentiles.
-
-    - Choose contrast adjustment method.
-
-    - Maybe store options on Context.
-
     - Add warnings for short images when reading telemetry.
 
     - Add icons to executables.
@@ -102,14 +96,17 @@ Notes:
     - The parameters used for filter design are hardcoded, maybe add a toml file
       with constants?
 
+    - Investigate about despeckle.
+
     - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
       machine to work?.
 
     - Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
 
-    - For some reason the `--debug` does not work when using the GUI.
+    - For some reason the `--debug` does not work when using the GUI. Maybe
+      replace argparse for something else.
 
-    - Improve syncing performance. Improve hardcoded sync frame.
+    - Improve syncing performance.
 
     - Looks like the Windows version has some icons missing.
 
