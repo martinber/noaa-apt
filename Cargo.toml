@@ -2,6 +2,7 @@
 name = "noaa-apt"
 version = "0.9.7-dev"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
+build = "src/build.rs"
 
 [profile.dev]
 opt-level = 3

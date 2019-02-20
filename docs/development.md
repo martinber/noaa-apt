@@ -79,7 +79,7 @@ Notes:
 
     - Add warnings for short images when reading telemetry.
 
-    - Add icons to executables.
+    - Add icons to Linux executables.
 
     - Check things that can panic/can fail:
 
@@ -216,6 +216,8 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 - Increment version number on `/docs/version_check`.
 
+- Increment version number eon `/src/program.rc`.
+
 - Build using Docker for:
 
     - GNU/Linux.
@@ -227,8 +229,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 - [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
   should be less than the version shown on the Download page.
 
-- Compress with the `/test` folder. Delete `/test/test.sh` on the Windows
-  archive. Names:
+- Zip archives. Names:
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu.zip`
 
@@ -264,6 +265,10 @@ anything other than the currently installed version.
 
 - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
     change the address to `127.0.0.1`.
+
+- [Sizes for Windows icons](https://docs.microsoft.com/en-us/windows/desktop/uxguide/vis-icons#size-requirements):
+    16x16, 32x32, 48x48, and 256x256. Icons generated using the script
+    `/build/generate_windows_icon.sh`.
 
 ## References
 

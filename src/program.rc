@@ -1,0 +1,25 @@
+id ICON "icon.ico"
+1 VERSIONINFO
+FILEVERSION     0,9,7,0
+PRODUCTVERSION  0,9,7,0
+BEGIN
+BLOCK "StringFileInfo"
+BEGIN
+    BLOCK "040904E4"
+    BEGIN
+        VALUE "CompanyName", "Martin Bernardi"
+        VALUE "FileDescription", "noaa-apt image decoder"
+        VALUE "FileVersion", "0.9.7"
+        VALUE "InternalName", "noaa-apt"
+        VALUE "LegalCopyright", "Martin Bernardi"
+        VALUE "OriginalFilename", "noaa-apt.exe"
+        VALUE "ProductName", "noaa-apt"
+        VALUE "ProductVersion", "0.9.7"
+    END
+END
+BLOCK "VarFileInfo"
+BEGIN
+    VALUE "Translation", 0x409, 1252
+END
+END
+
