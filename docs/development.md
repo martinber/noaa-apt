@@ -79,7 +79,9 @@ Notes:
 
     - Add warnings for short images when reading telemetry.
 
-    - Add icons to Linux executables.
+    - Add icon to .deb so it's shown when installing on Ubuntu.
+
+    - Modify license on .deb so it says GPLv3 on Ubuntu.
 
     - Check things that can panic/can fail:
 

@@ -1,5 +1,5 @@
-noaa-apt (0.9.8-1) unstable; urgency=medium
+noaa-apt (0.9.8-dev-1) unstable; urgency=medium
 
   * Initial packaged release.
 
- -- Martin Bernardi <martin@mbernardi.com.ar>  Wed, 20 Feb 2019 20:05:35 -0300
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Wed, 21 Feb 2019 20:05:35 -0300

@@ -12,5 +12,5 @@ Package: noaa-apt
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Image decoder for APT signals from NOAA satellites
- Decodes NOAA weather satellites images from WAV recordings of APT signals.
+ Decodes NOAA weather satellite images from WAV recordings of APT signals.
  These recordings can be made using RTL-SDR and gqrx-sdr.
