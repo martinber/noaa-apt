@@ -56,3 +56,6 @@ installed what you need:
 - glibc >= 2.19
 
 - libgcc
+
+My builds use a statically linked libssl, so you don't need libssl unless you
+compiled noaa-apt yourself.

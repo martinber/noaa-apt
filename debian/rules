@@ -1,15 +1,18 @@
 #!/usr/bin/make -f
 
+# Binaries to use
+CARGO_BINARY ?= cargo
+CLEAN_TARGET ?= 0
+
 %:
 	dh $@
 
 override_dh_auto_clean:
-	cargo clean
+	# $(CARGO_BINARY) clean
 	rm -r docs/_site || true
 	rm -r test/results || true
 	rm -r *.wav || true
 	rm -r *.png || true
 
 override_dh_auto_build:
-	cargo build --release --frozen --verbose
-	jekyll build --source docs/ --baseurl file:///usr/share/doc/noaa-apt --destination docs/_site
+	$(CARGO_BINARY) build --release --frozen --verbose

@@ -7,8 +7,9 @@ RUN set -x
 RUN apt-get update \
     && apt-get install -y curl \
                           git \
+                          zip \
                           libgtk-3-dev \
-                          libssl-dev \
+                          debhelper \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Compile libssl static lib

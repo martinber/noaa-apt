@@ -7,3 +7,8 @@ test/results/
 output*.png
 salida*.png
 *~
+
+/debian/noaa-apt/
+/debian/noaa-apt.debhelper.log
+/debian/noaa-apt.substvars
+/debian/files
