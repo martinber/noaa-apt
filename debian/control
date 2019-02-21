@@ -1,0 +1,16 @@
+Source: noaa-apt
+Maintainer: Martin Bernardi <martin@mbernardi.com.ar>
+Section: hamradio
+Priority: optional
+Standards-Version: 4.3.0
+Build-Depends: debhelper (>= 9), cargo, libgtk-3-dev, libssl-dev, jekyll,
+Homepage: https://noaa-apt.mbernardi.com.ar
+Vcs-Browser: https://github.com/martinber/noaa-apt
+Vcs-Git: https://github.com/martinber/noaa-apt
+
+Package: noaa-apt
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Image decoder for APT signals from NOAA satellites
+ Decodes NOAA weather satellites images from WAV recordings of APT signals.
+ These recordings can be made using RTL-SDR and gqrx-sdr.

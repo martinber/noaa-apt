@@ -229,7 +229,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 - [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
   should be less than the version shown on the Download page.
 
-- Zip archives. Names:
+- Zip archives. Include test folder on Linux ones. Names:
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu.zip`
 
@@ -247,6 +247,10 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 - Edit release on GitHub. Leave "Release title" empty, check commits and leave
     changelog as description. Upload zip files.
+
+- Create deb package:
+
+    - 
 
 - Edit the Downloads page on the website.
 

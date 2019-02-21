@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	cargo clean
+	rm -r docs/_site || true
+	rm -r test/results || true
+	rm -r *.wav || true
+	rm -r *.png || true
+
+override_dh_auto_build:
+	cargo build --release --frozen --verbose
+	jekyll build --source docs/ --baseurl file:///usr/share/doc/noaa-apt --destination docs/_site

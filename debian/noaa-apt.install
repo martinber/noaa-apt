@@ -1,0 +1,4 @@
+target/release/noaa-apt                 usr/bin
+
+debian/noaa-apt.desktop                 usr/share/applications
+extra/icon.svg                          usr/share/icons/hicolor/scalable/apps
