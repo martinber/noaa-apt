@@ -15,10 +15,10 @@ PKG_CONFIG_ALLOW_CROSS=1
 
 
 # These environment variables are used by cargo when compiling rust-openssl
-OPENSSL_DIR=/usr/local
-OPENSSL_LIB_DIR=/usr/local/lib/
-OPENSSL_INCLUDE_DIR=/usr/local/include
-OPENSSL_STATIC=yes
+export OPENSSL_DIR=/usr/local
+export OPENSSL_LIB_DIR=/usr/local/lib/
+export OPENSSL_INCLUDE_DIR=/usr/local/include
+export OPENSSL_STATIC=yes
 
 # Build with GUI
 
@@ -44,6 +44,8 @@ rm -r "$NOGUI_PACKAGE_FOLDER/test/results" || true
 
 # Verbose build for dpkg-buildpackage
 DH_VERBOSE=1
+# Also set location if cargo, used by debian/rules
+export CARGO_BINARY=/home/rustacean/.cargo/bin/cargo
 
 # -us -uc: Do not sign anything. When upgrading to a newer Debian version I
 #          should change to --no-sign
@@ -51,9 +53,7 @@ DH_VERBOSE=1
 #     install it manually using rustup. Also i'm statically linking libssl so I
 #     don't need libssl-dev
 # -b: Binary package only
-#
-# Also set location if cargo, used by debian/rules
-env CARGO_BINARY=/home/rustacean/.cargo/bin/cargo dpkg-buildpackage -us -uc -d -b
+dpkg-buildpackage -us -uc -d -b
 
 mv ../noaa-apt*.deb "$PACKAGES_FOLDER/"
 

@@ -79,9 +79,7 @@ Notes:
 
     - Add warnings for short images when reading telemetry.
 
-    - Add icon to .deb so it's shown when installing on Ubuntu.
-
-    - Modify license on .deb so it says GPLv3 on Ubuntu.
+    - Add test WAV files to website.
 
     - Check things that can panic/can fail:
 
@@ -93,15 +91,32 @@ Notes:
 
         - Something else?.
 
+    - If you keep pressing the start button, the same image is processed on
+        several threads at the same time
+
+    - In KDE, the windows has a wrong (X11?) icon, while on the taskbar the icon
+      is right.
+
+    - Add man page.
+
+    - Error when disabling syncing and exporting steps:
+
+        ```
+        2019-02-22 14:47:02 INFO  [noaa_apt::noaa_apt] Not syncing
+        2019-02-22 14:47:02 DEBUG [noaa_apt::context] Got step: sync_correlation
+        2019-02-22 14:47:02 DEBUG [noaa_apt::wav] Normalizing samples and writing WAV to '07_sync_correlation.wav'
+        2019-02-22 14:47:02 ERROR [noaa_apt] Can't get maximum of a zero length vector
+        ```
+
 - Someday:
 
     - The parameters used for filter design are hardcoded, maybe add a toml file
-      with constants?
+        with constants?
 
     - Investigate about despeckle.
 
     - Make OSX binaries, I don't have a Mac. I should cross-compile or get a virtual
-      machine to work?.
+        machine to work?.
 
     - Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
 
@@ -113,7 +128,8 @@ Notes:
     - Looks like the Windows version has some icons missing.
 
     - Live decoding, from a TCP stream or using
-      [librtlsdr](https://github.com/steve-m/librtlsdr/blob/master/include/rtl-sdr.h)
+        [librtlsdr](https://github.com/steve-m/librtlsdr/blob/master/include/rtl-sdr.h)
+        or from audio.
 
 ## Compilation
 
@@ -135,6 +151,9 @@ I'm building with the default `x86_64-unknown-linux-gnu` on Debian Jessie. I
 think the binary works on any linux with GLIBC newer than the one used when
 building, that's why I'm using a Debian Jessie docker image.
 
+So in the end, I build by releases with a Docker image: The GUI version, the no
+GUI version and the GUI .deb package.
+
 - Set up:
 
   - Install Docker.
@@ -149,8 +168,7 @@ building, that's why I'm using a Debian Jessie docker image.
 
   - `docker start -ai noaa-apt-linux-build`
 
-- The binaries are on `./target/x86_64-unknown-linux-gnu/package` and on
-    `./target/x86_64-unknown-linux-gnu/no-gui-package`.
+- The binaries/packages are on `./target/docker_builds`
 
 ### Mac / OSX
 
@@ -167,7 +185,7 @@ building, that's why I'm using a Debian Jessie docker image.
 
 I never tried to compile from Windows, I cross-compile from GNU/Linux to
 Windows. I tried to get a mingw64-gtk environment to work on Debian without
-success. So I use a Docker image I found
+success. So I use a modification of a Docker image I found
 [here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
 
 - Set up:
@@ -184,7 +202,7 @@ success. So I use a Docker image I found
 
   - `docker start -ai noaa-apt-windows-build`.
 
-  - The build is on `./target/x86_64-pc-windows-gnu/package/`.
+- The binaries/packages are on `./target/docker_builds`
 
 ## Tests
 
@@ -220,6 +238,11 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 - Increment version number on `/src/program.rc`.
 
+- Write changelog on `/debian/changelog`.
+
+- Edit the Downloads page on the website, point to the new packages that are
+    going to be uploaded.
+
 - Build using Docker for:
 
     - GNU/Linux.
@@ -229,28 +252,30 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
     - Windows.
 
 - [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
-  should be less than the version shown on the Download page.
+    should be less than the version shown on the Download page.
 
-- Zip archives. Names:
+- Check zip archives. Names should be:
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu.zip`
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu-nogui.zip`
 
+    - `noaa-apt_?.?.?-1_amd64.deb`
+
     - `noaa-apt-?.?.?-x86_64-windows-gnu.zip`
 
-- Extract somewhere both GNU/Linux builds and test using `/test/test.sh`.
+- Test both GNU/Linux builds using `/test/test.sh`.
 
 - Test Windows version.
+
+- Optionally test `.deb` on Ubuntu VM.
 
 - Create tag on git, e.g.: `git tag v0.9.2`.
 
 - Push tag, e.g.: `git push origin v0.9.2`.
 
-- Edit release on GitHub. Leave "Release title" empty, check commits and leave
-    changelog as description. Upload zip files.
-
-- Edit the Downloads page on the website.
+- Edit release on GitHub. Leave "Release title" empty, leave changelog as
+    description. Upload files.
 
 ## Check for updates
 

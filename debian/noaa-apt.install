@@ -1,4 +1,5 @@
-target/release/noaa-apt                 usr/bin
+target/release/noaa-apt                    usr/bin
 
-debian/noaa-apt.desktop                 usr/share/applications
-extra/icon.svg                          usr/share/icons/hicolor/scalable/apps
+debian/ar.com.mbernardi.noaa-apt.desktop   usr/share/applications
+debian/noaa-apt.png                        usr/share/icons/hicolor/48x48/apps
+debian/noaa-apt.svg                        usr/share/icons/hicolor/scalable/apps
