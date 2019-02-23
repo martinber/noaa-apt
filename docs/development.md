@@ -79,8 +79,6 @@ Notes:
 
     - Add warnings for short images when reading telemetry.
 
-    - Add test WAV files to website.
-
     - Check things that can panic/can fail:
 
         - Integer substraction.
@@ -93,18 +91,9 @@ Notes:
 
     - Remove help icons, add help menu instead.
 
-    - Error when disabling syncing and exporting steps:
-
-        ```
-        2019-02-22 14:47:02 INFO  [noaa_apt::noaa_apt] Not syncing
-        2019-02-22 14:47:02 DEBUG [noaa_apt::context] Got step: sync_correlation
-        2019-02-22 14:47:02 DEBUG [noaa_apt::wav] Normalizing samples and writing WAV to '07_sync_correlation.wav'
-        2019-02-22 14:47:02 ERROR [noaa_apt] Can't get maximum of a zero length vector
-        ```
+    - Improve GUI.
 
 - Someday:
-
-    - Improve GUI.
 
     - The parameters used for filter design are hardcoded, maybe add a toml file
         with constants?

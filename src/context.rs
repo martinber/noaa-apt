@@ -146,6 +146,11 @@ impl Context {
                     "Expected variant {:?}, got {:?}", metadata.variant, step.variant)));
             }
 
+            // Happens if syncing is disabled and the correlation step is sent.
+            if step.signal.is_empty() {
+                return Ok(())
+            }
+
             match step.variant {
                 Variant::Filter => {
 
