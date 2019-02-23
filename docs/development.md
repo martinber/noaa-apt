@@ -91,9 +91,6 @@ Notes:
 
         - Something else?.
 
-    - If you keep pressing the start button, the same image is processed on
-        several threads at the same time
-
     - Add man page.
 
     - Remove help icons, add help menu instead.

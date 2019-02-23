@@ -187,9 +187,9 @@ fn build_ui(application: &gtk::Application) {
     widgets.start_button.connect_clicked(move |_| {
 
         // Check if we are decoding or resampling
-
         match widgets_clone.options_stack.get_visible_child_name()
-            .expect("Stack has no visible child").as_str() {
+            .expect("Stack has no visible child").as_str()
+        {
 
             "decode_page" => run_noaa_apt(Action::Decode, Rc::clone(&widgets_clone)),
             "resample_page" => run_noaa_apt(Action::Resample, Rc::clone(&widgets_clone)),
@@ -223,6 +223,7 @@ enum Action {
 /// Start decoding or resampling.
 ///
 /// Starts another working thread and updates the `status_label` when finished.
+/// Also sets the button as not sensitive and then as sensitive again.
 fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
 
     let input_filename: String = widgets
@@ -254,6 +255,8 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
     let callback = move |result| {
         glib::idle_add(move || {
             let widgets = widgets_cell.borrow();
+
+            widgets.start_button.set_sensitive(true);
             match result {
                 Ok(()) => {
                     widgets.status_label.set_markup("Finished");
@@ -292,6 +295,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             }?;
             debug!("Decode {} to {}", input_filename, output_filename);
 
+            widgets.start_button.set_sensitive(false);
             std::thread::spawn(move || {
                 let context = Context::decode(
                     Rate::hz(noaa_apt::WORK_RATE),
@@ -315,6 +319,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             let resample_step = widgets.resample_resample_step_check.get_active();
             debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
+            widgets.start_button.set_sensitive(false);
             std::thread::spawn(move || {
                 let context = Context::resample(
                     wav_steps,
