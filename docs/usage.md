@@ -81,14 +81,16 @@ TODO
 
 ### Upside down images
 
-If the satellite went from south to north you should rotate the image.
+These satellites have polar orbits, so sometimes you see them go from north to
+south and sometimes from south to north. If the satellite went from south to
+north you should rotate the image.
 
 ### Bad contrast, dark images
 
 The program tries to adjust the contrast with a conservative method, you can try
 another one, check the advanced settings.
 
-Also if the image needs more contrast you can adjust it with an image editor.
+If the image needs more contrast you can adjust it with an image editor.
 I use GIMP and the tool _Colors > Levels_. You can pick a white spot and a black
 spot as you can see on this screenshot.
 

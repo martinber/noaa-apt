@@ -23,7 +23,13 @@ layout: landing
 
 			<p>
 				Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the
-				image.
+				image. As an example,
+				<a href="{{ site.baseurl }}/examples/argentina.wav">
+					this is a WAV file I recorded using GQRX</a>,
+				using a RTL-SDR and a double cross antenna.
+				When loading that file on noaa-apt, you get as a result
+				<a href="{{ site.baseurl }}/examples/argentina.png">
+					this image</a>.
 			</p>
 
 			<h3>Why?</h3>
@@ -33,7 +39,12 @@ layout: landing
 				most popular software, it's propietary and
 				<a href="https://www.rtl-sdr.com/notice-wxtoimg-website-down/">no longer maintained</a>.
 				But you can get old recovered versions from an
-				<a href="https://wxtoimgrestored.xyz/">unofficial website</a>.
+				<a href="https://wxtoimgrestored.xyz/">unofficial website</a>. Also,
+				the
+				<a href="{{ site.baseurl }}/guide.html#wxtoimg-guide">
+					steps required to decode WAV files on it
+				</a>
+				are not that obvious.
 			</p>
 
 			<p>
@@ -60,8 +71,9 @@ layout: landing
 				<a href="https://github.com/martinber/noaa-apt">GitHub repository</a>.
 			</p>
 
-			<img src="images/gui.png" alt="GUI"/>
+			<h3>Screenshot</h3>
 
+			<img src="images/gui.png" alt="GUI"/>
 
 
 			<!-- Content -->

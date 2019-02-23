@@ -58,6 +58,10 @@ layout: main
 
     - Decimation: None.
 
+- IF noise reduction in SDR#
+
+https://old.reddit.com/r/RTLSDR/comments/atw4cf/how_i_received_my_first_noise_free_noaa_images/
+
 ### Frequencies
 
 - NOAA 15: 137.62MHz.

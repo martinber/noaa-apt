@@ -91,8 +91,6 @@ Notes:
 
         - Something else?.
 
-    - Add man page.
-
     - Remove help icons, add help menu instead.
 
     - Error when disabling syncing and exporting steps:
@@ -128,6 +126,9 @@ Notes:
     - Live decoding, from a TCP stream or using
         [librtlsdr](https://github.com/steve-m/librtlsdr/blob/master/include/rtl-sdr.h)
         or from audio.
+
+    - Add man page.
+
 
 ## Compilation
 

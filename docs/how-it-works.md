@@ -117,7 +117,7 @@ one is wrong, uses `0` for black and `1` for white. The third has the same
 sample as the first one but removes the DC component of the APT signal before
 doing the cross correlation.
 
-Here you can see close up of a peak.
+Here you can see a close up of a peak.
 
 ![Sync cross correlation peak]({{ site.baseurl }}/images/syncing_zoom.png)
 
