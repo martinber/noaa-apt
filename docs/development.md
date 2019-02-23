@@ -94,10 +94,9 @@ Notes:
     - If you keep pressing the start button, the same image is processed on
         several threads at the same time
 
-    - In KDE, the windows has a wrong (X11?) icon, while on the taskbar the icon
-      is right.
-
     - Add man page.
+
+    - Remove help icons, add help menu instead.
 
     - Error when disabling syncing and exporting steps:
 
@@ -109,6 +108,8 @@ Notes:
         ```
 
 - Someday:
+
+    - Improve GUI.
 
     - The parameters used for filter design are hardcoded, maybe add a toml file
         with constants?

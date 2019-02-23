@@ -112,6 +112,13 @@ fn build_ui(application: &gtk::Application) {
 
     widgets.window.set_application(application);
 
+    // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
+    // but for some reason the window has a stock X11 icon on the top-left
+    // corner. When I set WM_CLASS the window gets the correct icon.
+    // GTK docs say that this option is deprecated?
+    // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
+    widgets.window.set_wmclass("noaa-apt", "noaa-apt");
+
     info!("GUI opened");
 
     // Set status_label and start_button to ready
