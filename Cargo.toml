@@ -1,6 +1,6 @@
 [package]
 name = "noaa-apt"
-version = "0.9.8-dev"
+version = "0.9.8"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 build = "src/build.rs"
 

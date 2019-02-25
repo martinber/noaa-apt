@@ -1,4 +1,15 @@
-noaa-apt (0.9.8-dev-1) unstable; urgency=medium
+noaa-apt (0.9.8-1) testing; urgency=medium
+
+  * Automatic contrast adjustment.
+  * Now can read telemetry frames.
+  * Application icons for GNU/Linux and Windows.
+  * .deb packages for Debian-based distros.
+  * Better font for GUI on Windows.
+  * Small fixes and improvements.
+
+ -- Martin Bernardi <mbernardi@mbernardi-pc>  Sat, 23 Feb 2019 20:08:25 -0300
+
+noaa-apt (0.9.7+dev-1) testing; urgency=medium
 
   * Initial packaged release.
 

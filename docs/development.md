@@ -220,7 +220,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
     git tag -l
     ```
 
-- Increment version number on `/Cargo.lock`.
+- Increment version number on `/Cargo.toml`.
 
 - Increment version number on `/docs/version_check`.
 
@@ -242,7 +242,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 - [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
     should be less than the version shown on the Download page.
 
-- Check zip archives. Names should be:
+- Check archives, names should be:
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu.zip`
 

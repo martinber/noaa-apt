@@ -7,11 +7,13 @@ layout: main
 
 There is a GUI version and a no-GUI version available.
 
-- [noaa-apt 0.9.7 GNU/Linux x86_64](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-linux-gnu.zip).
+- [noaa-apt 0.9.8 GNU/Linux x86_64 .deb package](https://github.com/martinber/noaa-apt/releases/download/v0.9.8/noaa-apt_0.9.8-1_amd64.deb).
 
-- [noaa-apt 0.9.7 GNU/Linux x86_64 (no GUI)](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-linux-gnu-nogui.zip).
+- [noaa-apt 0.9.8 Windows x86_64](https://github.com/martinber/noaa-apt/releases/download/v0.9.8/noaa-apt-0.9.8-x86_64-windows-gnu.zip).
 
-- [noaa-apt 0.9.7 Windows x86_64](https://github.com/martinber/noaa-apt/releases/download/v0.9.7/noaa-apt-0.9.7-x86_64-windows-gnu.zip).
+- [noaa-apt 0.9.8 GNU/Linux x86_64 zip](https://github.com/martinber/noaa-apt/releases/download/v0.9.8/noaa-apt-0.9.8-x86_64-linux-gnu.zip).
+
+- [noaa-apt 0.9.8 GNU/Linux x86_64 (no GUI) zip](https://github.com/martinber/noaa-apt/releases/download/v0.9.8/noaa-apt-0.9.8-x86_64-linux-gnu-nogui.zip).
 
 You can download those executables, or old ones from the
 [releases page on GitHub](https://github.com/martinber/noaa-apt/releases).
@@ -19,6 +21,8 @@ You can download those executables, or old ones from the
 Your options are:
 
 - GNU/Linux:
+
+    - Download .deb package for Debian based distros (Ubuntu, Linux Mint...)
 
     - Download executable with GUI.
 

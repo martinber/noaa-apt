@@ -7,7 +7,7 @@ RUN set -x
 
 RUN dnf -y update \
     && dnf clean all \
-    && dnf -y install file gcc make man sudo tar \
+    && dnf -y install file gcc make man sudo tar zip \
                       mingw64-gcc \
                       mingw64-freetype freetype freetype-devel \
                       mingw64-cairo mingw64-cairo-static cairo cairo-devel \
