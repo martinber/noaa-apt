@@ -4,7 +4,12 @@ version = "0.9.8"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 build = "src/build.rs"
 
+[target.armv7-unknown-linux-gnueabihf]
+# For cross-compilation to Raspberry Pi
+linker = "arm-linux-gnueabihf-gcc"
+
 [profile.dev]
+# So the dev builds run faster, otherwise they are extremely slow
 opt-level = 3
 
 [features]

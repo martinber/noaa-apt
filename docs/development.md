@@ -192,6 +192,14 @@ success. So I use a modification of a Docker image I found
 
 - The binaries/packages are on `./target/docker_builds`
 
+### Raspberry Pi
+
+I'm building it using the same docker container I use for GNU/Linux portables.
+
+I followed [this guide](https://hackernoon.com/seamlessly-cross-compiling-rust-for-raspberry-pis-ede5e2bd3fe2).
+Modified the Docker image based on
+[this container](https://github.com/sdt/docker-raspberry-pi-cross-compiler).
+
 ## Tests
 
 Unit tests are located on the bottom of every module.
