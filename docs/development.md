@@ -300,6 +300,22 @@ anything other than the currently installed version.
     16x16, 32x32, 48x48, and 256x256. Icons generated using the script
     `/build/generate_windows_icon.sh`.
 
+- Decode of `argentina.wav` on Raspberry Pi took approx 36s with WXtoImg
+    (pristine, no map, no despeckle) and 1:30s with noaa-apt. Something like 3X
+    slower.
+
+## Acknowledgements
+
+- RTL-SDR.com: For writing a blog post.
+
+- pietern: I took the AM demodulator from his [apt137 decoder][apt137].
+
+- Grant T. Olson: OSX build instructions.
+
+- wren84: Reported problems with input noise filtering.
+
+- FMighty: Helped with cross compilation to Raspberry Pi.
+
 ## References
 
 - [Error Handling in Rust][1].
@@ -317,3 +333,4 @@ anything other than the currently installed version.
 [3]: https://www.reddit.com/r/rust/comments/5k8uab/crosscompiling_from_ubuntu_to_windows_with_rustup/
 [4]: https://askubuntu.com/questions/942010/how-to-compile-c-gtk3-program-in-ubuntu-for-windows
 [5]: https://github.com/LeoTindall/rust-mingw64-gtk-docker
+[apt137]: https://github.com/pietern/apt137
