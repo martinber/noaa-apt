@@ -12,3 +12,5 @@ salida*.png
 /debian/noaa-apt.debhelper.log
 /debian/noaa-apt.substvars
 /debian/files
+/debian/.debhelper/
+/debian/debhelper-build-stamp
