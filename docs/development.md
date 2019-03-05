@@ -93,6 +93,9 @@ Notes:
 
     - Improve GUI.
 
+    - Fix bug on Raspberry Pi because of overflow of usize (it's 32 bits instead
+        of 64 bits).
+
 - Someday:
 
     - The parameters used for filter design are hardcoded, maybe add a toml file
@@ -113,7 +116,7 @@ Notes:
       replace argparse for something else.
 
     - Improve syncing performance. Make it faster and more resilent to noise,
-        maybe working with the mean and variance?.
+        maybe working with the mean and variance?. Especially for Raspberry Pi.
 
     - Try different `WORK_RATE`s.
 
@@ -124,7 +127,6 @@ Notes:
         or from audio.
 
     - Add man page.
-
 
 ## Compilation
 
@@ -142,12 +144,13 @@ Build with `--release`, Rust does some optimizations and it works faster.
 ### GNU/Linux portable
 
 I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so
-I'm building with the default `x86_64-unknown-linux-gnu` on Debian Jessie. I
+I'm building with the default `x86_64-unknown-linux-gnu` on Debian Stretch. I
 think the binary works on any linux with GLIBC newer than the one used when
 building, that's why I'm using a Debian Jessie docker image.
 
 So in the end, I build by releases with a Docker image: The GUI version, the no
-GUI version and the GUI .deb package.
+GUI version and the GUI .deb package. Also I build the Raspberry Pi versions
+(armhf).
 
 - Set up:
 
@@ -202,10 +205,6 @@ success. So I use a modification of a Docker image I found
 ### Raspberry Pi
 
 I'm building it using the same docker container I use for GNU/Linux portables.
-
-I followed [this guide](https://hackernoon.com/seamlessly-cross-compiling-rust-for-raspberry-pis-ede5e2bd3fe2).
-Modified the Docker image based on
-[this container](https://github.com/sdt/docker-raspberry-pi-cross-compiler).
 
 ## Tests
 
@@ -263,6 +262,10 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu-nogui.zip`
 
+    - `noaa-apt-?.?.?-armv7-linux-gnueabihf.zip`
+
+    - `noaa-apt-?.?.?-armv7-linux-gnueabihf-nogui.zip`
+
     - `noaa-apt_?.?.?-1_amd64.deb`
 
     - `noaa-apt-?.?.?-x86_64-windows-gnu.zip`
@@ -270,6 +273,8 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 - Test both GNU/Linux builds using `/test/test.sh`.
 
 - Test Windows version.
+
+- Test Raspberry Pi version.
 
 - Optionally test `.deb` on Ubuntu VM.
 

@@ -1,6 +1,6 @@
 # noaa-apt
 
-NOAA APT image decoder. Runs on GNU/Linux, Windows and OSX.
+NOAA APT image decoder. Runs on GNU/Linux, Windows, Raspberry Pi 2+ and OSX.
 
 [Visit the website](http://noaa-apt.mbernardi.com.ar/).
 
