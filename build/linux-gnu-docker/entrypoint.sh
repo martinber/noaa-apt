@@ -47,13 +47,17 @@ rm -r "$X86_64_NOGUI_PACKAGE_FOLDER/test/results" || true
 # Otherwise it can't find `arm-linux-gnueabihf-gcc` because of the missing `-6`
 export TARGET_CC=arm-linux-gnueabihf-gcc-6
 
-# "$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release
-#
-# rm -r "$ARMV7_GUI_PACKAGE_FOLDER" || true
-# mkdir -p "$ARMV7_GUI_PACKAGE_FOLDER"
-# cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_GUI_PACKAGE_FOLDER/"
-# cp -r "./test" "$ARMV7_GUI_PACKAGE_FOLDER/"
-# rm -r "$ARMV7_GUI_PACKAGE_FOLDER/test/results" || true
+# Otherwise for some reason it can't find
+# `/usr/lib/arm-linux-gnueabihf/pkgconfig/glib-2.0.pc`
+export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/
+
+"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release
+
+rm -r "$ARMV7_GUI_PACKAGE_FOLDER" || true
+mkdir -p "$ARMV7_GUI_PACKAGE_FOLDER"
+cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_GUI_PACKAGE_FOLDER/"
+cp -r "./test" "$ARMV7_GUI_PACKAGE_FOLDER/"
+rm -r "$ARMV7_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI for Raspberry Pi
 
@@ -90,9 +94,9 @@ pushd "$X86_64_NOGUI_PACKAGE_FOLDER/"
 zip -r "$PACKAGES_FOLDER/$X86_64_NOGUI_PACKAGE_NAME.zip" ./*
 popd
 
-# pushd "$ARMV7_GUI_PACKAGE_FOLDER/"
-# zip -r "$PACKAGES_FOLDER/$ARMV7_GUI_PACKAGE_NAME.zip" ./*
-# popd
+pushd "$ARMV7_GUI_PACKAGE_FOLDER/"
+zip -r "$PACKAGES_FOLDER/$ARMV7_GUI_PACKAGE_NAME.zip" ./*
+popd
 
 pushd "$ARMV7_NOGUI_PACKAGE_FOLDER/"
 zip -r "$PACKAGES_FOLDER/$ARMV7_NOGUI_PACKAGE_NAME.zip" ./*
