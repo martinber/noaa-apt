@@ -6,46 +6,78 @@ set -eux -o pipefail
 NOAA_APT_VERSION=$(awk '/^version =/{print substr($NF, 2, length($NF)-2)}' Cargo.toml)
 
 PACKAGES_FOLDER=/home/rustacean/src/target/docker_builds
-GUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-x86_64-linux-gnu"
-NOGUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-x86_64-linux-gnu-nogui"
-GUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$GUI_PACKAGE_NAME"
-NOGUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$NOGUI_PACKAGE_NAME"
 
-PKG_CONFIG_ALLOW_CROSS=1
+LINUX_GUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-x86_64-linux-gnu"
+LINUX_NOGUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-x86_64-linux-gnu-nogui"
+LINUX_GUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$LINUX_GUI_PACKAGE_NAME"
+LINUX_NOGUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$LINUX_NOGUI_PACKAGE_NAME"
 
+RPI_GUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-armv7-linux-gnueabihf"
+RPI_NOGUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-armv7-linux-gnueabihf-nogui"
+RPI_GUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$RPI_GUI_PACKAGE_NAME"
+RPI_NOGUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$RPI_NOGUI_PACKAGE_NAME"
 
-# These environment variables are used by cargo when compiling rust-openssl
-export OPENSSL_DIR=/usr/local
-export OPENSSL_LIB_DIR=/usr/local/lib/
-export OPENSSL_INCLUDE_DIR=/usr/local/include
+export PKG_CONFIG_ALLOW_CROSS=1
+
+# Export these variables, because they are also used on debian/rules
+export CARGO_BINARY=/home/rustacean/.cargo/bin/cargo
+
+# Used by cargo when compiling rust-openssl
+# Also inside of debian/rules
+export OPENSSL_DIR=/usr/local/openssl
+export OPENSSL_LIB_DIR=/usr/local/openssl/lib/
+export OPENSSL_INCLUDE_DIR=/usr/local/openssl/include
+export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_DIR=/usr/local/openssl_armv7
+export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_LIB_DIR=/usr/local/openssl_armv7/lib/
+export ARMV7_UNKNOWN_LINUX_GNUEABIHF_OPENSSL_INCLUDE_DIR=/usr/local/openssl_armv7/include
 export OPENSSL_STATIC=yes
+
+# Build without GUI for Raspberry Pi
+
+export TARGET_CC=arm-linux-gnueabihf-gcc-6
+
+"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --no-default-features
+
+rm -r "$RPI_NOGUI_PACKAGE_FOLDER" || true
+mkdir -p "$RPI_NOGUI_PACKAGE_FOLDER"
+cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$RPI_NOGUI_PACKAGE_FOLDER/"
+cp -r "./test" "$RPI_NOGUI_PACKAGE_FOLDER/"
+rm -r "$RPI_NOGUI_PACKAGE_FOLDER/test/results" || true
+
+# Build with GUI for Raspberry Pi
+
+"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release
+
+rm -r "$RPI_GUI_PACKAGE_FOLDER" || true
+mkdir -p "$RPI_GUI_PACKAGE_FOLDER"
+cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$RPI_GUI_PACKAGE_FOLDER/"
+cp -r "./test" "$RPI_GUI_PACKAGE_FOLDER/"
+rm -r "$RPI_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build with GUI
 
-/home/rustacean/.cargo/bin/cargo build --target=x86_64-unknown-linux-gnu --release
+"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release
 
-rm -r "$GUI_PACKAGE_FOLDER" || true
-mkdir -p "$GUI_PACKAGE_FOLDER"
-cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$GUI_PACKAGE_FOLDER/"
-cp -r "./test" "$GUI_PACKAGE_FOLDER/"
-rm -r "$GUI_PACKAGE_FOLDER/test/results" || true
+rm -r "$LINUX_GUI_PACKAGE_FOLDER" || true
+mkdir -p "$LINUX_GUI_PACKAGE_FOLDER"
+cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$LINUX_GUI_PACKAGE_FOLDER/"
+cp -r "./test" "$LINUX_GUI_PACKAGE_FOLDER/"
+rm -r "$LINUX_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI
 
-/home/rustacean/.cargo/bin/cargo build --target=x86_64-unknown-linux-gnu --release --no-default-features
+"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --no-default-features
 
-rm -r "$NOGUI_PACKAGE_FOLDER" || true
-mkdir -p "$NOGUI_PACKAGE_FOLDER"
-cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$NOGUI_PACKAGE_FOLDER/"
-cp -r "./test" "$NOGUI_PACKAGE_FOLDER/"
-rm -r "$NOGUI_PACKAGE_FOLDER/test/results" || true
+rm -r "$LINUX_NOGUI_PACKAGE_FOLDER" || true
+mkdir -p "$LINUX_NOGUI_PACKAGE_FOLDER"
+cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$LINUX_NOGUI_PACKAGE_FOLDER/"
+cp -r "./test" "$LINUX_NOGUI_PACKAGE_FOLDER/"
+rm -r "$LINUX_NOGUI_PACKAGE_FOLDER/test/results" || true
 
 # Build deb
 
 # Verbose build for dpkg-buildpackage
 DH_VERBOSE=1
-# Also set location if cargo, used by debian/rules
-export CARGO_BINARY=/home/rustacean/.cargo/bin/cargo
 
 # -us -uc: Do not sign anything. When upgrading to a newer Debian version I
 #          should change to --no-sign
@@ -59,10 +91,10 @@ mv ../noaa-apt*.deb "$PACKAGES_FOLDER/"
 
 # Zip GUI and NOGUI folders
 
-pushd "$GUI_PACKAGE_FOLDER/"
-zip -r "$PACKAGES_FOLDER/$GUI_PACKAGE_NAME.zip" ./*
+pushd "$LINUX_GUI_PACKAGE_FOLDER/"
+zip -r "$PACKAGES_FOLDER/$LINUX_GUI_PACKAGE_NAME.zip" ./*
 popd
 
-pushd "$NOGUI_PACKAGE_FOLDER/"
-zip -r "$PACKAGES_FOLDER/$NOGUI_PACKAGE_NAME.zip" ./*
+pushd "$LINUX_NOGUI_PACKAGE_FOLDER/"
+zip -r "$PACKAGES_FOLDER/$LINUX_NOGUI_PACKAGE_NAME.zip" ./*
 popd

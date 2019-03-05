@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:stretch
 
 RUN set -x
 
@@ -10,16 +10,23 @@ RUN apt-get update \
                           zip \
                           libgtk-3-dev \
                           debhelper \
+                          gcc-6-arm-linux-gnueabihf \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Compile libssl static lib
+# Compile libssl static lib for x86 and armv7
 
 RUN OPENSSL_VERSION=1.0.2o \
     && curl -LO "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" \
-	&& tar xvzf "openssl-$OPENSSL_VERSION.tar.gz" && cd "openssl-$OPENSSL_VERSION" \
+    && tar xvzf "openssl-$OPENSSL_VERSION.tar.gz" && cd "openssl-$OPENSSL_VERSION" \
     && ./config no-zlib -fPIC \
-                --prefix=/usr/local  \
+                --prefix=/usr/local/openssl \
     && make \
+    && make install \
+    && make clean \
+    && export MACHINE=armv7 ARC=arm CC=arm-linux-gnueabihf-gcc-6 \
+    && ./config shared \
+                --prefix=/usr/local/openssl_armv7 \
+    && make  \
     && make install
 
 # Install rust as user rustacean
@@ -28,7 +35,10 @@ RUN useradd --create-home --shell /bin/bash rustacean
 USER rustacean
 
 RUN curl https://sh.rustup.rs -sSf | \
-    sh -s -- --default-toolchain stable -y
+    sh -s -- --default-toolchain stable -y \
+    && /home/rustacean/.cargo/bin/rustup target add armv7-unknown-linux-gnueabihf
+
+ADD .cargo/config /home/rustacean/.cargo/config
 
 # Build as user rustacean
 
