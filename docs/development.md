@@ -105,10 +105,17 @@ Notes:
 
     - Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
 
+    - [Compile as a library and create an Android client](https://mozilla.github.io/firefox-browser-architecture/experiments/2017-09-21-rust-on-android.html)
+
+    - Implement false color [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
+
     - For some reason the `--debug` does not work when using the GUI. Maybe
       replace argparse for something else.
 
-    - Improve syncing performance.
+    - Improve syncing performance. Make it faster and more resilent to noise,
+        maybe working with the mean and variance?.
+
+    - Try different `WORK_RATE`s.
 
     - Looks like the Windows version has some icons missing.
 
