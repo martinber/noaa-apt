@@ -27,6 +27,7 @@ use gio;
 use glib;
 use gio::prelude::*;
 use gtk::prelude::*;
+use gio::MenuExt;
 use gtk::Builder;
 
 use err;
@@ -44,8 +45,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[derive(Debug)]
 struct WidgetList {
     window:                       gtk::ApplicationWindow,
-    status_label:                 gtk::Label,
-    footer_label:                 gtk::Label,
+    progress_bar:                 gtk::ProgressBar,
     start_button:                 gtk::Button,
     decode_output_entry:          gtk::Entry,
     resample_output_entry:        gtk::Entry,
@@ -65,8 +65,7 @@ impl WidgetList {
     fn create(builder: &gtk::Builder) -> Self {
         Self {
             window:                       builder.get_object("window"                      ).expect("Couldn't get window"                      ),
-            status_label:                 builder.get_object("status_label"                ).expect("Couldn't get status_label"                ),
-            footer_label:                 builder.get_object("footer_label"                ).expect("Couldn't get footer_label"                ),
+            progress_bar:                 builder.get_object("progress_bar"                ).expect("Couldn't get progress_bar"                ),
             start_button:                 builder.get_object("start_button"                ).expect("Couldn't get start_button"                ),
             decode_output_entry:          builder.get_object("decode_output_entry"         ).expect("Couldn't get decode_output_entry"         ),
             resample_output_entry:        builder.get_object("resample_output_entry"       ).expect("Couldn't get resample_output_entry"       ),
@@ -119,16 +118,18 @@ fn build_ui(application: &gtk::Application) {
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
     widgets.window.set_wmclass("noaa-apt", "noaa-apt");
 
+    build_system_menu(application);
+
     info!("GUI opened");
 
-    // Set status_label and start_button to ready
+    // Set progress_bar and start_button to ready
 
-    widgets.status_label.set_label("Ready");
+    widgets.progress_bar.set_text("Ready");
     widgets.start_button.set_sensitive(true);
 
     // Set footer
 
-    update_footer(Rc::clone(&widgets));
+    // update_footer(Rc::clone(&widgets));
 
     // Configure decode_output_entry file chooser
 
@@ -196,9 +197,9 @@ fn build_ui(application: &gtk::Application) {
 
             x => panic!("Unexpected stack child name {}", x),
         }.unwrap_or_else(|string| {
-            widgets_clone.status_label.set_markup(
-                format!("<b>Error: {}</b>", string).as_str()
-            );
+            // widgets_clone.status_label.set_markup(
+                // format!("<b>Error: {}</b>", string).as_str()
+            // );
             error!("{}", string);
         });
     });
@@ -212,6 +213,35 @@ fn build_ui(application: &gtk::Application) {
     });
 
     widgets.window.show_all();
+}
+
+/// Build menu bar
+fn build_system_menu(application: &gtk::Application) {
+    // let menu = gio::Menu::new();
+    let menu_bar = gio::Menu::new();
+    let more_menu = gio::Menu::new();
+    let switch_menu = gio::Menu::new();
+    let settings_menu = gio::Menu::new();
+    let submenu = gio::Menu::new();
+
+    // The first argument is the label of the menu item whereas the second is the action name. It'll
+    // makes more sense when you'll be reading the "add_actions" function.
+    // menu.append("Quit", "app.quit");
+
+    switch_menu.append("Switch", "app.switch");
+    menu_bar.append_submenu("_Switch", &switch_menu);
+
+    settings_menu.append("Sub another", "app.sub_another");
+    submenu.append("Sub sub another", "app.sub_sub_another");
+    submenu.append("Sub sub another2", "app.sub_sub_another2");
+    settings_menu.append_submenu("Sub menu", &submenu);
+    menu_bar.append_submenu("_Another", &settings_menu);
+
+    more_menu.append("About", "app.about");
+    menu_bar.append_submenu("?", &more_menu);
+
+    // application.set_app_menu(&menu);
+    application.set_menubar(&menu_bar);
 }
 
 /// If the user wants to decode or resample.
@@ -247,7 +277,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
         return Err(err::Error::Internal("Select output filename".to_string()))
     }
 
-    widgets.status_label.set_markup("Processing");
+    // widgets.status_label.set_markup("Processing");
 
     // Callback called when decode/resample ends. Using ThreadGuard to send
     // widgets to another thread and back
@@ -259,10 +289,10 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             widgets.start_button.set_sensitive(true);
             match result {
                 Ok(()) => {
-                    widgets.status_label.set_markup("Finished");
+                    // widgets.status_label.set_markup("Finished");
                 },
                 Err(ref e) => {
-                    widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
+                    // widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
                     error!("{}", e);
                 },
             }
@@ -344,12 +374,12 @@ fn update_footer(widgets: Rc<WidgetList>) {
 
     // Show this while we check for updates online
 
-    widgets.footer_label.set_label(format!(
-        "noaa-apt {}\n\
-        Martín Bernardi\n\
-        martin@mbernardi.com.ar",
-        VERSION
-    ).as_str());
+    // widgets.footer_label.set_label(format!(
+        // "noaa-apt {}\n\
+        // Martín Bernardi\n\
+        // martin@mbernardi.com.ar",
+        // VERSION
+    // ).as_str());
 
 
     // Callback called when check_update ends. Using ThreadGuard to send
@@ -360,28 +390,28 @@ fn update_footer(widgets: Rc<WidgetList>) {
             let widgets = widgets_cell.borrow();
             match result {
                 Some((true, ref latest)) => {
-                    widgets.footer_label.set_markup(format!(
-                        "noaa-apt {} - <b>Version \"{}\" available for download!</b>\n\
-                        Martín Bernardi\n\
-                        martin@mbernardi.com.ar",
-                        VERSION, latest
-                    ).as_str());
+                    // widgets.footer_label.set_markup(format!(
+                        // "noaa-apt {} - <b>Version \"{}\" available for download!</b>\n\
+                        // Martín Bernardi\n\
+                        // martin@mbernardi.com.ar",
+                        // VERSION, latest
+                    // ).as_str());
                 },
                 Some((false, ref _latest)) => {
-                    widgets.footer_label.set_markup(format!(
-                        "noaa-apt {} - You have the latest version available\n\
-                        Martín Bernardi\n\
-                        martin@mbernardi.com.ar",
-                        VERSION
-                    ).as_str());
+                    // widgets.footer_label.set_markup(format!(
+                        // "noaa-apt {} - You have the latest version available\n\
+                        // Martín Bernardi\n\
+                        // martin@mbernardi.com.ar",
+                        // VERSION
+                    // ).as_str());
                 },
                 None => {
-                    widgets.footer_label.set_markup(format!(
-                        "noaa-apt {} - Error checking for updates\n\
-                        Martín Bernardi\n\
-                        martin@mbernardi.com.ar",
-                        VERSION
-                    ).as_str());
+                    // widgets.footer_label.set_markup(format!(
+                        // "noaa-apt {} - Error checking for updates\n\
+                        // Martín Bernardi\n\
+                        // martin@mbernardi.com.ar",
+                        // VERSION
+                    // ).as_str());
                 },
             }
             gtk::Continue(false)
