@@ -12,6 +12,7 @@ use err;
 /// Lookup table for numbers used in `bessel_i0()`
 ///
 /// 1 / (n! * 2^n)^2
+#[allow(clippy::excessive_precision, clippy::unreadable_literal)]
 const BESSEL_TABLE: [f32; 20] = [
     1.0,
     0.25,
@@ -120,7 +121,7 @@ impl<T> ThreadGuard<T> {
     pub fn borrow(&self) -> Ref<T> {
         match self.check_thread() {
             Ok(_) => self.data.borrow(),
-            Err(_) => {
+            Err(()) => {
                 panic!(
                     "Data is only accessible on thread {:?} (current is {:?})",
                     self.thread_id,
@@ -133,7 +134,7 @@ impl<T> ThreadGuard<T> {
     pub fn borrow_mut(&self) -> RefMut<T> {
         match self.check_thread() {
             Ok(_) => self.data.borrow_mut(),
-            Err(_) => {
+            Err(()) => {
                 panic!(
                     "Data is only accessible on thread {:?} (current is {:?})",
                     self.thread_id,

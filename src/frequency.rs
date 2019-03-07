@@ -71,17 +71,17 @@ impl Freq {
     }
 
     /// Get radians per second.
-    pub fn get_rad(&self) -> f32 {
+    pub fn get_rad(self) -> f32 {
         self.pi_rad*PI
     }
 
     /// Get fractions of pi radians per second.
-    pub fn get_pi_rad(&self) -> f32 {
+    pub fn get_pi_rad(self) -> f32 {
         self.pi_rad
     }
 
     /// Get frequency on Hertz given some sample rate.
-    pub fn get_hz(&self, rate: Rate) -> f32 {
+    pub fn get_hz(self, rate: Rate) -> f32 {
         self.pi_rad * rate.get_hz() as f32 / 2.
     }
 }
@@ -101,7 +101,7 @@ impl Rate {
         Rate { hz: num::NumCast::from(r).unwrap() }
     }
     /// Get rate on Hertz.
-    pub fn get_hz(&self) -> u32 {
+    pub fn get_hz(self) -> u32 {
         self.hz
     }
 }

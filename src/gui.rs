@@ -229,10 +229,10 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
     let input_filename: String = widgets
         .input_file_chooser
         .get_filename() // Option<std::path::PathBuf>
-        .ok_or(err::Error::Internal("Select input file".to_string()))
+        .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
         .and_then(|path: std::path::PathBuf| {
              path.to_str()
-                 .ok_or(err::Error::Internal("Invalid character on input path".to_string()))
+                 .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
                  .map(|s: &str| s.to_string())
         })?;
 

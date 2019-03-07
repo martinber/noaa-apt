@@ -1,12 +1,16 @@
 [package]
 name = "noaa-apt"
-version = "0.9.8"
+version = "0.9.9-dev"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 build = "src/build.rs"
 
 [profile.dev]
 # So the dev builds run faster, otherwise they are extremely slow
 opt-level = 3
+
+[profile.release]
+# I don't like silent overflows
+overflow-checks = true
 
 [features]
 default = ["gui"]

@@ -134,6 +134,9 @@ pub fn resample(
 ///
 /// Low-level function used by `resample_with_filter`.
 ///
+/// I expect you to read this while looking at the diagram on the documentation
+/// to figure out what the letters mean.
+///
 /// Resamples by expansion by `l`, filtering and then decimation by `m`. The
 /// expansion is equivalent to the insertion of `l-1` zeros between samples.
 ///
@@ -144,7 +147,7 @@ pub fn resample(
 /// I've tried to make it faster several times, that's why it's so ugly. It's
 /// much more efficient than expanding, filtering and decimating, because skips
 /// computed values that otherwise would be dropped on decimation.
-
+#[allow(clippy::many_single_char_names)]
 fn fast_resampling(
     context: &mut Context,
     signal: &Signal,
