@@ -137,6 +137,7 @@ impl Filter for LowpassDcRemoval {
 ///
 /// The length depends on the parameters given, and it's always odd.
 fn kaiser(atten: f32, delta_w: Freq) -> Signal {
+    use misc::bessel_i0 as bessel;
 
     debug!("Designing Kaiser window, \
            attenuation: {}dB, delta_w: pi*{}rad/s",
@@ -159,7 +160,6 @@ fn kaiser(atten: f32, delta_w: Freq) -> Signal {
 
     let mut window: Signal = Vec::with_capacity(length as usize);
 
-    use misc::bessel_i0 as bessel;
     for n in -(length-1)/2 ..= (length-1)/2 {
         let n = n as f32;
         let m = length as f32;

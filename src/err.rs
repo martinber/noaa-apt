@@ -47,13 +47,13 @@ impl std::fmt::Display for Error {
 }
 
 impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Error {
+    fn from(err: std::io::Error) -> Self {
         Error::Io(err)
     }
 }
 
 impl From<hound::Error> for Error {
-    fn from(err: hound::Error) -> Error {
+    fn from(err: hound::Error) -> Self {
         match err {
             hound::Error::IoError(io_error) => Error::Io(io_error),
             hound::Error::FormatError(_) => Error::WavOpen(err.to_string()),
@@ -66,13 +66,13 @@ impl From<hound::Error> for Error {
 }
 
 impl From<log::SetLoggerError> for Error {
-    fn from(err: log::SetLoggerError) -> Error {
+    fn from(err: log::SetLoggerError) -> Self {
         Error::Internal(err.description().to_string())
     }
 }
 
 impl From<png::EncodingError> for Error {
-    fn from(err: png::EncodingError) -> Error {
+    fn from(err: png::EncodingError) -> Self {
         match err {
             png::EncodingError::IoError(io_error) => Error::Io(io_error),
             png::EncodingError::Format(_) => Error::PngWrite(err.description().to_string()),

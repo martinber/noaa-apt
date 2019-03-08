@@ -119,84 +119,80 @@ fn main() -> err::Result<()> {
         .as_ref()
         .map(|s| s.as_str())
     {
-        Some("98_percent") => Contrast::Percent(0.98),
         Some("telemetry") => Contrast::Telemetry,
         Some("disable") => Contrast::MinMax,
+        Some("98_percent") | None => Contrast::Percent(0.98),
         Some(_) => {
             println!("Invalid contrast adjustment argument");
             std::process::exit(0);
         },
-        None => Contrast::Percent(0.98),
     };
 
-    match input_filename {
+    // If set, then the program will be used as a command-line one, else we open
+    // the GUI
+    if let Some(input_filename) = input_filename {
 
-        // Input filename set, command line
-        Some(input_filename) => {
-            match resample_output {
+        // If set, we are resampling, else we are decoding
+        if let Some(rate) = resample_output {
 
-                // Just resample the WAV file
-                Some(rate) => {
-                    let output = match output_filename {
-                        Some(filename) => filename,
-                        None => String::from("./output.wav"),
-                    };
+            let output = match output_filename {
+                Some(filename) => filename,
+                None => String::from("./output.wav"),
+            };
 
-                    let context = Context::resample(
-                        wav_steps,
-                        export_resample_filtered
-                    );
+            let context = Context::resample(
+                wav_steps,
+                export_resample_filtered
+            );
 
-                    match noaa_apt::resample_wav(
-                        context,
-                        input_filename.as_str(),
-                        output.as_str(),
-                        Rate::hz(rate),
-                    ) {
-                        Ok(_) => (),
-                        Err(e) => error!("{}", e),
-                    };
-                }
+            match noaa_apt::resample_wav(
+                context,
+                input_filename.as_str(),
+                output.as_str(),
+                Rate::hz(rate),
+            ) {
+                Ok(_) => (),
+                Err(e) => error!("{}", e),
+            };
 
-                // Decode WAV file
-                None => {
-                    let output = match output_filename {
-                        Some(filename) => filename,
-                        None => String::from("./output.png"),
-                    };
+        // resample_output option not set, decode WAV file
+        } else {
 
-                    let context = Context::decode(
-                        Rate::hz(noaa_apt::WORK_RATE),
-                        Rate::hz(noaa_apt::FINAL_RATE),
-                        wav_steps,
-                        export_resample_filtered,
-                    );
+            let output = match output_filename {
+                Some(filename) => filename,
+                None => String::from("./output.png"),
+            };
 
-                    match noaa_apt::decode(
-                        context,
-                        input_filename.as_str(),
-                        output.as_str(),
-                        contrast_adjustment,
-                        sync,
-                    ) {
-                        Ok(_) => (),
-                        Err(e) => error!("{}", e),
-                    };
-                }
-            }
+            let context = Context::decode(
+                Rate::hz(noaa_apt::WORK_RATE),
+                Rate::hz(noaa_apt::FINAL_RATE),
+                wav_steps,
+                export_resample_filtered,
+            );
+
+            match noaa_apt::decode(
+                context,
+                input_filename.as_str(),
+                output.as_str(),
+                contrast_adjustment,
+                sync,
+            ) {
+                Ok(_) => (),
+                Err(e) => error!("{}", e),
+            };
         }
 
-        // Input filename not set, launch GUI
-        None => {
-            #[cfg(feature = "gui")]
-            {
-                gui::main();
-            }
-            #[cfg(not(feature = "gui"))]
-            {
-                error!("Program compiled without gui support, please download \
-                    the gui version of this program.");
-            }
+    // Input filename not set, launch GUI
+    } else {
+
+        #[cfg(feature = "gui")]
+        {
+            gui::main();
+        }
+        #[cfg(not(feature = "gui"))]
+        {
+            error!("Program compiled without gui support, please download \
+                the gui version of this program.");
         }
     }
 

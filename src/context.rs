@@ -196,9 +196,9 @@ impl Context {
     pub fn resample(
         export_wav: bool,
         export_resample_filtered: bool
-    ) -> Context {
+    ) -> Self {
 
-        Context {
+        Self {
             steps_metadata: vec![
                 StepMetadata {
                     description: "Samples read from WAV",
@@ -242,9 +242,9 @@ impl Context {
         final_rate: Rate,
         export_wav: bool,
         export_resample_filtered: bool
-    ) -> Context {
+    ) -> Self {
 
-        Context {
+        Self {
             steps_metadata: vec![
                 StepMetadata {
                     description: "Samples read from WAV",

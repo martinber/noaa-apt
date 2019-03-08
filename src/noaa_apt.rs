@@ -29,7 +29,7 @@ pub const PX_PER_ROW: u32 = 2080;
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
 
-/// Samples on each image row when at WORK_RATE.
+/// Samples on each image row when at `WORK_RATE`.
 pub const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
 
 /// Load and resample WAV file.

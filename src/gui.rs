@@ -62,8 +62,8 @@ struct WidgetList {
 
 impl WidgetList {
     /// Create and load widgets from `gtk::Builder`.
-    fn create(builder: &gtk::Builder) -> WidgetList {
-        WidgetList {
+    fn create(builder: &gtk::Builder) -> Self {
+        Self {
             window:                       builder.get_object("window"                      ).expect("Couldn't get window"                      ),
             status_label:                 builder.get_object("status_label"                ).expect("Couldn't get status_label"                ),
             footer_label:                 builder.get_object("footer_label"                ).expect("Couldn't get footer_label"                ),

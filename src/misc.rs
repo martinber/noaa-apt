@@ -112,7 +112,7 @@ unsafe impl<T> Sync for ThreadGuard<T> {}
 #[allow(dead_code)]
 impl<T> ThreadGuard<T> {
     pub fn new(data: T) -> Self {
-        ThreadGuard {
+        Self {
             thread_id: thread::current().id(),
             data: RefCell::new(data),
         }

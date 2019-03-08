@@ -56,18 +56,18 @@ pub struct Freq {
 #[allow(dead_code)]
 impl Freq {
     /// Create frequency struct from radians per second.
-    pub fn rad(f: f32) -> Freq {
-        Freq { pi_rad: f/PI }
+    pub fn rad(f: f32) -> Self {
+        Self { pi_rad: f/PI }
     }
 
     /// Create frequency struct from fractions of pi radians per second.
-    pub fn pi_rad(f: f32) -> Freq {
-        Freq { pi_rad: f }
+    pub fn pi_rad(f: f32) -> Self {
+        Self { pi_rad: f }
     }
 
     /// Create frequency struct from Hertz and the sample rate used.
-    pub fn hz(f: f32, rate: Rate) -> Freq {
-        Freq { pi_rad: 2.*f / rate.get_hz() as f32 }
+    pub fn hz(f: f32, rate: Rate) -> Self {
+        Self { pi_rad: 2.*f / rate.get_hz() as f32 }
     }
 
     /// Get radians per second.
@@ -96,9 +96,9 @@ pub struct Rate {
 
 impl Rate {
     /// Create rate from Hertz.
-    pub fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Rate {
+    pub fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Self {
         // Should panic only when r < 0
-        Rate { hz: num::NumCast::from(r).unwrap() }
+        Self { hz: num::NumCast::from(r).unwrap() }
     }
     /// Get rate on Hertz.
     pub fn get_hz(self) -> u32 {

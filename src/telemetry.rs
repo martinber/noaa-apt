@@ -27,7 +27,7 @@ impl Telemetry {
     ///
     /// Takes two signals containing the horizontal averages of each band (8
     /// values per wedge), also takes the row where to start reading the frame.
-    pub fn from_bands(means_a: &Signal, means_b: &Signal, row: usize) -> Telemetry{
+    pub fn from_bands(means_a: &Signal, means_b: &Signal, row: usize) -> Self {
 
         // Calculate the mean of contiguous 8 values, starting from the given
         // one until wedge 9 of the next frame
@@ -37,7 +37,7 @@ impl Telemetry {
         let means_b: Signal = means_b[row..]
             .chunks_exact(8).map(|x| x.iter().sum::<f32>() / 8.).take(16 + 9).collect();
 
-        let telemetry = Telemetry {
+        let telemetry = Self {
             values_a: (1..=16).map(|wedge|
                 // Contrast wedges 1-9 are averaged to the ones on the next frame
                 if wedge <= 9 {
@@ -106,8 +106,8 @@ impl Telemetry {
 
 /// Read telemetry from aligned signal.
 ///
-/// Takes already synced signal, it's a Vec where the first PX_PER_ROW values
-/// represent the first line of the image, the next PX_PER_ROW represent the
+/// Takes already synced signal, it's a Vec where the first `PX_PER_ROW` values
+/// represent the first line of the image, the next `PX_PER_ROW` represent the
 /// next line, etc.
 pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Telemetry> {
 
