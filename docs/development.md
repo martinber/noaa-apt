@@ -89,12 +89,17 @@ Notes:
 
         - Something else?.
 
+        - Make sure that Rate cant overflow when resampling against strange
+            sample rates.
+
     - Remove help icons, add help menu instead.
 
-    - Improve GUI.
+    - Improve GUI, show decoding progress.
 
     - Fix bug on Raspberry Pi because of overflow of usize (it's 32 bits instead
         of 64 bits).
+
+    - Show panics and errors on GUI. Remove terminal for Windows users.
 
 - Someday:
 
@@ -220,6 +225,13 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 ```
 ./test/test.sh
 ```
+
+I use Clippy too:
+
+- `cargo clippy -- -A clippy::ptr_arg`: Should have no warnings.
+
+- `cargo clippy -- -A clippy::ptr_arg -W clippy::pedantic`: Check once in a
+    while but ignore most of the lints
 
 ## Release checklist
 

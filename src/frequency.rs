@@ -89,6 +89,10 @@ impl Freq {
 /// Represents an integer sample rate.
 ///
 /// Uses Hertz as unit.
+///
+/// When testing on Raspberry Pi I realised that we should be careful working
+/// with usize or u32, because when resampling we multiply against L and it's
+/// easy to overflow.
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Rate {
     hz: u32
@@ -103,6 +107,13 @@ impl Rate {
     /// Get rate on Hertz.
     pub fn get_hz(self) -> u32 {
         self.hz
+    }
+
+    /// Multiplication against u32 with overflow check
+    pub fn checked_mul(self, other: u32) -> Option<Self> {
+        self.hz.checked_mul(other).map(
+            |r| Self { hz: r }
+        )
     }
 }
 

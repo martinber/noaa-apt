@@ -74,7 +74,15 @@ pub fn resample_with_filter(
 
     if l > 1 { // If we need interpolation
         // Reference the frequencies to the rate we have after interpolation
-        filt.resample(input_rate, input_rate * l);
+        let interpolated_rate = input_rate.checked_mul(l).ok_or(
+            err::Error::RateOverflow(format!(
+                "Can't resample, looks like the sample rates do not have a big
+                divisor in common. input_rate: {}, output_rate: {}, l: {}, m: {}",
+                input_rate.get_hz(), output_rate.get_hz(), l, m
+            ))
+        )?;
+
+        filt.resample(input_rate, interpolated_rate);
         let coeff = filt.design();
 
         context.step(Step::filter("resample_filter", &coeff))?;
@@ -339,4 +347,32 @@ pub fn filter(
     context.step(Step::filter("filter_filter", &coeff))?;
     context.step(Step::signal("filter_result", &output, None))?;
     Ok(output)
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    /// Check that when we use strange resampling rates, the greatest common
+    /// divisor between them can be too small and the calculated interpolated
+    /// rate can overflow.
+    #[test]
+    fn test_rate_overflow() {
+
+        let result = resample_with_filter(
+            &mut Context::resample(false, false), // Dummy context, not important
+            &vec![0.0; 1000],
+            Rate::hz(99371), // Two primes as sample rates
+            Rate::hz(93911),
+            filters::NoFilter,
+        );
+
+        if let Err(err::Error::RateOverflow(_)) = result { }
+        else {
+            panic!();
+        }
+    }
+
 }

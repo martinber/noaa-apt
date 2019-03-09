@@ -27,6 +27,10 @@ pub enum Error {
     /// `noaa-apt` internal errors.
     Internal(String),
 
+    /// Overflow of variables holding sample rates, most likely because the user
+    /// choose strange sample rates.
+    RateOverflow(String),
+
     /// Functionality not available because the program was compiled without
     /// those features
     FeatureNotAvailable(Vec<String>),
@@ -39,6 +43,7 @@ impl std::fmt::Display for Error {
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
             Error::PngWrite(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
+            Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref features) =>
                 write!(f, "Program compiled without support for features: {:?}",
                     features),
