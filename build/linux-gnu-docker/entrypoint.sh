@@ -24,7 +24,7 @@ export CARGO_BINARY=/home/rustacean/.cargo/bin/cargo
 
 # Build with GUI
 
-"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release
+"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --features static_ssl
 
 rm -r "$X86_64_GUI_PACKAGE_FOLDER" || true
 mkdir -p "$X86_64_GUI_PACKAGE_FOLDER"
@@ -34,7 +34,7 @@ rm -r "$X86_64_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI
 
-"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --no-default-features
+"$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --no-default-features --features static_ssl
 
 rm -r "$X86_64_NOGUI_PACKAGE_FOLDER" || true
 mkdir -p "$X86_64_NOGUI_PACKAGE_FOLDER"
@@ -51,7 +51,7 @@ export TARGET_CC=arm-linux-gnueabihf-gcc-6
 # `/usr/lib/arm-linux-gnueabihf/pkgconfig/glib-2.0.pc`
 export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/
 
-"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release
+"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --features static_ssl
 
 rm -r "$ARMV7_GUI_PACKAGE_FOLDER" || true
 mkdir -p "$ARMV7_GUI_PACKAGE_FOLDER"
@@ -61,7 +61,7 @@ rm -r "$ARMV7_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI for Raspberry Pi
 
-"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --no-default-features
+"$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --no-default-features --features static_ssl
 
 rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER" || true
 mkdir -p "$ARMV7_NOGUI_PACKAGE_FOLDER"
