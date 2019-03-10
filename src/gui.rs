@@ -47,6 +47,9 @@ struct WidgetList {
     window:                       gtk::ApplicationWindow,
     progress_bar:                 gtk::ProgressBar,
     start_button:                 gtk::Button,
+    info_bar:                     gtk::InfoBar,
+    info_label:                   gtk::Label,
+    info_revealer:                gtk::Revealer,
     decode_output_entry:          gtk::Entry,
     resample_output_entry:        gtk::Entry,
     resample_rate_spinner:        gtk::SpinButton,
@@ -67,6 +70,9 @@ impl WidgetList {
             window:                       builder.get_object("window"                      ).expect("Couldn't get window"                      ),
             progress_bar:                 builder.get_object("progress_bar"                ).expect("Couldn't get progress_bar"                ),
             start_button:                 builder.get_object("start_button"                ).expect("Couldn't get start_button"                ),
+            info_bar:                     builder.get_object("info_bar"                    ).expect("Couldn't get info_bar"                    ),
+            info_label:                   builder.get_object("info_label"                  ).expect("Couldn't get info_label"                  ),
+            info_revealer:                builder.get_object("info_revealer"               ).expect("Couldn't get info_revealer"               ),
             decode_output_entry:          builder.get_object("decode_output_entry"         ).expect("Couldn't get decode_output_entry"         ),
             resample_output_entry:        builder.get_object("resample_output_entry"       ).expect("Couldn't get resample_output_entry"       ),
             resample_rate_spinner:        builder.get_object("resample_rate_spinner"       ).expect("Couldn't get resample_rate_spinner"       ),
@@ -127,9 +133,7 @@ fn build_ui(application: &gtk::Application) {
     widgets.progress_bar.set_text("Ready");
     widgets.start_button.set_sensitive(true);
 
-    // Set footer
-
-    // update_footer(Rc::clone(&widgets));
+    check_updates(Rc::clone(&widgets));
 
     // Configure decode_output_entry file chooser
 
@@ -187,22 +191,33 @@ fn build_ui(application: &gtk::Application) {
     let widgets_clone = Rc::clone(&widgets);
     widgets.start_button.connect_clicked(move |_| {
 
+        widgets_clone.info_revealer.set_reveal_child(false);
+
         // Check if we are decoding or resampling
         match widgets_clone.options_stack.get_visible_child_name()
             .expect("Stack has no visible child").as_str()
         {
-
             "decode_page" => run_noaa_apt(Action::Decode, Rc::clone(&widgets_clone)),
             "resample_page" => run_noaa_apt(Action::Resample, Rc::clone(&widgets_clone)),
 
             x => panic!("Unexpected stack child name {}", x),
-        }.unwrap_or_else(|string| {
-            // widgets_clone.status_label.set_markup(
-                // format!("<b>Error: {}</b>", string).as_str()
-            // );
-            error!("{}", string);
+        }.unwrap_or_else(|error| {
+            let widgets= Rc::clone(&widgets_clone);
+            show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
+
+            error!("{}", error);
         });
     });
+
+    // Connect info_bar close button
+
+    // let widgets_clone = Rc::clone(&widgets);
+    // widgets.info_bar.connect_response(move |_, response| {
+        // if gtk::ResponseType::Close == response {
+            // widgets_clone.info_revealer.set_reveal_child(false);
+            // info!("Asdfjhalkj");
+        // }
+    // });
 
     // Finish and show
 
@@ -292,7 +307,8 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
                     // widgets.status_label.set_markup("Finished");
                 },
                 Err(ref e) => {
-                    // widgets.status_label.set_markup(format!("<b>Error: {}</b>", e).as_str());
+                    show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
+
                     error!("{}", e);
                 },
             }
@@ -369,19 +385,30 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
     Ok(())
 }
 
-/// Check for updates on another thread and show the result on the footer.
-fn update_footer(widgets: Rc<WidgetList>) {
+fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
+    match message_type {
+        gtk::MessageType::Info =>
+            widgets.info_label.set_markup(
+                text
+            ),
+        gtk::MessageType::Warning =>
+            widgets.info_label.set_markup(
+                format!("<b>Warning: {}</b>", text).as_str()
+            ),
+        gtk::MessageType::Error =>
+            widgets.info_label.set_markup(
+                format!("<b>Error: {}</b>", text).as_str()
+            ),
+        _ =>
+            unreachable!(),
+    }
 
-    // Show this while we check for updates online
+    widgets.info_bar.set_message_type(message_type);
+    widgets.info_revealer.set_reveal_child(true);
+}
 
-    // widgets.footer_label.set_label(format!(
-        // "noaa-apt {}\n\
-        // Martín Bernardi\n\
-        // martin@mbernardi.com.ar",
-        // VERSION
-    // ).as_str());
-
-
+/// Check for updates on another thread and show the result on the info_bar.
+fn check_updates(widgets: Rc<WidgetList>) {
     // Callback called when check_update ends. Using ThreadGuard to send
     // widgets to another thread and back
     let widgets_cell = ThreadGuard::new(widgets);
@@ -390,28 +417,19 @@ fn update_footer(widgets: Rc<WidgetList>) {
             let widgets = widgets_cell.borrow();
             match result {
                 Some((true, ref latest)) => {
-                    // widgets.footer_label.set_markup(format!(
-                        // "noaa-apt {} - <b>Version \"{}\" available for download!</b>\n\
-                        // Martín Bernardi\n\
-                        // martin@mbernardi.com.ar",
-                        // VERSION, latest
-                    // ).as_str());
+                    show_info(
+                        &widgets,
+                        gtk::MessageType::Info,
+                        format!("Version \"{}\" available for download!", latest).as_str(),
+                    );
                 },
-                Some((false, ref _latest)) => {
-                    // widgets.footer_label.set_markup(format!(
-                        // "noaa-apt {} - You have the latest version available\n\
-                        // Martín Bernardi\n\
-                        // martin@mbernardi.com.ar",
-                        // VERSION
-                    // ).as_str());
-                },
+                Some((false, _)) => {},
                 None => {
-                    // widgets.footer_label.set_markup(format!(
-                        // "noaa-apt {} - Error checking for updates\n\
-                        // Martín Bernardi\n\
-                        // martin@mbernardi.com.ar",
-                        // VERSION
-                    // ).as_str());
+                    show_info(
+                        &widgets,
+                        gtk::MessageType::Info,
+                        format!("Error checking for updates, do you have an internet connection?").as_str(),
+                    );
                 },
             }
             gtk::Continue(false)
@@ -421,5 +439,4 @@ fn update_footer(widgets: Rc<WidgetList>) {
     std::thread::spawn(move || {
         callback(misc::check_updates(VERSION));
     });
-
 }
