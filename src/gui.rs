@@ -27,7 +27,6 @@ use gio;
 use glib;
 use gio::prelude::*;
 use gtk::prelude::*;
-use gio::MenuExt;
 use gtk::Builder;
 
 use err;
@@ -211,13 +210,12 @@ fn build_ui(application: &gtk::Application) {
 
     // Connect info_bar close button
 
-    // let widgets_clone = Rc::clone(&widgets);
-    // widgets.info_bar.connect_response(move |_, response| {
-        // if gtk::ResponseType::Close == response {
-            // widgets_clone.info_revealer.set_reveal_child(false);
-            // info!("Asdfjhalkj");
-        // }
-    // });
+    let widgets_clone = Rc::clone(&widgets);
+    widgets.info_bar.connect_response(move |_, response| {
+        if gtk::ResponseType::Close == response {
+            widgets_clone.info_revealer.set_reveal_child(false);
+        }
+    });
 
     // Finish and show
 
@@ -271,6 +269,8 @@ enum Action {
 /// Also sets the button as not sensitive and then as sensitive again.
 fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
 
+    // input_filename has to be a String instead of GString because I need to
+    // move to another thread
     let input_filename: String = widgets
         .input_file_chooser
         .get_filename() // Option<std::path::PathBuf>
@@ -281,11 +281,13 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
                  .map(|s: &str| s.to_string())
         })?;
 
+    // output_filename has to be a String instead of GString because I need to
+    // move to another thread
     let output_filename = match action {
         Action::Decode => widgets.decode_output_entry.get_text()
-            .expect("Couldn't get decode_output_entry text"),
+            .expect("Couldn't get decode_output_entry text").as_str().to_string(),
         Action::Resample => widgets.resample_output_entry.get_text()
-            .expect("Couldn't get resample_output_entry text"),
+            .expect("Couldn't get resample_output_entry text").as_str().to_string(),
     };
 
     if output_filename == "" {
