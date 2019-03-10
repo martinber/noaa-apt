@@ -1,6 +1,7 @@
 //! Functions for digital signal processing.
 
 use num::Integer; // For u32.gcd(u32)
+use num::ToPrimitive;
 
 pub use frequency::Freq;
 pub use frequency::Rate;
@@ -155,6 +156,10 @@ pub fn resample(
 /// I've tried to make it faster several times, that's why it's so ugly. It's
 /// much more efficient than expanding, filtering and decimating, because skips
 /// computed values that otherwise would be dropped on decimation.
+///
+/// Should be careful because it's easy to overflow usize when on 32 bits
+/// systems. Specifically the variables that can overflow are:
+/// `interpolated_len`, `n`, `t`.
 #[allow(clippy::many_single_char_names)]
 fn fast_resampling(
     context: &mut Context,
@@ -165,32 +170,46 @@ fn fast_resampling(
     input_rate: Rate,
 ) -> err::Result<Signal> {
 
-    let l = l as usize;
-    let m = m as usize;
+    let l = l as u64;
+    let m = m as u64;
 
     // Check the diagram on the documentation to see what the letters mean
 
     debug!("Resampling by L/M: {}/{}", l, m);
 
-    let mut output: Signal = Vec::with_capacity(signal.len() * l / m);
+    // Length that the interpolated signal should have, as u64 because this can
+    // easily overflow if usize is 32 bits long
+    let interpolated_len: u64 = signal.len() as u64 * l;
+
+    // Length of the output signal, this should fit in 32 bits anyway.
+    let output_len: u64 = interpolated_len / m;
+
+    let mut output: Signal = Vec::with_capacity(output_len as usize);
 
     // Save expanded and filtered signal if we need to export that step
     let mut expanded_filtered = if context.export_resample_filtered  {
-        Vec::with_capacity(signal.len() * l)
+        // Very likely to overflow usize on 32 bits systems
+        match interpolated_len.to_usize() {
+            Some(l) => Vec::with_capacity(l),
+            None => {
+                error!("Expanded filtered signal can't fit in memory, skipping step");
+                Vec::with_capacity(0) // Not going to be used
+            }
+        }
     } else {
         Vec::with_capacity(0) // Not going to be used
     };
 
-    let offset = (coeff.len() - 1) / 2; // Filter delay in the n axis, half
-                                        // of filter width
+    // Filter delay in the n axis, half of filter width
+    let offset: u64 = (coeff.len() as u64 - 1) / 2;
 
-    let mut n: usize; // Current working n
+    let mut n: u64; // Current working n
 
-    let mut t: usize = offset; // Like n but fixed to the current output
-                               // sample to calculate
+    let mut t: u64 = offset; // Like n but fixed to the current output
+                             // sample to calculate
 
     // Iterate over each output sample
-    while t < signal.len() * l {
+    while t < interpolated_len {
 
         // Find first n inside the window that has a input sample that I
         // should multiply with a filter coefficient
@@ -198,8 +217,8 @@ fn fast_resampling(
             n = t - offset; // Go to n at start of filter
             match n % l { // Jump to first sample in window
                 0 => (),
-                x => n += l - x, // I checked this on paper once and forgot
-                                 // how it works
+                rem => n += l - rem, // I checked this on pen and paper once and
+                                     // forgot how it works
             }
         } else { // In this case the first sample in window is located at 0
             n = 0;
@@ -212,9 +231,9 @@ fn fast_resampling(
         while n <= t + offset {
             // Check if there is a sample in that index, in case that we
             // use an index bigger that signal.len()
-            if let Some(sample) = signal.get(x) {
+            if let Some(sample) = signal.get(x as usize) {
                 // n+offset-t is equal to j
-                sum += coeff[n + offset - t] * sample;
+                sum += coeff[(n + offset - t) as usize] * sample;
             }
             x += 1;
             n += l;
@@ -375,4 +394,37 @@ mod tests {
         }
     }
 
+    /// Check a simple resample using `fast_resampling()`.
+    ///
+    /// I'm checking only for overflows, not checking if the resample is
+    /// actually good.
+    #[test]
+    fn test_fast_resampling() {
+        let result = fast_resampling(
+            &mut Context::resample(false, false), // Dummy context, not important
+            &vec![0.0; 1000], // signal
+            3, // l
+            2, // m
+            &vec![0.0; 100], // coeff
+            Rate::hz(1000), // input_rate
+        );
+        assert!(result.is_ok());
+    }
+
+    /// Check `fast_resampling()` when the coeffs are longer than the signal.
+    ///
+    /// I'm checking only for overflows, not checking if the resample is
+    /// actually good.
+    #[test]
+    fn test_fast_resampling_short() {
+        let result = fast_resampling(
+            &mut Context::resample(false, false), // Dummy context, not important
+            &vec![0.0; 100], // signal
+            3, // l
+            2, // m
+            &vec![0.0; 1000], // coeff
+            Rate::hz(1000), // input_rate
+        );
+        assert!(result.is_ok());
+    }
 }
