@@ -96,9 +96,6 @@ Notes:
 
     - Improve GUI, show decoding progress.
 
-    - Fix bug on Raspberry Pi because of overflow of usize (it's 32 bits instead
-        of 64 bits).
-
     - Show panics and errors on GUI. Remove terminal for Windows users.
 
 - Someday:

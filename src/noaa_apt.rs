@@ -16,7 +16,7 @@ use misc;
 ///
 /// Should be multiple of the final sample rate. Because the syncing needs that,
 /// also that way the final resampling it's just a decimation.
-pub const WORK_RATE: u32 = 20800;
+pub const WORK_RATE: u32 = 12480;
 
 /// Final signal sample rate.
 ///
@@ -223,12 +223,12 @@ pub fn decode(
         // through to avoid noise, 2 times the carrier frequency is enough
         cutout: Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.,
 
-        atten: 40.,
+        atten: 30.,
 
         // Width of transition band, we are using a DC removal filter that has a
         // transition band from zero to delta_w. I think that APT signals have
         // nothing below 500Hz.
-        delta_w: Freq::hz(500., input_rate)
+        delta_w: Freq::hz(3000., input_rate)
     };
     let signal = dsp::resample_with_filter(
         &mut context, &signal, input_rate, work_rate, filter)?;
@@ -252,7 +252,7 @@ pub fn decode(
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let filter = filters::Lowpass {
         cutout,
-        atten: 20.,
+        atten: 23.,
         delta_w: cutout / 5.
     };
     // mut because on sync the signal is going to be modified
