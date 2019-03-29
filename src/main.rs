@@ -141,6 +141,7 @@ fn main() -> err::Result<()> {
             };
 
             let context = Context::resample(
+                |progress| println!("{}", progress),
                 wav_steps,
                 export_resample_filtered
             );
@@ -164,6 +165,7 @@ fn main() -> err::Result<()> {
             };
 
             let context = Context::decode(
+                |progress| println!("{}", progress),
                 Rate::hz(noaa_apt::WORK_RATE),
                 Rate::hz(noaa_apt::FINAL_RATE),
                 wav_steps,
@@ -192,7 +194,8 @@ fn main() -> err::Result<()> {
         #[cfg(not(feature = "gui"))]
         {
             error!("Program compiled without gui support, please download \
-                the gui version of this program.");
+                the gui version of this program or use --help to see available \
+                options.");
         }
     }
 

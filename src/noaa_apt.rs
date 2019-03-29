@@ -185,7 +185,7 @@ fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
 
 /// Available settings for contrast adjustment.
 pub enum Contrast {
-    /// From telemetry bands, requires that syncing is enabled.
+    /// From telemetry bands, requires syncing to be enabled.
     Telemetry,
 
     /// Takes only a given percent of the samples, clamping the rest. Something
@@ -207,6 +207,7 @@ pub fn decode(
 ) -> err::Result<()>{
 
     info!("Reading WAV file");
+    context.status(0.0);
 
     let (signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
@@ -215,6 +216,7 @@ pub fn decode(
     context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
     info!("Resampling to {}", WORK_RATE);
+    context.status(0.1);
 
     let filter = filters::LowpassDcRemoval {
         // Cutout frequency of the resampling filter, only the AM spectrum should go
@@ -237,11 +239,13 @@ pub fn decode(
     }
 
     info!("Demodulating");
+    context.status(0.4);
 
     let signal = dsp::demodulate(
         &mut context, &signal, Freq::hz(CARRIER_FREQ as f32, work_rate))?;
 
     info!("Filtering");
+    context.status(0.42);
 
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let filter = filters::Lowpass {
@@ -252,6 +256,7 @@ pub fn decode(
     // mut because on sync the signal is going to be modified
     let mut signal = dsp::filter(&mut context, &signal, filter)?;
 
+    context.status(0.5);
     if sync {
         info!("Syncing");
 
@@ -299,6 +304,7 @@ pub fn decode(
     context.step(Step::signal("sync_result", &signal, Some(work_rate)))?;
 
     info!("Resampling to 4160");
+    context.status(0.90);
 
     // Resample without filter because we already filtered the signal before
     // syncing
@@ -342,6 +348,7 @@ pub fn decode(
     ))?;
 
     info!("Writing PNG to '{}'", output_filename);
+    context.status(0.95);
 
     // To use encoder.set()
     use png::HasParameters;
@@ -358,6 +365,8 @@ pub fn decode(
 
     writer.write_image_data(&signal[..])?;
 
+    info!("Finished");
+    context.status(1.);
     Ok(())
 }
 

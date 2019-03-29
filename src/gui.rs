@@ -317,6 +317,14 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             gtk::Continue(false)
         });
     };
+    let widgets_cell = ThreadGuard::new(widgets.clone());
+    let progress_callback = move |progress| {
+        glib::idle_add(move || {
+            let widgets = widgets_cell.borrow();
+            widgets.progress_bar.set_fraction(progress as f64);
+            gtk::Continue(false)
+        });
+    };
 
     match action {
         Action::Decode => {
@@ -346,6 +354,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             widgets.start_button.set_sensitive(false);
             std::thread::spawn(move || {
                 let context = Context::decode(
+                    progress_callback,
                     Rate::hz(noaa_apt::WORK_RATE),
                     Rate::hz(noaa_apt::FINAL_RATE),
                     wav_steps,
@@ -370,6 +379,7 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
             widgets.start_button.set_sensitive(false);
             std::thread::spawn(move || {
                 let context = Context::resample(
+                    |progress| println!("{}", progress),
                     wav_steps,
                     resample_step,
                 );

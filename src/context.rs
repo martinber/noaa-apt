@@ -15,14 +15,18 @@ enum Variant {
 
 /// Represents a step on the decoding process.
 ///
+/// Steps have the purpose of storing samples of intermediate steps on the
+/// decoding progress, so the `Context` can export those samples if needed.
+///
 /// Some steps can happen twice or can not happen, the `Context` has information
 /// about the order in which the steps can ocurr.
 ///
-/// The `Rate` is optional because some functions on the dsp module don't know
+/// The `Rate` is optional because some functions on the `dsp` module don't know
 /// the sample rate. In those cases, the metadata should have it. Also, when
 /// saving filters, there is no rate.
 ///
-/// The references only need to be valid until calling `Context::step()`.
+/// The given references only need to be valid until calling `Context::step()`,
+/// but I had to add lifetimes (not entirely sure why).
 #[derive(Debug)]
 pub struct Step<'a> {
     variant: Variant,
@@ -63,21 +67,25 @@ struct StepMetadata {
     rate: Option<Rate>,
 }
 
-/// Keep track of settings and export the results of each step of the decoding
-/// process.
+/// Keep track of settings and keep track of progress of the process.
 ///
-/// I wanted to keep track of settings and manage the results of each step of
-/// the decoding process, because I want to debug every step of the decode by
-/// storing the samples as a WAV file.
+/// - Keep track of the settings.
+///
+/// - Notify the UI about the current progress. Some functions notify the
+///     `Context` about the progress (`Context.status()`) and the `Context`
+///     notifies the UI.
+///
+/// - Manage results of each step of the decoding progress, because I want to
+///     debug every step of the decode by storing the samples as a WAV file.
 ///
 /// Meanwhile in the future maybe instead of saving the samples on WAV files I
 /// can plot them on the GUI. Also I don't want clutter every function on the
 /// `dsp` and `noaa_apt` modules with code for WAV export.
 ///
 /// So every interesting function (on the `dsp` or `noaa_apt` module) should get
-/// an instance of `Context`, and send to it results of each step. Then the
-/// `Context` will save them as WAV or do nothing depending on the user's
-/// settings.
+/// an instance of `Context`, and send to it results of each step
+/// (`Context.step()`). Then the `Context` will save them as WAV or do nothing
+/// depending on the user's settings.
 ///
 /// Also the `Context` has information (`StepMetadata`) about each Step: like a
 /// description and filename to use when saving to disk.
@@ -108,9 +116,17 @@ pub struct Context {
 
     /// Current step index.
     index: usize,
+
+    /// Callback to notify the UI
+    ui_callback: Box<FnMut(f32)>,
 }
 
 impl Context {
+
+    /// Notify progress
+    pub fn status(&mut self, progress: f32) {
+        (self.ui_callback)(progress);
+    }
 
     /// Export step.
     pub fn step(&mut self, step: Step) -> err::Result<()> {
@@ -193,7 +209,8 @@ impl Context {
     }
 
     /// Create `Context` for a resampling process.
-    pub fn resample(
+    pub fn resample<F: FnMut(f32) + 'static>(
+        ui_callback: F,
         export_wav: bool,
         export_resample_filtered: bool
     ) -> Self {
@@ -233,11 +250,13 @@ impl Context {
             export_resample_filtered,
             export_wav,
             index: 0,
+            ui_callback: Box::new(ui_callback),
         }
     }
 
     /// Create `Context` for a decoding process.
-    pub fn decode(
+    pub fn decode<F: FnMut(f32) + 'static>(
+        ui_callback: F,
         work_rate: Rate,
         final_rate: Rate,
         export_wav: bool,
@@ -377,6 +396,7 @@ impl Context {
             export_resample_filtered,
             export_wav,
             index: 0,
+            ui_callback: Box::new(ui_callback),
         }
     }
 }
