@@ -43,7 +43,35 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Option because it's none before building the GUI
 // RefCell because I need mutable references
+
+// Stores the WidgetList.
+//
+// Use the functions below when accesing it. Only available from the GUI thread.
 thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
+
+/// Work with reference to WidgetList.
+///
+/// Panics if called from a thread different than the GUI one. Also panics if
+/// the GUI is not built yet.
+fn borrow_widgets<F: FnOnce(&WidgetList)>(f: F) {
+    GLOBAL.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            (f)(widgets)
+        } else {
+            panic!("Can't get WidgetList. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI")
+        }
+    });
+}
+
+/// Set the WidgetList.
+///
+/// Called when building the GUI.
+fn set_widgets(widget_list: WidgetList) {
+    GLOBAL.with(|global| {
+        *global.borrow_mut() = Some(widget_list);
+    });
+}
 
 
 /// Contains references to widgets, so I can pass them together around.
@@ -118,15 +146,10 @@ fn build_ui(application: &gtk::Application) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
-    // let widgets = Rc::new(WidgetList::create(&builder));
-    GLOBAL.with(|global| {
-        *global.borrow_mut() = Some(WidgetList::create(&builder));
-    });
+    set_widgets(WidgetList::create(&builder));
 
-    GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            widgets.window.set_application(application);
-        }
+    borrow_widgets(|widgets| {
+        widgets.window.set_application(application);
     });
 
     // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
@@ -134,10 +157,8 @@ fn build_ui(application: &gtk::Application) {
     // corner. When I set WM_CLASS the window gets the correct icon.
     // GTK docs say that this option is deprecated?
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
-    GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            widgets.window.set_wmclass("noaa-apt", "noaa-apt");
-        }
+    borrow_widgets(|widgets| {
+        widgets.window.set_wmclass("noaa-apt", "noaa-apt");
     });
 
     build_system_menu(application);
@@ -146,11 +167,15 @@ fn build_ui(application: &gtk::Application) {
 
     // Set progress_bar and start_button to ready
 
-    GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            widgets.progress_bar.set_text("Ready");
-            widgets.start_button.set_sensitive(true);
-        }
+    // GLOBAL.with(|global| {
+        // if let Some(ref widgets) = *global.borrow() {
+            // widgets.progress_bar.set_text("Ready");
+            // widgets.start_button.set_sensitive(true);
+        // }
+    // });
+    borrow_widgets(|widgets| {
+        widgets.progress_bar.set_text("Ready");
+        widgets.start_button.set_sensitive(true);
     });
 
     /*
@@ -256,10 +281,8 @@ fn build_ui(application: &gtk::Application) {
     });
     */
 
-    GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            widgets.window.show_all();
-        }
+    borrow_widgets(|widgets| {
+        widgets.window.show_all();
     });
 }
 
