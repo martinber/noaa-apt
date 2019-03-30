@@ -21,6 +21,7 @@
 
 use std::env::args;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 use gtk;
 use gio;
@@ -39,6 +40,11 @@ use misc::ThreadGuard;
 
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+// Option because it's none before building the GUI
+// RefCell because I need mutable references
+thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
+
 
 /// Contains references to widgets, so I can pass them together around.
 #[derive(Debug)]
@@ -112,16 +118,27 @@ fn build_ui(application: &gtk::Application) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
-    let widgets = Rc::new(WidgetList::create(&builder));
+    // let widgets = Rc::new(WidgetList::create(&builder));
+    GLOBAL.with(|global| {
+        *global.borrow_mut() = Some(WidgetList::create(&builder));
+    });
 
-    widgets.window.set_application(application);
+    GLOBAL.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            widgets.window.set_application(application);
+        }
+    });
 
     // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
     // but for some reason the window has a stock X11 icon on the top-left
     // corner. When I set WM_CLASS the window gets the correct icon.
     // GTK docs say that this option is deprecated?
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
-    widgets.window.set_wmclass("noaa-apt", "noaa-apt");
+    GLOBAL.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            widgets.window.set_wmclass("noaa-apt", "noaa-apt");
+        }
+    });
 
     build_system_menu(application);
 
@@ -129,13 +146,20 @@ fn build_ui(application: &gtk::Application) {
 
     // Set progress_bar and start_button to ready
 
-    widgets.progress_bar.set_text("Ready");
-    widgets.start_button.set_sensitive(true);
+    GLOBAL.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            widgets.progress_bar.set_text("Ready");
+            widgets.start_button.set_sensitive(true);
+        }
+    });
 
+    /*
     check_updates(Rc::clone(&widgets));
+    */
 
     // Configure decode_output_entry file chooser
 
+    /*
     let widgets_clone = Rc::clone(&widgets);
     widgets.decode_output_entry.connect_icon_press(move |_, _, _| {
         let file_chooser = gtk::FileChooserDialog::new(
@@ -158,9 +182,11 @@ fn build_ui(application: &gtk::Application) {
 
         file_chooser.destroy();
     });
+    */
 
     // Configure resample_output_entry file chooser
 
+    /*
     let widgets_clone = Rc::clone(&widgets);
     widgets.resample_output_entry.connect_icon_press(move |_, _, _| {
         let file_chooser = gtk::FileChooserDialog::new(
@@ -184,7 +210,9 @@ fn build_ui(application: &gtk::Application) {
 
         file_chooser.destroy();
     });
+    */
 
+    /*
     // Connect start button
 
     let widgets_clone = Rc::clone(&widgets);
@@ -216,16 +244,23 @@ fn build_ui(application: &gtk::Application) {
             widgets_clone.info_revealer.set_reveal_child(false);
         }
     });
+    */
 
     // Finish and show
 
+    /*
     let widgets_clone = Rc::clone(&widgets);
     widgets.window.connect_delete_event(move |_, _| {
         widgets_clone.window.destroy();
         Inhibit(false)
     });
+    */
 
-    widgets.window.show_all();
+    GLOBAL.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            widgets.window.show_all();
+        }
+    });
 }
 
 /// Build menu bar
@@ -257,6 +292,7 @@ fn build_system_menu(application: &gtk::Application) {
     application.set_menubar(&menu_bar);
 }
 
+/*
 /// If the user wants to decode or resample.
 enum Action {
     Decode,
@@ -452,3 +488,4 @@ fn check_updates(widgets: Rc<WidgetList>) {
         callback(misc::check_updates(VERSION));
     });
 }
+*/
