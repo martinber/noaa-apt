@@ -53,7 +53,9 @@ thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
 ///
 /// Panics if called from a thread different than the GUI one. Also panics if
 /// the GUI is not built yet.
-fn borrow_widgets<F: FnOnce(&WidgetList)>(f: F) {
+fn borrow_widgets<F, R>(f: F) -> R
+where F: FnOnce(&WidgetList) -> R
+{
     GLOBAL.with(|global| {
         if let Some(ref widgets) = *global.borrow() {
             (f)(widgets)
@@ -61,7 +63,7 @@ fn borrow_widgets<F: FnOnce(&WidgetList)>(f: F) {
             panic!("Can't get WidgetList. Tried to borrow from another thread \
                     or tried to borrow before building the GUI")
         }
-    });
+    })
 }
 
 /// Set the WidgetList.
@@ -75,7 +77,7 @@ fn set_widgets(widget_list: WidgetList) {
 
 
 /// Contains references to widgets, so I can pass them together around.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct WidgetList {
     window:                       gtk::ApplicationWindow,
     progress_bar:                 gtk::ProgressBar,
@@ -146,20 +148,19 @@ fn build_ui(application: &gtk::Application) {
     let glade_src = include_str!("gui.glade");
     let builder = Builder::new_from_string(glade_src);
 
-    set_widgets(WidgetList::create(&builder));
+    let widgets = WidgetList::create(&builder);
 
-    borrow_widgets(|widgets| {
-        widgets.window.set_application(application);
-    });
+    // Clone because I don't want to move my widgets
+    set_widgets(widgets.clone());
+
+    widgets.window.set_application(application);
 
     // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
     // but for some reason the window has a stock X11 icon on the top-left
     // corner. When I set WM_CLASS the window gets the correct icon.
     // GTK docs say that this option is deprecated?
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
-    borrow_widgets(|widgets| {
-        widgets.window.set_wmclass("noaa-apt", "noaa-apt");
-    });
+    widgets.window.set_wmclass("noaa-apt", "noaa-apt");
 
     build_system_menu(application);
 
@@ -167,123 +168,107 @@ fn build_ui(application: &gtk::Application) {
 
     // Set progress_bar and start_button to ready
 
-    // GLOBAL.with(|global| {
-        // if let Some(ref widgets) = *global.borrow() {
-            // widgets.progress_bar.set_text("Ready");
-            // widgets.start_button.set_sensitive(true);
-        // }
-    // });
-    borrow_widgets(|widgets| {
-        widgets.progress_bar.set_text("Ready");
-        widgets.start_button.set_sensitive(true);
-    });
+    widgets.progress_bar.set_text("Ready");
+    widgets.start_button.set_sensitive(true);
 
-    /*
-    check_updates(Rc::clone(&widgets));
-    */
+    check_updates();
 
     // Configure decode_output_entry file chooser
 
-    /*
-    let widgets_clone = Rc::clone(&widgets);
-    widgets.decode_output_entry.connect_icon_press(move |_, _, _| {
-        let file_chooser = gtk::FileChooserDialog::new(
-            Some("Save file as"),
-            Some(&widgets_clone.window),
-            gtk::FileChooserAction::Save
-        );
+    widgets.decode_output_entry.connect_icon_press(|_, _, _| {
+        borrow_widgets(|widgets| {
+            let file_chooser = gtk::FileChooserDialog::new(
+                Some("Save file as"),
+                Some(&widgets.window),
+                gtk::FileChooserAction::Save
+            );
 
-        file_chooser.add_buttons(&[
-            ("Ok", gtk::ResponseType::Ok.into()),
-            ("Cancel", gtk::ResponseType::Cancel.into()),
-        ]);
+            file_chooser.add_buttons(&[
+                ("Ok", gtk::ResponseType::Ok.into()),
+                ("Cancel", gtk::ResponseType::Cancel.into()),
+            ]);
 
-        if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
-            let filename = file_chooser.get_filename()
-                .expect("Couldn't get filename");
+            if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
+                let filename = file_chooser.get_filename()
+                    .expect("Couldn't get filename");
 
-            widgets_clone.decode_output_entry.set_text(filename.to_str().unwrap());
-        }
+                widgets.decode_output_entry.set_text(filename.to_str().unwrap());
+            }
 
-        file_chooser.destroy();
+            file_chooser.destroy();
+        });
     });
-    */
 
     // Configure resample_output_entry file chooser
 
-    /*
-    let widgets_clone = Rc::clone(&widgets);
-    widgets.resample_output_entry.connect_icon_press(move |_, _, _| {
-        let file_chooser = gtk::FileChooserDialog::new(
-            Some("Save file as"),
-            Some(&widgets_clone.window),
-            gtk::FileChooserAction::Save
-        );
+    widgets.resample_output_entry.connect_icon_press(|_, _, _| {
+        borrow_widgets(|widgets| {
+            let file_chooser = gtk::FileChooserDialog::new(
+                Some("Save file as"),
+                Some(&widgets.window),
+                gtk::FileChooserAction::Save
+            );
 
-        file_chooser.add_buttons(&[
-            ("Ok", gtk::ResponseType::Ok.into()),
-            ("Cancel", gtk::ResponseType::Cancel.into()),
-        ]);
+            file_chooser.add_buttons(&[
+                ("Ok", gtk::ResponseType::Ok.into()),
+                ("Cancel", gtk::ResponseType::Cancel.into()),
+            ]);
 
-        if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
-            let filename =
-                file_chooser.get_filename()
-                .expect("Couldn't get filename");
+            if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
+                let filename =
+                    file_chooser.get_filename()
+                    .expect("Couldn't get filename");
 
-            widgets_clone.resample_output_entry.set_text(filename.to_str().unwrap());
-        }
+                widgets.resample_output_entry.set_text(filename.to_str().unwrap());
+            }
 
-        file_chooser.destroy();
+            file_chooser.destroy();
+        });
     });
-    */
 
-    /*
     // Connect start button
 
-    let widgets_clone = Rc::clone(&widgets);
-    widgets.start_button.connect_clicked(move |_| {
+    widgets.start_button.connect_clicked(|_| {
+        borrow_widgets(|widgets| {
+            widgets.info_revealer.set_reveal_child(false);
 
-        widgets_clone.info_revealer.set_reveal_child(false);
+            // Check if we are decoding or resampling
+            match widgets.options_stack.get_visible_child_name()
+                .expect("Stack has no visible child").as_str()
+            {
 
-        // Check if we are decoding or resampling
-        match widgets_clone.options_stack.get_visible_child_name()
-            .expect("Stack has no visible child").as_str()
-        {
-            "decode_page" => run_noaa_apt(Action::Decode, Rc::clone(&widgets_clone)),
-            "resample_page" => run_noaa_apt(Action::Resample, Rc::clone(&widgets_clone)),
+                "decode_page" => run_noaa_apt(Action::Decode),
+                "resample_page" => run_noaa_apt(Action::Resample),
 
-            x => panic!("Unexpected stack child name {}", x),
-        }.unwrap_or_else(|error| {
-            let widgets= Rc::clone(&widgets_clone);
-            show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
+                x => panic!("Unexpected stack child name {}", x),
 
-            error!("{}", error);
+            }.unwrap_or_else(|error| {
+                show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
+                error!("{}", error);
+            });
         });
     });
 
     // Connect info_bar close button
 
-    let widgets_clone = Rc::clone(&widgets);
-    widgets.info_bar.connect_response(move |_, response| {
+    widgets.info_bar.connect_response(|_, response| {
         if gtk::ResponseType::Close == response {
-            widgets_clone.info_revealer.set_reveal_child(false);
+            borrow_widgets(|widgets| {
+                widgets.info_revealer.set_reveal_child(false);
+            });
         }
     });
-    */
 
     // Finish and show
 
-    /*
-    let widgets_clone = Rc::clone(&widgets);
-    widgets.window.connect_delete_event(move |_, _| {
-        widgets_clone.window.destroy();
-        Inhibit(false)
+    widgets.window.connect_delete_event(|_, _| {
+        borrow_widgets(|widgets| {
+            widgets.window.destroy();
+            Inhibit(false)
+        })
     });
-    */
 
-    borrow_widgets(|widgets| {
-        widgets.window.show_all();
-    });
+    widgets.window.show_all();
 }
 
 /// Build menu bar
@@ -315,7 +300,13 @@ fn build_system_menu(application: &gtk::Application) {
     application.set_menubar(&menu_bar);
 }
 
-/*
+/// Set progress of ProgressBar
+fn set_progress(fraction: f32) {
+    borrow_widgets(|widgets| {
+        widgets.progress_bar.set_fraction(fraction as f64);
+    });
+}
+
 /// If the user wants to decode or resample.
 enum Action {
     Decode,
@@ -326,26 +317,30 @@ enum Action {
 ///
 /// Starts another working thread and updates the `status_label` when finished.
 /// Also sets the button as not sensitive and then as sensitive again.
-fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
+fn run_noaa_apt(action: Action) -> err::Result<()> {
 
     // input_filename has to be a String instead of GString because I need to
-    // move to another thread
-    let input_filename: String = widgets
-        .input_file_chooser
-        .get_filename() // Option<std::path::PathBuf>
-        .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-        .and_then(|path: std::path::PathBuf| {
-             path.to_str()
-                 .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                 .map(|s: &str| s.to_string())
+    // move it to another thread
+    let input_filename: String =
+        borrow_widgets(|widgets| {
+            widgets
+            .input_file_chooser
+            .get_filename() // Option<std::path::PathBuf>
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
+            .and_then(|path: std::path::PathBuf| {
+                 path.to_str()
+                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
+                     .map(|s: &str| s.to_string())
+            })
         })?;
+
 
     // output_filename has to be a String instead of GString because I need to
     // move to another thread
     let output_filename = match action {
-        Action::Decode => widgets.decode_output_entry.get_text()
+        Action::Decode => borrow_widgets(|w| w.decode_output_entry.get_text())
             .expect("Couldn't get decode_output_entry text").as_str().to_string(),
-        Action::Resample => widgets.resample_output_entry.get_text()
+        Action::Resample => borrow_widgets(|w| w.resample_output_entry.get_text())
             .expect("Couldn't get resample_output_entry text").as_str().to_string(),
     };
 
@@ -353,109 +348,107 @@ fn run_noaa_apt(action: Action, widgets: Rc<WidgetList>) -> err::Result<()> {
         return Err(err::Error::Internal("Select output filename".to_string()))
     }
 
-    // widgets.status_label.set_markup("Processing");
-
-    // Callback called when decode/resample ends. Using ThreadGuard to send
-    // widgets to another thread and back
-    let widgets_cell = ThreadGuard::new(widgets.clone());
     let callback = move |result| {
         glib::idle_add(move || {
-            let widgets = widgets_cell.borrow();
+            borrow_widgets(|widgets| {
+                widgets.start_button.set_sensitive(true);
+                match result {
+                    Ok(()) => {
+                        // widgets.status_label.set_markup("Finished");
+                        set_progress(1.);
+                    },
+                    Err(ref e) => {
+                        show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
+                        set_progress(1.);
 
-            widgets.start_button.set_sensitive(true);
-            match result {
-                Ok(()) => {
-                    // widgets.status_label.set_markup("Finished");
-                },
-                Err(ref e) => {
-                    show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
-
-                    error!("{}", e);
-                },
-            }
+                        error!("{}", e);
+                    },
+                }
+            });
             gtk::Continue(false)
         });
     };
-    let widgets_cell = ThreadGuard::new(widgets.clone());
     let progress_callback = move |progress| {
         glib::idle_add(move || {
-            let widgets = widgets_cell.borrow();
-            widgets.progress_bar.set_fraction(progress as f64);
+            set_progress(progress);
             gtk::Continue(false)
         });
     };
 
-    match action {
-        Action::Decode => {
-            let sync = widgets.decode_sync_check.get_active();
-            let wav_steps = widgets.decode_wav_steps_check.get_active();
-            let resample_step = widgets.decode_resample_step_check.get_active();
+    borrow_widgets(|widgets| {
+        match action {
+            Action::Decode => {
+                let sync = widgets.decode_sync_check.get_active();
+                let wav_steps = widgets.decode_wav_steps_check.get_active();
+                let resample_step = widgets.decode_resample_step_check.get_active();
 
-            // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
-            let contrast_adjustment = match widgets
-                .decode_contrast_combo
-                .get_active_text()
-                .as_ref()
-                .map(|s| s.as_str())
-            {
-                Some("Keep 98 percent") => Ok(Contrast::Percent(0.98)),
-                Some("From telemetry") => Ok(Contrast::Telemetry),
-                Some("Disable") => Ok(Contrast::MinMax),
-                Some(id) => Err(err::Error::Internal(
-                    format!("Unknown contrast adjustment \"{}\"", id)
-                )),
-                None => Err(err::Error::Internal(
-                    "Select contrast adjustment".to_string()
-                )),
-            }?;
-            debug!("Decode {} to {}", input_filename, output_filename);
+                // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
+                let contrast_adjustment: Contrast = match widgets
+                    .decode_contrast_combo
+                    .get_active_text()
+                    .as_ref()
+                    .map(|s| s.as_str())
+                {
+                    Some("Keep 98 percent") => Ok(Contrast::Percent(0.98)),
+                    Some("From telemetry") => Ok(Contrast::Telemetry),
+                    Some("Disable") => Ok(Contrast::MinMax),
+                    Some(id) => Err(err::Error::Internal(
+                        format!("Unknown contrast adjustment \"{}\"", id)
+                    )),
+                    None => Err(err::Error::Internal(
+                        "Select contrast adjustment".to_string()
+                    )),
+                }?;
+                debug!("Decode {} to {}", input_filename, output_filename);
 
-            widgets.start_button.set_sensitive(false);
-            std::thread::spawn(move || {
-                let context = Context::decode(
-                    progress_callback,
-                    Rate::hz(noaa_apt::WORK_RATE),
-                    Rate::hz(noaa_apt::FINAL_RATE),
-                    wav_steps,
-                    resample_step,
-                );
+                widgets.start_button.set_sensitive(false);
+                std::thread::spawn(move || {
+                    let context = Context::decode(
+                        progress_callback,
+                        Rate::hz(noaa_apt::WORK_RATE),
+                        Rate::hz(noaa_apt::FINAL_RATE),
+                        wav_steps,
+                        resample_step,
+                    );
 
-                callback(noaa_apt::decode(
-                    context,
-                    input_filename.as_str(),
-                    output_filename.as_str(),
-                    contrast_adjustment,
-                    sync,
-                ));
-            });
-        },
-        Action::Resample => {
-            let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
-            let wav_steps = widgets.resample_wav_steps_check.get_active();
-            let resample_step = widgets.resample_resample_step_check.get_active();
-            debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
+                    callback(noaa_apt::decode(
+                        context,
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        contrast_adjustment,
+                        sync,
+                    ));
+                });
+            },
+            Action::Resample => {
+                let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
+                let wav_steps = widgets.resample_wav_steps_check.get_active();
+                let resample_step = widgets.resample_resample_step_check.get_active();
+                debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
-            widgets.start_button.set_sensitive(false);
-            std::thread::spawn(move || {
-                let context = Context::resample(
-                    |progress| println!("{}", progress),
-                    wav_steps,
-                    resample_step,
-                );
+                widgets.start_button.set_sensitive(false);
+                std::thread::spawn(move || {
+                    let context = Context::resample(
+                        |progress| println!("{}", progress),
+                        wav_steps,
+                        resample_step,
+                    );
 
-                callback(noaa_apt::resample_wav(
-                    context,
-                    input_filename.as_str(),
-                    output_filename.as_str(),
-                    Rate::hz(rate),
-                ));
-            });
-        },
-    };
+                    callback(noaa_apt::resample_wav(
+                        context,
+                        input_filename.as_str(),
+                        output_filename.as_str(),
+                        Rate::hz(rate),
+                    ));
+                });
+            },
+        };
 
-    Ok(())
+        Ok(())
+    })
 }
 
+/// Show InfoBar with custom message and type.
 fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
     match message_type {
         gtk::MessageType::Info =>
@@ -479,30 +472,30 @@ fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
 }
 
 /// Check for updates on another thread and show the result on the info_bar.
-fn check_updates(widgets: Rc<WidgetList>) {
-    // Callback called when check_update ends. Using ThreadGuard to send
-    // widgets to another thread and back
-    let widgets_cell = ThreadGuard::new(widgets);
+fn check_updates() {
+    // Callback called when check_update ends. Inside calls glib::idle_add to
+    // execute code om the GUI thread.
     let callback = move |result| {
         glib::idle_add(move || {
-            let widgets = widgets_cell.borrow();
-            match result {
-                Some((true, ref latest)) => {
-                    show_info(
-                        &widgets,
-                        gtk::MessageType::Info,
-                        format!("Version \"{}\" available for download!", latest).as_str(),
-                    );
-                },
-                Some((false, _)) => {},
-                None => {
-                    show_info(
-                        &widgets,
-                        gtk::MessageType::Info,
-                        format!("Error checking for updates, do you have an internet connection?").as_str(),
-                    );
-                },
-            }
+            borrow_widgets(|widgets| {
+                match result {
+                    Some((true, ref latest)) => {
+                        show_info(
+                            &widgets,
+                            gtk::MessageType::Info,
+                            format!("Version \"{}\" available for download!", latest).as_str(),
+                        );
+                    },
+                    Some((false, _)) => {}, // Do nothing, already on latest version
+                    None => {
+                        show_info(
+                            &widgets,
+                            gtk::MessageType::Info,
+                            format!("Error checking for updates, do you have an internet connection?").as_str(),
+                        );
+                    },
+                }
+            });
             gtk::Continue(false)
         });
     };
@@ -511,4 +504,3 @@ fn check_updates(widgets: Rc<WidgetList>) {
         callback(misc::check_updates(VERSION));
     });
 }
-*/
