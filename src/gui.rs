@@ -301,9 +301,10 @@ fn build_system_menu(application: &gtk::Application) {
 }
 
 /// Set progress of ProgressBar
-fn set_progress(fraction: f32) {
+fn set_progress(fraction: f32, description: String) {
     borrow_widgets(|widgets| {
         widgets.progress_bar.set_fraction(fraction as f64);
+        widgets.progress_bar.set_text(description.as_str());
     });
 }
 
@@ -355,11 +356,11 @@ fn run_noaa_apt(action: Action) -> err::Result<()> {
                 match result {
                     Ok(()) => {
                         // widgets.status_label.set_markup("Finished");
-                        set_progress(1.);
+                        set_progress(1., "Finished".to_string());
                     },
                     Err(ref e) => {
+                        set_progress(1., "Error".to_string());
                         show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
-                        set_progress(1.);
 
                         error!("{}", e);
                     },
@@ -368,9 +369,9 @@ fn run_noaa_apt(action: Action) -> err::Result<()> {
             gtk::Continue(false)
         });
     };
-    let progress_callback = move |progress| {
+    let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
-            set_progress(progress);
+            set_progress(progress, description.clone());
             gtk::Continue(false)
         });
     };
@@ -429,7 +430,7 @@ fn run_noaa_apt(action: Action) -> err::Result<()> {
                 widgets.start_button.set_sensitive(false);
                 std::thread::spawn(move || {
                     let context = Context::resample(
-                        |progress| println!("{}", progress),
+                        progress_callback,
                         wav_steps,
                         resample_step,
                     );

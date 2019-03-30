@@ -111,8 +111,6 @@ fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
 /// Returns list of found sync frames positions.
 fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> {
 
-    info!("Searching for sync frames");
-
     let guard = generate_sync_frame(Rate::hz(WORK_RATE))?;
 
     // list of maximum correlations found: (index, value)
@@ -206,8 +204,9 @@ pub fn decode(
     sync: bool,
 ) -> err::Result<()>{
 
-    info!("Reading WAV file");
-    context.status(0.0);
+    // --------------------
+
+    context.status(0.0, "Reading WAV file".to_string());
 
     let (signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
@@ -215,8 +214,9 @@ pub fn decode(
     let final_rate = Rate::hz(FINAL_RATE);
     context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
-    info!("Resampling to {}", WORK_RATE);
-    context.status(0.1);
+    // --------------------
+
+    context.status(0.1, format!("Resampling to {}", WORK_RATE));
 
     let filter = filters::LowpassDcRemoval {
         // Cutout frequency of the resampling filter, only the AM spectrum should go
@@ -238,14 +238,16 @@ pub fn decode(
             "Got less than 10 rows of samples, audio file is too short".to_string()));
     }
 
-    info!("Demodulating");
-    context.status(0.4);
+    // --------------------
+
+    context.status(0.4, "Demodulating".to_string());
 
     let signal = dsp::demodulate(
         &mut context, &signal, Freq::hz(CARRIER_FREQ as f32, work_rate))?;
 
-    info!("Filtering");
-    context.status(0.42);
+    // --------------------
+
+    context.status(0.42, "Filtering".to_string());
 
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
     let filter = filters::Lowpass {
@@ -256,9 +258,10 @@ pub fn decode(
     // mut because on sync the signal is going to be modified
     let mut signal = dsp::filter(&mut context, &signal, filter)?;
 
-    context.status(0.5);
+    // --------------------
+
     if sync {
-        info!("Syncing");
+        context.status(0.5, "Syncing".to_string());
 
         // Get list of sync frames positions
         let sync_pos = find_sync(&mut context, &signal)?;
@@ -288,7 +291,7 @@ pub fn decode(
         signal = aligned;
 
     } else {
-        info!("Not syncing");
+        context.status(0.5, "Skipping Syncing".to_string());
 
         // If we are not syncing send a dummy correlation step
         context.step(Step::signal("sync_correlation", &vec![], Some(work_rate)))?;
@@ -303,8 +306,9 @@ pub fn decode(
 
     context.step(Step::signal("sync_result", &signal, Some(work_rate)))?;
 
-    info!("Resampling to 4160");
-    context.status(0.90);
+    // --------------------
+
+    context.status(0.90, "Resampling to 4160".to_string());
 
     // Resample without filter because we already filtered the signal before
     // syncing
@@ -347,8 +351,9 @@ pub fn decode(
             Some(final_rate)
     ))?;
 
-    info!("Writing PNG to '{}'", output_filename);
-    context.status(0.95);
+    // --------------------
+
+    context.status(0.95, format!("Writing PNG to '{}'", output_filename));
 
     // To use encoder.set()
     use png::HasParameters;
@@ -365,8 +370,9 @@ pub fn decode(
 
     writer.write_image_data(&signal[..])?;
 
-    info!("Finished");
-    context.status(1.);
+    // --------------------
+
+    context.status(1., "Finished".to_string());
     Ok(())
 }
 

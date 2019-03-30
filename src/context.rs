@@ -118,14 +118,14 @@ pub struct Context {
     index: usize,
 
     /// Callback to notify the UI
-    ui_callback: Box<FnMut(f32)>,
+    ui_callback: Box<FnMut(f32, String)>,
 }
 
 impl Context {
 
     /// Notify progress
-    pub fn status(&mut self, progress: f32) {
-        (self.ui_callback)(progress);
+    pub fn status(&mut self, progress: f32, description: String) {
+        (self.ui_callback)(progress, description);
     }
 
     /// Export step.
@@ -209,7 +209,7 @@ impl Context {
     }
 
     /// Create `Context` for a resampling process.
-    pub fn resample<F: FnMut(f32) + 'static>(
+    pub fn resample<F: FnMut(f32, String) + 'static>(
         ui_callback: F,
         export_wav: bool,
         export_resample_filtered: bool
@@ -255,7 +255,7 @@ impl Context {
     }
 
     /// Create `Context` for a decoding process.
-    pub fn decode<F: FnMut(f32) + 'static>(
+    pub fn decode<F: FnMut(f32, String) + 'static>(
         ui_callback: F,
         work_rate: Rate,
         final_rate: Rate,

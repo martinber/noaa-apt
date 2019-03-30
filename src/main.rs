@@ -141,7 +141,7 @@ fn main() -> err::Result<()> {
             };
 
             let context = Context::resample(
-                |progress| println!("{}", progress),
+                |_progress, description| info!("{}", description),
                 wav_steps,
                 export_resample_filtered
             );
@@ -165,7 +165,7 @@ fn main() -> err::Result<()> {
             };
 
             let context = Context::decode(
-                |progress| println!("{}", progress),
+                |_progress, description| info!("{}", description),
                 Rate::hz(noaa_apt::WORK_RATE),
                 Rate::hz(noaa_apt::FINAL_RATE),
                 wav_steps,
