@@ -20,7 +20,6 @@
 //! back.
 
 use std::env::args;
-use std::rc::Rc;
 use std::cell::RefCell;
 
 use gtk;
@@ -35,7 +34,6 @@ use noaa_apt::{self, Contrast};
 use context::Context;
 use misc;
 use dsp::Rate;
-use misc::ThreadGuard;
 
 
 /// Defined by Cargo.toml
@@ -51,8 +49,8 @@ enum Mode {
 // Stores the WidgetList.
 //
 // Use the functions below when accesing it. Only available from the GUI thread.
-// Option because it's none before building the GUI
-// RefCell because I need mutable references
+// Wrapped on Option because it's None before building the GUI.
+// Wrapped on RefCell because I need mutable references when modifying the GUI.
 thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
 
 
@@ -84,11 +82,13 @@ fn set_widgets(widget_list: WidgetList) {
 
 
 /// Contains references to widgets, so I can pass them together around.
+///
+/// Widgets that may not exist are wrapped on Option.
 #[derive(Debug, Clone)]
 struct WidgetList {
     mode:                  Mode,
     window:                gtk::ApplicationWindow,
-    outer_box:              gtk::Box,
+    outer_box:             gtk::Box,
     main_box:              gtk::Box,
     progress_bar:          gtk::ProgressBar,
     start_button:          gtk::Button,
@@ -103,32 +103,6 @@ struct WidgetList {
     resample_step_check:   gtk::CheckButton,
     contrast_combo:        Option<gtk::ComboBoxText>,
 }
-
-// impl WidgetList {
-    // /// Create and load widgets from `gtk::Builder`.
-    // fn create(
-        // mode: Mode,
-        // window: gtk::ApplicationWindow,
-        // builder: &gtk::Builder
-    // ) -> Self {
-        // Self {
-            // mode
-            // window:              builder.get_object("window"             ).expect("Couldn't get window"             ),
-            // progress_bar:        builder.get_object("progress_bar"       ).expect("Couldn't get progress_bar"       ),
-            // start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
-            // info_bar:            builder.get_object("info_bar"           ).expect("Couldn't get info_bar"           ),
-            // info_label:          builder.get_object("info_label"         ).expect("Couldn't get info_label"         ),
-            // info_revealer:       builder.get_object("info_revealer"      ).expect("Couldn't get info_revealer"      ),
-            // output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
-            // rate_spinner:        builder.get_object("rate_spinner"       ).expect("Couldn't get rate_spinner"       ),
-            // input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
-            // sync_check:          builder.get_object("sync_check"         ).expect("Couldn't get sync_check"         ),
-            // wav_steps_check:     builder.get_object("wav_steps_check"    ).expect("Couldn't get wav_steps_check"    ),
-            // resample_step_check: builder.get_object("resample_step_check").expect("Couldn't get resample_step_check"),
-            // contrast_combo:      builder.get_object("contrast_combo"     ).expect("Couldn't get contrast_combo"     ),
-        // }
-    // }
-// }
 
 /// Start GUI.
 ///
@@ -147,21 +121,46 @@ pub fn main() {
     application.run(&args().collect::<Vec<_>>());
 }
 
-/// Set contents depending on mode.
+/// Create empty window and call build_ui().
+fn create_window(
+    application: &gtk::Application,
+) {
+
+    let window = gtk::ApplicationWindow::new(application);
+
+    let mode = Mode::Decode;
+
+    window.set_title("noaa-apt");
+    window.set_default_size(450, -1);
+
+    // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
+    // but for some reason the window has a stock X11 icon on the top-left
+    // corner. When I set WM_CLASS the window gets the correct icon.
+    // GTK docs say that this option is deprecated?
+    // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
+    window.set_wmclass("noaa-apt", "noaa-apt");
+
+    build_ui(mode, &application, &window);
+}
+
+/// Build GUI.
 ///
 /// Loads GUI from glade file depending if decoding or resampling
 fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
+
+    // Clean GUI if there was something previously
 
     if let Some(previous_outer_box) = window.get_child() {
         window.remove(&previous_outer_box);
     }
 
-    let glade_src = match mode {
-        Mode::Decode => include_str!("decode.glade"),
-        Mode::Resample => include_str!("resample.glade"),
-    };
+    // Load widgets from glade file depending if we are decoding or resampling
+    // Every element loaded is inside main_box
 
-    let builder = Builder::new_from_string(glade_src);
+    let builder = match mode {
+        Mode::Decode => Builder::new_from_string(include_str!("decode.glade")),
+        Mode::Resample => Builder::new_from_string(include_str!("resample.glade")),
+    };
 
     let rate_spinner;
     let sync_check;
@@ -186,23 +185,32 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
         mode,
         window:              window.clone(),
         outer_box:           gtk::Box::new(gtk::Orientation::Vertical, 0),
-        main_box:            builder.get_object("main_box"           ).expect("Couldn't get main_box"           ),
-        progress_bar:        builder.get_object("progress_bar"       ).expect("Couldn't get progress_bar"       ),
-        start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
         info_bar:            gtk::InfoBar::new(),
         info_label:          gtk::Label::new(None),
         info_revealer:       gtk::Revealer::new(),
-        output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
         rate_spinner,
-        input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
         sync_check,
+        contrast_combo,
+        main_box:            builder.get_object("main_box"           ).expect("Couldn't get main_box"           ),
+        progress_bar:        builder.get_object("progress_bar"       ).expect("Couldn't get progress_bar"       ),
+        start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
+        output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
+        input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
         wav_steps_check:     builder.get_object("wav_steps_check"    ).expect("Couldn't get wav_steps_check"    ),
         resample_step_check: builder.get_object("resample_step_check").expect("Couldn't get resample_step_check"),
-        contrast_combo,
     };
+
+    // Add info_bar
 
     widgets.info_revealer.add(&widgets.info_bar);
     widgets.info_bar.set_show_close_button(true);
+    widgets.info_bar.connect_response(|_, response| {
+        if gtk::ResponseType::Close == response {
+            borrow_widgets(|widgets| {
+                widgets.info_revealer.set_reveal_child(false);
+            });
+        }
+    });
     let info_content_area = widgets
         .info_bar
         .get_content_area()
@@ -211,6 +219,16 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
         .expect("Couldn't get info_content_area (not a gtk::Box)");
     info_content_area.add(&widgets.info_label);
 
+    // Finish adding elements
+    //
+    // - window
+    //     - outer_box
+    //         - main_box (everything loaded from glade file)
+    //             - (everything you see on screen)
+    //             - ...
+    //         - info_revealer
+    //             - info_bar
+
     widgets.outer_box.pack_start(&widgets.main_box, true, true, 0);
     widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
 
@@ -218,7 +236,7 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
 
     set_widgets(widgets.clone());
 
-    info!("GUI opened");
+    info!("GUI opened: {:?}", mode);
 
     // Set progress_bar and start_button to ready
 
@@ -234,7 +252,7 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
                 Some(&widgets.window),
-                gtk::FileChooserAction::Save
+                gtk::FileChooserAction::Save,
             );
 
             file_chooser.add_buttons(&[
@@ -255,37 +273,16 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
 
     // Connect start button
 
-    /*
-    widgets.start_button.connect_clicked(|_| {
+    widgets.start_button.connect_clicked(move |_| {
         borrow_widgets(|widgets| {
             widgets.info_revealer.set_reveal_child(false);
 
-            // Check if we are decoding or resampling
-            match widgets.options_stack.get_visible_child_name()
-                .expect("Stack has no visible child").as_str()
-            {
-
-                "decode_page" => run_noaa_apt(Mode::Decode),
-                "resample_page" => run_noaa_apt(Mode::Resample),
-
-                x => panic!("Unexpected stack child name {}", x),
-
-            }.unwrap_or_else(|error| {
+            run_noaa_apt(mode).unwrap_or_else(|error| {
                 show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
                 error!("{}", error);
+                widgets.start_button.set_sensitive(true);
             });
         });
-    });
-
-    */
-    // Connect info_bar close button
-
-    widgets.info_bar.connect_response(|_, response| {
-        if gtk::ResponseType::Close == response {
-            borrow_widgets(|widgets| {
-                widgets.info_revealer.set_reveal_child(false);
-            });
-        }
     });
 
     // Finish and show
@@ -297,51 +294,23 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
         })
     });
 
-
     build_system_menu(mode, application, &window);
 
     widgets.window.show_all();
 }
 
-/// Add widgets from .glade file and get everything ready.
-///
-/// Connect signals to Widgets.
-fn create_window(
-    application: &gtk::Application
-) {
-
-    let window = gtk::ApplicationWindow::new(application);
-
-    let mode = Mode::Resample;
-
-    window.set_title("noaa-apt");
-    window.set_default_size(450, -1);
-
-    // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
-    // but for some reason the window has a stock X11 icon on the top-left
-    // corner. When I set WM_CLASS the window gets the correct icon.
-    // GTK docs say that this option is deprecated?
-    // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
-    window.set_wmclass("noaa-apt", "noaa-apt");
-
-    build_ui(mode, &application, &window);
-}
-
 /// Build menu bar
 fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
-    // let menu = gio::Menu::new();
+
+    // Create menu bar
+
     let menu_bar = gio::Menu::new();
     let help_menu = gio::Menu::new();
     let tools_menu = gio::Menu::new();
 
-    // The first argument is the label of the menu item whereas the second is the action name. It'll
-    // makes more sense when you'll be reading the "add_actions" function.
-    // menu.append("Quit", "app.quit");
-
     tools_menu.append("_Decode", "app.decode");
     tools_menu.append("_Resample WAV", "app.resample");
     menu_bar.append_submenu("_Tools", &tools_menu);
-
 
     help_menu.append("_Usage", "app.usage");
     help_menu.append("_Guide", "app.guide");
@@ -350,6 +319,7 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
 
     application.set_menubar(&menu_bar);
 
+    // Add actions to buttons
 
     let decode = gio::SimpleAction::new("decode", None);
     let w = window.clone();
@@ -357,7 +327,11 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
     decode.connect_activate(move |_, _| {
         build_ui(Mode::Decode, &a, &w);
     });
-    application.add_action(&decode);
+    if let Mode::Resample = mode {
+        application.add_action(&decode);
+    } else {
+        application.remove_action("decode");
+    }
 
     let resample = gio::SimpleAction::new("resample", None);
     let w = window.clone();
@@ -365,7 +339,11 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
     resample.connect_activate(move |_, _| {
         build_ui(Mode::Resample, &a, &w);
     });
-    application.add_action(&resample);
+    if let Mode::Decode = mode {
+        application.add_action(&resample);
+    } else {
+        application.remove_action("resample");
+    }
 
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(|_, _| {
@@ -377,56 +355,27 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
         dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
         dialog.set_license_type(gtk::License::Gpl30);
         dialog.set_title("About noaa-apt");
-        // dialog.set_transient_for(Some(&window));
+        // dialog.set_transient_for(Some(&window)); // Not working?
         dialog.run();
         dialog.destroy();
     });
     application.add_action(&about);
 }
 
-/// Set progress of ProgressBar
-fn set_progress(fraction: f32, description: String) {
-    borrow_widgets(|widgets| {
-        widgets.progress_bar.set_fraction(fraction as f64);
-        widgets.progress_bar.set_text(description.as_str());
-    });
-}
-
-/*
 /// Start decoding or resampling.
 ///
-/// Starts another working thread and updates the `status_label` when finished.
-/// Also sets the button as not sensitive and then as sensitive again.
-fn run_noaa_apt(action: Mode) -> err::Result<()> {
+/// Starts another working thread and sets the start_button as not sensitive.
+///
+/// If this function returns Err() before starting the decode/resample, the
+/// message will be shown on the info_bar thank to build_ui() who calls this
+/// function
+///
+/// When the decode/resample ends the callback will set the start_button as
+/// sensitive again. If there is an error decoding/resampling will also show the
+/// error on the info_bar
+fn run_noaa_apt(mode: Mode) -> err::Result<()> {
 
-    // input_filename has to be a String instead of GString because I need to
-    // move it to another thread
-    let input_filename: String =
-        borrow_widgets(|widgets| {
-            widgets
-            .input_file_chooser
-            .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-            .and_then(|path: std::path::PathBuf| {
-                 path.to_str()
-                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                     .map(|s: &str| s.to_string())
-            })
-        })?;
-
-
-    // output_filename has to be a String instead of GString because I need to
-    // move to another thread
-    let output_filename = match action {
-        Mode::Decode => borrow_widgets(|w| w.decode_output_entry.get_text())
-            .expect("Couldn't get decode_output_entry text").as_str().to_string(),
-        Mode::Resample => borrow_widgets(|w| w.resample_output_entry.get_text())
-            .expect("Couldn't get resample_output_entry text").as_str().to_string(),
-    };
-
-    if output_filename == "" {
-        return Err(err::Error::Internal("Select output filename".to_string()))
-    }
+    // Create callbacks
 
     let callback = move |result| {
         glib::idle_add(move || {
@@ -456,15 +405,52 @@ fn run_noaa_apt(action: Mode) -> err::Result<()> {
     };
 
     borrow_widgets(|widgets| {
-        match action {
+
+        widgets.start_button.set_sensitive(false);
+
+        // input_filename has to be a String instead of GString because I need it to
+        // implement Sync
+
+        let input_filename: String = widgets
+            .input_file_chooser
+            .get_filename() // Option<std::path::PathBuf>
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
+            .and_then(|path: std::path::PathBuf| {
+                 path.to_str()
+                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
+                     .map(|s: &str| s.to_string())
+            })?;
+
+        // output_filename has to be a String instead of GString because I need it
+        // to implement Sync
+
+        let output_filename: String = widgets
+            .output_entry
+            .get_text()
+            .expect("Couldn't get decode_output_entry text")
+            .as_str()
+            .to_string();
+
+        if output_filename == "" {
+            return Err(err::Error::Internal("Select output filename".to_string()))
+        }
+
+        let wav_steps = widgets.wav_steps_check.get_active();
+        let resample_step = widgets.resample_step_check.get_active();
+
+        match mode {
             Mode::Decode => {
-                let sync = widgets.decode_sync_check.get_active();
-                let wav_steps = widgets.decode_wav_steps_check.get_active();
-                let resample_step = widgets.decode_resample_step_check.get_active();
+                let sync = widgets
+                    .clone() // Why I need this clone()?
+                    .sync_check
+                    .expect("Couldn't get sync_check")
+                    .get_active();
 
                 // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
                 let contrast_adjustment: Contrast = match widgets
-                    .decode_contrast_combo
+                    .clone() // Why I need this clone()?
+                    .contrast_combo
+                    .expect("Couldn't get contrast_combo")
                     .get_active_text()
                     .as_ref()
                     .map(|s| s.as_str())
@@ -479,9 +465,9 @@ fn run_noaa_apt(action: Mode) -> err::Result<()> {
                         "Select contrast adjustment".to_string()
                     )),
                 }?;
+
                 debug!("Decode {} to {}", input_filename, output_filename);
 
-                widgets.start_button.set_sensitive(false);
                 std::thread::spawn(move || {
                     let context = Context::decode(
                         progress_callback,
@@ -501,9 +487,12 @@ fn run_noaa_apt(action: Mode) -> err::Result<()> {
                 });
             },
             Mode::Resample => {
-                let rate = widgets.resample_rate_spinner.get_value_as_int() as u32;
-                let wav_steps = widgets.resample_wav_steps_check.get_active();
-                let resample_step = widgets.resample_resample_step_check.get_active();
+                let rate = widgets
+                    .clone() // Why I need this clone()?
+                    .rate_spinner
+                    .expect("Couldn't get rate_spinner")
+                    .get_value_as_int() as u32;
+
                 debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
                 widgets.start_button.set_sensitive(false);
@@ -527,9 +516,16 @@ fn run_noaa_apt(action: Mode) -> err::Result<()> {
         Ok(())
     })
 }
-*/
 
-/// Show InfoBar with custom message and type.
+/// Set progress of ProgressBar
+fn set_progress(fraction: f32, description: String) {
+    borrow_widgets(|widgets| {
+        widgets.progress_bar.set_fraction(fraction as f64);
+        widgets.progress_bar.set_text(description.as_str());
+    });
+}
+
+/// Show InfoBar with custom message.
 fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
     match message_type {
         gtk::MessageType::Info =>
@@ -554,8 +550,6 @@ fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
 
 /// Check for updates on another thread and show the result on the info_bar.
 fn check_updates() {
-    // Callback called when check_update ends. Inside calls glib::idle_add to
-    // execute code om the GUI thread.
     let callback = move |result| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {

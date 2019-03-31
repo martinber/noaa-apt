@@ -1,8 +1,5 @@
 //! Small things that don't fit anywhere else.
 
-use std::cell::{Ref, RefCell, RefMut};
-use std::thread;
-
 use reqwest;
 
 use dsp::{self, Signal};
@@ -91,64 +88,6 @@ pub fn check_updates(current: &str) -> Option<(bool, String)> {
             }
         }
         None => None,
-    }
-}
-
-/// Runtime thread guard for its internal data. It panics if data is being
-/// accessed from a thread other than the one that `TheardGuard` was initialized
-/// in.
-///
-/// Taken from [gnvim](https://github.com/vhakulinen/gnvim).
-///
-/// By _vhakulinen_, MIT license.
-pub struct ThreadGuard<T> {
-    thread_id: thread::ThreadId,
-    data: RefCell<T>,
-}
-
-unsafe impl<T> Send for ThreadGuard<T> {}
-unsafe impl<T> Sync for ThreadGuard<T> {}
-
-#[allow(dead_code)]
-impl<T> ThreadGuard<T> {
-    pub fn new(data: T) -> Self {
-        Self {
-            thread_id: thread::current().id(),
-            data: RefCell::new(data),
-        }
-    }
-
-    pub fn borrow(&self) -> Ref<T> {
-        match self.check_thread() {
-            Ok(_) => self.data.borrow(),
-            Err(()) => {
-                panic!(
-                    "Data is only accessible on thread {:?} (current is {:?})",
-                    self.thread_id,
-                    thread::current().id(),
-                );
-            }
-        }
-    }
-
-    pub fn borrow_mut(&self) -> RefMut<T> {
-        match self.check_thread() {
-            Ok(_) => self.data.borrow_mut(),
-            Err(()) => {
-                panic!(
-                    "Data is only accessible on thread {:?} (current is {:?})",
-                    self.thread_id,
-                    thread::current().id(),
-                );
-            }
-        }
-    }
-
-    fn check_thread(&self) -> Result<(), ()> {
-        if self.thread_id == thread::current().id() {
-            return Ok(());
-        }
-        Err(())
     }
 }
 
