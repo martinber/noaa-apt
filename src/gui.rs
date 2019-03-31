@@ -42,7 +42,7 @@ use misc::ThreadGuard;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// If the user wants to decode or resample.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 enum Mode {
     Decode,
     Resample,
@@ -140,7 +140,7 @@ pub fn main() {
     ).expect("Initialization failed");
 
     application.connect_startup(move |app| {
-        build_ui(app);
+        create_window(app);
     });
     application.connect_activate(|_| {});
 
@@ -150,7 +150,11 @@ pub fn main() {
 /// Set contents depending on mode.
 ///
 /// Loads GUI from glade file depending if decoding or resampling
-fn set_ui_contents(mode: Mode, window: &gtk::ApplicationWindow) -> WidgetList {
+fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
+
+    if let Some(previous_outer_box) = window.get_child() {
+        window.remove(&previous_outer_box);
+    }
 
     let glade_src = match mode {
         Mode::Decode => include_str!("decode.glade"),
@@ -209,37 +213,10 @@ fn set_ui_contents(mode: Mode, window: &gtk::ApplicationWindow) -> WidgetList {
 
     widgets.outer_box.pack_start(&widgets.main_box, true, true, 0);
     widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
+
     widgets.window.add(&widgets.outer_box);
 
     set_widgets(widgets.clone());
-
-    widgets
-}
-
-/// Add widgets from .glade file and get everything ready.
-///
-/// Connect signals to Widgets.
-fn build_ui(
-    application: &gtk::Application
-) {
-
-    let window = gtk::ApplicationWindow::new(application);
-
-    let mode = Mode::Resample;
-
-    window.set_title("noaa-apt");
-    window.set_default_size(450, -1);
-
-    // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
-    // but for some reason the window has a stock X11 icon on the top-left
-    // corner. When I set WM_CLASS the window gets the correct icon.
-    // GTK docs say that this option is deprecated?
-    // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
-    window.set_wmclass("noaa-apt", "noaa-apt");
-
-    let widgets = set_ui_contents(mode, &window);
-
-    build_system_menu(application);
 
     info!("GUI opened");
 
@@ -320,36 +297,91 @@ fn build_ui(
         })
     });
 
+
+    build_system_menu(mode, application, &window);
+
     widgets.window.show_all();
 }
 
+/// Add widgets from .glade file and get everything ready.
+///
+/// Connect signals to Widgets.
+fn create_window(
+    application: &gtk::Application
+) {
+
+    let window = gtk::ApplicationWindow::new(application);
+
+    let mode = Mode::Resample;
+
+    window.set_title("noaa-apt");
+    window.set_default_size(450, -1);
+
+    // Set WM_CLASS property. Without it, on KDE the taskbar icon is correct,
+    // but for some reason the window has a stock X11 icon on the top-left
+    // corner. When I set WM_CLASS the window gets the correct icon.
+    // GTK docs say that this option is deprecated?
+    // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
+    window.set_wmclass("noaa-apt", "noaa-apt");
+
+    build_ui(mode, &application, &window);
+}
+
 /// Build menu bar
-fn build_system_menu(application: &gtk::Application) {
+fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
     // let menu = gio::Menu::new();
     let menu_bar = gio::Menu::new();
-    let more_menu = gio::Menu::new();
-    let switch_menu = gio::Menu::new();
-    let settings_menu = gio::Menu::new();
-    let submenu = gio::Menu::new();
+    let help_menu = gio::Menu::new();
+    let tools_menu = gio::Menu::new();
 
     // The first argument is the label of the menu item whereas the second is the action name. It'll
     // makes more sense when you'll be reading the "add_actions" function.
     // menu.append("Quit", "app.quit");
 
-    switch_menu.append("Switch", "app.switch");
-    menu_bar.append_submenu("_Switch", &switch_menu);
+    tools_menu.append("_Decode", "app.decode");
+    tools_menu.append("_Resample WAV", "app.resample");
+    menu_bar.append_submenu("_Tools", &tools_menu);
 
-    settings_menu.append("Sub another", "app.sub_another");
-    submenu.append("Sub sub another", "app.sub_sub_another");
-    submenu.append("Sub sub another2", "app.sub_sub_another2");
-    settings_menu.append_submenu("Sub menu", &submenu);
-    menu_bar.append_submenu("_Another", &settings_menu);
 
-    more_menu.append("About", "app.about");
-    menu_bar.append_submenu("?", &more_menu);
+    help_menu.append("_Usage", "app.usage");
+    help_menu.append("_Guide", "app.guide");
+    help_menu.append("_About", "app.about");
+    menu_bar.append_submenu("_Help", &help_menu);
 
-    // application.set_app_menu(&menu);
     application.set_menubar(&menu_bar);
+
+
+    let decode = gio::SimpleAction::new("decode", None);
+    let w = window.clone();
+    let a = application.clone();
+    decode.connect_activate(move |_, _| {
+        build_ui(Mode::Decode, &a, &w);
+    });
+    application.add_action(&decode);
+
+    let resample = gio::SimpleAction::new("resample", None);
+    let w = window.clone();
+    let a = application.clone();
+    resample.connect_activate(move |_, _| {
+        build_ui(Mode::Resample, &a, &w);
+    });
+    application.add_action(&resample);
+
+    let about = gio::SimpleAction::new("about", None);
+    about.connect_activate(|_, _| {
+        let dialog = gtk::AboutDialog::new();
+        dialog.set_program_name("noaa-apt");
+        dialog.set_version(VERSION);
+        dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
+        dialog.set_website_label(Some("noaa-apt website"));
+        dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
+        dialog.set_license_type(gtk::License::Gpl30);
+        dialog.set_title("About noaa-apt");
+        // dialog.set_transient_for(Some(&window));
+        dialog.run();
+        dialog.destroy();
+    });
+    application.add_action(&about);
 }
 
 /// Set progress of ProgressBar
