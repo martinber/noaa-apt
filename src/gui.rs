@@ -345,6 +345,28 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
         application.remove_action("resample");
     }
 
+    let usage = gio::SimpleAction::new("usage", None);
+    let w = window.clone();
+    usage.connect_activate(move |_, _| {
+        gtk::show_uri(
+            &w.get_screen(),
+            "https://noaa-apt.mbernardi.com.ar/usage.html",
+            gtk::get_current_event_time(),
+        ).expect("Failed to open usage webpage");
+    });
+    application.add_action(&usage);
+
+    let guide = gio::SimpleAction::new("guide", None);
+    let w = window.clone();
+    guide.connect_activate(move |_, _| {
+        gtk::show_uri(
+            &w.get_screen(),
+            "https://noaa-apt.mbernardi.com.ar/guide.html",
+            gtk::get_current_event_time(),
+        ).expect("Failed to open guide webpage");
+    });
+    application.add_action(&guide);
+
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(|_, _| {
         let dialog = gtk::AboutDialog::new();
