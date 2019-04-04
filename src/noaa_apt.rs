@@ -12,12 +12,6 @@ use telemetry;
 use misc;
 
 
-/// Working sample rate, used during demodulation and syncing.
-///
-/// Should be multiple of the final sample rate. Because the syncing needs that,
-/// also that way the final resampling it's just a decimation.
-pub const WORK_RATE: u32 = 12480;
-
 /// Final signal sample rate.
 ///
 /// This signal has one sample per pixel.
@@ -29,15 +23,14 @@ pub const PX_PER_ROW: u32 = 2080;
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
 
-/// Samples on each image row when at `WORK_RATE`.
-pub const SAMPLES_PER_WORK_ROW: u32 = PX_PER_ROW * WORK_RATE / FINAL_RATE;
-
 /// Load and resample WAV file.
 pub fn resample_wav(
     mut context: Context,
     input_filename: &str,
     output_filename: &str,
     output_rate: Rate,
+    atten: u32,
+    delta_freq: Freq,
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
@@ -48,7 +41,7 @@ pub fn resample_wav(
 
     info!("Resampling");
     let resampled = dsp::resample(
-        &mut context, &input_signal, input_rate, output_rate, Freq::pi_rad(0.1))?;
+        &mut context, &input_signal, input_rate, output_rate, atten, delta_freq)?;
 
     if resampled.is_empty() {
         return Err(err::Error::Internal(
@@ -109,17 +102,24 @@ fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
 /// Find sync frame positions.
 ///
 /// Returns list of found sync frames positions.
-fn find_sync(context: &mut Context, signal: &Signal) -> err::Result<Vec<usize>> {
+fn find_sync(
+    context: &mut Context,
+    signal: &Signal,
+    work_rate: Rate
+) -> err::Result<Vec<usize>> {
 
-    let guard = generate_sync_frame(Rate::hz(WORK_RATE))?;
+    let guard = generate_sync_frame(work_rate)?;
 
     // list of maximum correlations found: (index, value)
     let mut peaks: Vec<(usize, f32)> = Vec::new();
     peaks.push((0, 0.));
 
+    // Samples on each image row when at `WORK_RATE`.
+    let samples_per_work_row: u32 = PX_PER_ROW * work_rate.get_hz() / FINAL_RATE;
+
     // Minimum distance between peaks, some arbitrary number smaller but close
     // to the number of samples by line
-    let min_distance: usize = SAMPLES_PER_WORK_ROW as usize * 8/10;
+    let min_distance: usize = samples_per_work_row as usize * 8/10;
 
     // Save cross-correlation if exporting steps
     let mut correlation = if context.export_steps {
@@ -182,6 +182,7 @@ fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
 }
 
 /// Available settings for contrast adjustment.
+#[derive(Debug)]
 pub enum Contrast {
     /// From telemetry bands, requires syncing to be enabled.
     Telemetry,
@@ -202,6 +203,11 @@ pub fn decode(
     output_filename: &str,
     contrast_adjustment: Contrast,
     sync: bool,
+    work_rate: Rate,
+    resample_atten: u32,
+    resample_delta_freq: u32,
+    resample_cutout: u32,
+    demodulation_atten: u32,
 ) -> err::Result<()>{
 
     // --------------------
@@ -210,30 +216,33 @@ pub fn decode(
 
     let (signal, input_spec) = wav::load_wav(input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
-    let work_rate = Rate::hz(WORK_RATE);
     let final_rate = Rate::hz(FINAL_RATE);
+
+    // Samples on each image row when at `WORK_RATE`.
+    let samples_per_work_row: u32 = PX_PER_ROW * work_rate.get_hz() / FINAL_RATE;
+
     context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
     // --------------------
 
-    context.status(0.1, format!("Resampling to {}", WORK_RATE));
+    context.status(0.1, format!("Resampling to {}", work_rate.get_hz()));
 
     let filter = filters::LowpassDcRemoval {
         // Cutout frequency of the resampling filter, only the AM spectrum should go
         // through to avoid noise, 2 times the carrier frequency is enough
-        cutout: Freq::hz(CARRIER_FREQ as f32, input_rate) * 2.,
+        cutout: Freq::hz(resample_cutout, input_rate),
 
-        atten: 30.,
+        atten: resample_atten,
 
         // Width of transition band, we are using a DC removal filter that has a
         // transition band from zero to delta_w. I think that APT signals have
         // nothing below 500Hz.
-        delta_w: Freq::hz(3000., input_rate)
+        delta_w: Freq::hz(resample_delta_freq, input_rate),
     };
     let signal = dsp::resample_with_filter(
         &mut context, &signal, input_rate, work_rate, filter)?;
 
-    if signal.len() < 10 * SAMPLES_PER_WORK_ROW as usize {
+    if signal.len() < 10 * samples_per_work_row as usize {
         return Err(err::Error::Internal(
             "Got less than 10 rows of samples, audio file is too short".to_string()));
     }
@@ -249,10 +258,10 @@ pub fn decode(
 
     context.status(0.42, "Filtering".to_string());
 
-    let cutout = Freq::pi_rad(FINAL_RATE as f32 / WORK_RATE as f32);
+    let cutout = Freq::pi_rad(FINAL_RATE as f32 / work_rate.get_hz() as f32);
     let filter = filters::Lowpass {
         cutout,
-        atten: 23.,
+        atten: demodulation_atten,
         delta_w: cutout / 5.
     };
     // mut because on sync the signal is going to be modified
@@ -273,17 +282,17 @@ pub fn decode(
             );
         }
 
-        // Create new "aligned" vector to SAMPLES_PER_WORK_ROW. Each row starts on
+        // Create new "aligned" vector to samples_per_work_row. Each row starts on
         // a found sync frame position
         let mut aligned: Signal = Vec::new();
 
         // For each sync position
         for i in 0..sync_pos.len()-1 {
             // Check if there are enough samples left to fill an image row
-            if (sync_pos[i] + SAMPLES_PER_WORK_ROW as usize) < signal.len() {
+            if (sync_pos[i] + samples_per_work_row as usize) < signal.len() {
 
                 aligned.extend_from_slice(
-                    &signal[sync_pos[i] .. sync_pos[i] + SAMPLES_PER_WORK_ROW as usize]
+                    &signal[sync_pos[i] .. sync_pos[i] + samples_per_work_row as usize]
                 );
             }
         }
@@ -296,11 +305,11 @@ pub fn decode(
         // If we are not syncing send a dummy correlation step
         context.step(Step::signal("sync_correlation", &vec![], Some(work_rate)))?;
 
-        // Crop signal to multiple of SAMPLES_PER_WORK_ROW
+        // Crop signal to multiple of samples_per_work_row
         let length = signal.len();
         signal.truncate(length
-            / SAMPLES_PER_WORK_ROW as usize // Integer division
-            * SAMPLES_PER_WORK_ROW as usize
+            / samples_per_work_row as usize // Integer division
+            * samples_per_work_row as usize
         );
     }
 

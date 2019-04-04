@@ -8,6 +8,9 @@ extern crate png;
 extern crate simple_logger;
 extern crate argparse;
 extern crate reqwest;
+extern crate directories;
+extern crate toml;
+extern crate serde;
 #[cfg_attr(test, macro_use)] extern crate approx;
 #[cfg(feature = "gui")] extern crate gtk;
 #[cfg(feature = "gui")] extern crate gdk;
@@ -23,9 +26,10 @@ mod err;
 mod filters;
 mod context;
 mod telemetry;
+mod config;
 #[cfg(feature = "gui")] mod gui;
 
-use dsp::Rate;
+use dsp::{Freq, Rate};
 use context::Context;
 use noaa_apt::Contrast;
 
@@ -36,168 +40,97 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Application entry point
 fn main() -> err::Result<()> {
 
-    let mut input_filename: Option<String> = None;
-    let mut debug = false;
-    let mut quiet = false;
-    let mut wav_steps = false;
-    let mut export_resample_filtered = false;
-    let mut sync = true;
-    let mut contrast_adjustment: Option<String> = None;
-    let mut print_version = false;
-    let mut output_filename: Option<String> = None;
-    let mut resample_output: Option<u32> = None;
-    {
-        let mut parser = argparse::ArgumentParser::new();
-        parser.set_description("Decode NOAA APT images from WAV files. Run \
-                               without arguments to launch the GUI");
-        parser.refer(&mut input_filename)
-            .add_argument("input_filename", argparse::StoreOption,
-            "Input WAV file.");
-        parser.refer(&mut print_version)
-            .add_option(&["-v", "--version"], argparse::StoreTrue,
-            "Show version and quit.");
-        parser.refer(&mut debug)
-            .add_option(&["-d", "--debug"], argparse::StoreTrue,
-            "Print debugging messages.");
-        parser.refer(&mut quiet)
-            .add_option(&["-q", "--quiet"], argparse::StoreTrue,
-            "Don't print info messages.");
-        parser.refer(&mut wav_steps)
-            .add_option(&["--wav-steps"], argparse::StoreTrue,
-            "Export a WAV for every step of the decoding process for debugging, \
-            the files will be located on the current folder, named \
-            {number}_{description}.wav");
-        parser.refer(&mut export_resample_filtered)
-            .add_option(&["--export-resample-filtered"], argparse::StoreTrue,
-            "Export a WAV for the expanded and filtered signal on the resampling
-            step. Very expensive operation, can take several GiB of both RAM and
-            disk. --wav-steps should be set.");
-        parser.refer(&mut sync)
-            .add_option(&["--no-sync"], argparse::StoreFalse,
-            "Disable syncing, useful when the sync frames are noisy and the \
-            syncing attempts do more harm than good.");
-        parser.refer(&mut contrast_adjustment)
-            .add_option(&["-c", "--contrast"], argparse::StoreOption,
-            "Contrast adjustment method for decode. Possible values: \
-            \"98_percent\", \"telemetry\" or \"disable\". 98 Percent used by \
-            default.");
-        parser.refer(&mut output_filename)
-            .add_option(&["-o", "--output"], argparse::StoreOption,
-            "Set output path. When decoding images the default is \
-            './output.png', when resampling the default is './output.wav'.")
-            .metavar("FILENAME");
-        parser.refer(&mut resample_output)
-            .add_option(&["-r", "--resample"], argparse::StoreOption,
-            "Resample WAV file to a given sample rate, no APT image will be \
-            decoded.")
-            .metavar("SAMPLE_RATE");
-        parser.parse_args_or_exit();
-    }
+    let (check_updates, verbosity, mode) = config::get_config();
 
-    if debug {
-        simple_logger::init_with_level(log::Level::Debug)?;
-    } else if quiet {
-        simple_logger::init_with_level(log::Level::Warn)?;
-    } else {
-        simple_logger::init_with_level(log::Level::Info)?;
-    }
+    simple_logger::init_with_level(verbosity)?;
 
-    if print_version {
-        println!("noaa-apt image decoder version {}", VERSION);
-        match misc::check_updates(VERSION) {
-            Some((false, _latest)) => println!("You have the latest version available"),
-            Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
-            None => println!("Could not retrieve latest version available"),
-        }
-        std::process::exit(0);
-    }
+    debug!("Mode: {:?}", mode);
 
-    info!("noaa-apt image decoder version {}", VERSION);
+    match mode {
+        config::Mode::Version => {
 
-    // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
-    let contrast_adjustment: Contrast = match contrast_adjustment
-        .as_ref()
-        .map(|s| s.as_str())
-    {
-        Some("telemetry") => Contrast::Telemetry,
-        Some("disable") => Contrast::MinMax,
-        Some("98_percent") | None => Contrast::Percent(0.98),
-        Some(_) => {
-            println!("Invalid contrast adjustment argument");
+            println!("noaa-apt image decoder version {}", VERSION);
+            match misc::check_updates(VERSION) {
+                Some((false, _latest)) => println!("You have the latest version available"),
+                Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
+                None => println!("Could not retrieve latest version available"),
+            }
             std::process::exit(0);
+
         },
-    };
+        config::Mode::Gui(settings) => {
 
-    // If set, then the program will be used as a command-line one, else we open
-    // the GUI
-    if let Some(input_filename) = input_filename {
+            #[cfg(feature = "gui")]
+            {
+                gui::main(check_updates, settings);
+            }
+            #[cfg(not(feature = "gui"))]
+            {
+                error!("Program compiled without gui support, please download \
+                    the gui version of this program or use --help to see available \
+                    options.");
+            }
 
-        // If set, we are resampling, else we are decoding
-        if let Some(rate) = resample_output {
+        },
+        config::Mode::Decode(settings) => {
 
-            let output = match output_filename {
-                Some(filename) => filename,
-                None => String::from("./output.wav"),
-            };
-
-            let context = Context::resample(
-                |_progress, description| info!("{}", description),
-                wav_steps,
-                export_resample_filtered
-            );
-
-            match noaa_apt::resample_wav(
-                context,
-                input_filename.as_str(),
-                output.as_str(),
-                Rate::hz(rate),
-            ) {
-                Ok(_) => (),
-                Err(e) => error!("{}", e),
-            };
-
-        // resample_output option not set, decode WAV file
-        } else {
-
-            let output = match output_filename {
-                Some(filename) => filename,
-                None => String::from("./output.png"),
-            };
+            if check_updates {
+                println!("noaa-apt image decoder version {}", VERSION);
+            }
 
             let context = Context::decode(
                 |_progress, description| info!("{}", description),
-                Rate::hz(noaa_apt::WORK_RATE),
+                Rate::hz(settings.work_rate),
                 Rate::hz(noaa_apt::FINAL_RATE),
-                wav_steps,
-                export_resample_filtered,
+                settings.wav_steps.expect("No wav_steps on settings"),
+                settings.export_resample_filtered.expect("No export_resample_filtered on settings"),
             );
 
             match noaa_apt::decode(
                 context,
-                input_filename.as_str(),
-                output.as_str(),
-                contrast_adjustment,
-                sync,
+                settings.input_filename.expect("No input_filename in settings").as_str(),
+                settings.output_filename.expect("No output_filename in settings").as_str(),
+                settings.contrast_adjustment.expect("No contrast_adjustment on settings"),
+                settings.sync.expect("No sync on Settings"),
+                Rate::hz(settings.work_rate),
+                settings.resample_atten,
+                settings.resample_delta_freq,
+                settings.resample_cutout,
+                settings.demodulation_atten,
             ) {
                 Ok(_) => (),
                 Err(e) => error!("{}", e),
             };
-        }
 
-    // Input filename not set, launch GUI
-    } else {
+        },
+        config::Mode::Resample(settings) => {
 
-        #[cfg(feature = "gui")]
-        {
-            gui::main();
-        }
-        #[cfg(not(feature = "gui"))]
-        {
-            error!("Program compiled without gui support, please download \
-                the gui version of this program or use --help to see available \
-                options.");
-        }
-    }
+            if check_updates {
+                println!("noaa-apt image decoder version {}", VERSION);
+            }
+
+            let context = Context::resample(
+                |_progress, description| info!("{}", description),
+                settings.wav_steps.expect("No wav_steps on settings"),
+                settings.export_resample_filtered.expect("No export_resample_filtered on settings"),
+            );
+
+            let work_rate = Rate::hz(settings.work_rate);
+
+            match noaa_apt::resample_wav(
+                context,
+                settings.input_filename.expect("No input_filename in settings").as_str(),
+                settings.output_filename.expect("No output_filename in settings").as_str(),
+                Rate::hz(settings.resample_rate.expect("No resample_rate on settings")),
+                settings.wav_resample_atten,
+                Freq::pi_rad(settings.wav_resample_delta_freq),
+            ) {
+                Ok(_) => (),
+                Err(e) => error!("{}", e),
+            };
+
+        },
+    };
 
     Ok(())
 }

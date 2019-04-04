@@ -33,7 +33,8 @@ use err;
 use noaa_apt::{self, Contrast};
 use context::Context;
 use misc;
-use dsp::Rate;
+use config;
+use dsp::{Freq, Rate};
 
 
 /// Defined by Cargo.toml
@@ -107,14 +108,14 @@ struct WidgetList {
 /// Start GUI.
 ///
 /// Build the window.
-pub fn main() {
+pub fn main(check_updates: bool, settings: config::Settings) {
     let application = gtk::Application::new(
         "ar.com.mbernardi.noaa-apt",
         gio::ApplicationFlags::empty(),
     ).expect("Initialization failed");
 
     application.connect_startup(move |app| {
-        create_window(app);
+        create_window(check_updates, settings, app);
     });
     application.connect_activate(|_| {});
 
@@ -123,6 +124,8 @@ pub fn main() {
 
 /// Create empty window and call build_ui().
 fn create_window(
+    check_updates: bool,
+    settings: config::Settings,
     application: &gtk::Application,
 ) {
 
@@ -140,13 +143,19 @@ fn create_window(
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
     window.set_wmclass("noaa-apt", "noaa-apt");
 
-    build_ui(mode, &application, &window);
+    build_ui(check_updates, mode, &application, &window);
 }
 
 /// Build GUI.
 ///
 /// Loads GUI from glade file depending if decoding or resampling
-fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
+fn build_ui(
+    check_updates: bool,
+    settings: config::Settings,
+    mode: Mode,
+    application: &gtk::Application,
+    window: &gtk::ApplicationWindow
+) {
 
     // Clean GUI if there was something previously
 
@@ -243,7 +252,9 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
     widgets.progress_bar.set_text("Ready");
     widgets.start_button.set_sensitive(true);
 
-    check_updates();
+    if check_updates {
+        check_updates_and_show();
+    }
 
     // Configure output_entry file chooser
 
@@ -294,13 +305,19 @@ fn build_ui(mode: Mode, application: &gtk::Application, window: &gtk::Applicatio
         })
     });
 
-    build_system_menu(mode, application, &window);
+    build_system_menu(check_updates, mode, application, &window);
 
     widgets.window.show_all();
 }
 
 /// Build menu bar
-fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::ApplicationWindow) {
+fn build_system_menu(
+    check_updates: bool,
+    settings: config::Settings,
+    mode: Mode,
+    application: &gtk::Application,
+    window: &gtk::ApplicationWindow
+) {
 
     // Create menu bar
 
@@ -325,7 +342,7 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
     let w = window.clone();
     let a = application.clone();
     decode.connect_activate(move |_, _| {
-        build_ui(Mode::Decode, &a, &w);
+        build_ui(check_updates, Mode::Decode, &a, &w);
     });
     if let Mode::Resample = mode {
         application.add_action(&decode);
@@ -337,7 +354,7 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
     let w = window.clone();
     let a = application.clone();
     resample.connect_activate(move |_, _| {
-        build_ui(Mode::Resample, &a, &w);
+        build_ui(check_updates, Mode::Resample, &a, &w);
     });
     if let Mode::Decode = mode {
         application.add_action(&resample);
@@ -395,7 +412,7 @@ fn build_system_menu(mode: Mode, application: &gtk::Application, window: &gtk::A
 /// When the decode/resample ends the callback will set the start_button as
 /// sensitive again. If there is an error decoding/resampling will also show the
 /// error on the info_bar
-fn run_noaa_apt(mode: Mode) -> err::Result<()> {
+fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
 
     // Create callbacks
 
@@ -493,7 +510,7 @@ fn run_noaa_apt(mode: Mode) -> err::Result<()> {
                 std::thread::spawn(move || {
                     let context = Context::decode(
                         progress_callback,
-                        Rate::hz(noaa_apt::WORK_RATE),
+                        Rate::hz(settings.work_rate),
                         Rate::hz(noaa_apt::FINAL_RATE),
                         wav_steps,
                         resample_step,
@@ -505,6 +522,8 @@ fn run_noaa_apt(mode: Mode) -> err::Result<()> {
                         output_filename.as_str(),
                         contrast_adjustment,
                         sync,
+                        settings.wav_resample_atten,
+                        Freq::pi_rad(settings.wav_resample_delta_freq),
                     ));
                 });
             },
@@ -525,11 +544,18 @@ fn run_noaa_apt(mode: Mode) -> err::Result<()> {
                         resample_step,
                     );
 
+                    let work_rate = Rate::hz(settings.work_rate);
+
                     callback(noaa_apt::resample_wav(
                         context,
                         input_filename.as_str(),
                         output_filename.as_str(),
                         Rate::hz(rate),
+                        work_rate,
+                        settings.resample_atten,
+                        settings.resample_delta_freq,
+                        settings.resample_cutout,
+                        settings.demodulation_atten,
                     ));
                 });
             },
@@ -571,7 +597,7 @@ fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
 }
 
 /// Check for updates on another thread and show the result on the info_bar.
-fn check_updates() {
+fn check_updates_and_show() {
     let callback = move |result| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {

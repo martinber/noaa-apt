@@ -24,6 +24,9 @@ pub enum Error {
     /// About PNG encoding/writing.
     PngWrite(String),
 
+    /// Deserializing errors.
+    Deserialize(String),
+
     /// `noaa-apt` internal errors.
     Internal(String),
 
@@ -42,6 +45,7 @@ impl std::fmt::Display for Error {
             Error::Io(ref err) => err.fmt(f),
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
             Error::PngWrite(ref msg) => f.write_str(msg.as_str()),
+            Error::Deserialize(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref features) =>
@@ -82,5 +86,11 @@ impl From<png::EncodingError> for Error {
             png::EncodingError::IoError(io_error) => Error::Io(io_error),
             png::EncodingError::Format(_) => Error::PngWrite(err.description().to_string()),
         }
+    }
+}
+
+impl From<toml::de::Error> for Error {
+    fn from(err: toml::de::Error) -> Self {
+        Error::Deserialize(err.description().to_string())
     }
 }

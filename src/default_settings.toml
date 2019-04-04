@@ -1,0 +1,64 @@
+# noaa-apt settings
+
+check_updates = true
+
+[profiles]
+
+default_profile = "standard"
+
+# Allowed profiles are "standard", "fast", and "slow". Each one has:
+
+# - work_rate: Sample rate to use when processing in Hz. Choose a multiple of
+#   4160 equal or bigger than 12480
+
+# - resample_atten: Attenuation in dB for the resampling filter.
+
+# - resample_delta_freq: Transition band width in Hz for the resampling filter.
+
+# - resample_cutout: Cutout frequency in Hz of the resampling filter. The
+#   transition band goes from `cutout - delta_freq / 2` to
+#   `cutout + delta_freq / 2`.
+
+# - demodulation_atten: Attenuation in dB for the demodulation filter.
+
+# - wav_resample_atten: Attenuation in dB, used when resampling a WAV into
+#   another WAV. Not used when decoding images
+
+# - wav_resample_delta_freq: Transition band width in pi radians per second,
+#   used when resampling a WAV into another WAV. Not used when decoding images
+
+
+    # Should work perfectly on every image
+    [profiles.standard]
+
+    work_rate = 12480
+    resample_atten = 30
+    resample_delta_freq = 1000
+    resample_cutout = 4800
+    demodulation_atten = 25
+    wav_resample_atten = 40
+    wav_resample_delta_freq = 0.1
+
+    # Fast profile, the filters are less strict and noise can be a problem, but
+    # it should be barely visible
+    [profiles.fast]
+
+    work_rate = 12480
+    resample_atten = 30
+    resample_delta_freq = 3000
+    resample_cutout = 4800
+    demodulation_atten = 23
+    wav_resample_atten = 30
+    wav_resample_delta_freq = 0.2
+
+    # Should be used temporairly if there is a problem with the "standard"
+    # profile in some images. But leave a bug report in that case.
+    [profiles.slow]
+
+    work_rate = 20800
+    resample_atten = 40
+    resample_delta_freq = 500
+    resample_cutout = 4800
+    demodulation_atten = 25
+    wav_resample_atten = 50
+    wav_resample_delta_freq = 0.05

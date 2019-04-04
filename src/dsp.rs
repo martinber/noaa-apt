@@ -110,12 +110,14 @@ pub fn resample_with_filter(
 
 /// Resample signal.
 ///
-/// `delta_w` is the transition band of the lowpass filter to use.
+/// `delta_w` is the transition band of the lowpass filter to use. `atten` is
+/// attenuation on positive decibels.
 pub fn resample(
     context: &mut Context,
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
+    atten: u32,
     delta_w: Freq,
 ) -> err::Result<Signal> {
 
@@ -133,7 +135,7 @@ pub fn resample(
     resample_with_filter(context, &signal, input_rate, output_rate,
         filters::Lowpass {
             cutout,
-            atten: 40.,
+            atten,
             delta_w,
         }
     )
