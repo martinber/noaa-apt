@@ -108,14 +108,14 @@ struct WidgetList {
 /// Start GUI.
 ///
 /// Build the window.
-pub fn main(check_updates: bool, settings: config::Settings) {
+pub fn main(check_updates: bool, settings: config::GuiSettings) {
     let application = gtk::Application::new(
         "ar.com.mbernardi.noaa-apt",
         gio::ApplicationFlags::empty(),
     ).expect("Initialization failed");
 
     application.connect_startup(move |app| {
-        create_window(check_updates, settings, app);
+        create_window(check_updates, settings.clone(), app);
     });
     application.connect_activate(|_| {});
 
@@ -125,7 +125,7 @@ pub fn main(check_updates: bool, settings: config::Settings) {
 /// Create empty window and call build_ui().
 fn create_window(
     check_updates: bool,
-    settings: config::Settings,
+    settings: config::GuiSettings,
     application: &gtk::Application,
 ) {
 
@@ -143,7 +143,7 @@ fn create_window(
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
     window.set_wmclass("noaa-apt", "noaa-apt");
 
-    build_ui(check_updates, mode, &application, &window);
+    build_ui(check_updates, settings, mode, &application, &window);
 }
 
 /// Build GUI.
@@ -151,7 +151,7 @@ fn create_window(
 /// Loads GUI from glade file depending if decoding or resampling
 fn build_ui(
     check_updates: bool,
-    settings: config::Settings,
+    settings: config::GuiSettings,
     mode: Mode,
     application: &gtk::Application,
     window: &gtk::ApplicationWindow
@@ -284,11 +284,12 @@ fn build_ui(
 
     // Connect start button
 
+    let settings_clone = settings.clone();
     widgets.start_button.connect_clicked(move |_| {
         borrow_widgets(|widgets| {
             widgets.info_revealer.set_reveal_child(false);
 
-            run_noaa_apt(mode).unwrap_or_else(|error| {
+            run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
                 show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
                 error!("{}", error);
                 widgets.start_button.set_sensitive(true);
@@ -305,7 +306,7 @@ fn build_ui(
         })
     });
 
-    build_system_menu(check_updates, mode, application, &window);
+    build_system_menu(check_updates, settings, mode, application, &window);
 
     widgets.window.show_all();
 }
@@ -313,7 +314,7 @@ fn build_ui(
 /// Build menu bar
 fn build_system_menu(
     check_updates: bool,
-    settings: config::Settings,
+    settings: config::GuiSettings,
     mode: Mode,
     application: &gtk::Application,
     window: &gtk::ApplicationWindow
@@ -341,8 +342,9 @@ fn build_system_menu(
     let decode = gio::SimpleAction::new("decode", None);
     let w = window.clone();
     let a = application.clone();
+    let s = settings.clone();
     decode.connect_activate(move |_, _| {
-        build_ui(check_updates, Mode::Decode, &a, &w);
+        build_ui(check_updates, s.clone(), Mode::Decode, &a, &w);
     });
     if let Mode::Resample = mode {
         application.add_action(&decode);
@@ -353,8 +355,9 @@ fn build_system_menu(
     let resample = gio::SimpleAction::new("resample", None);
     let w = window.clone();
     let a = application.clone();
+    let s = settings.clone();
     resample.connect_activate(move |_, _| {
-        build_ui(check_updates, Mode::Resample, &a, &w);
+        build_ui(check_updates, s.clone(), Mode::Resample, &a, &w);
     });
     if let Mode::Decode = mode {
         application.add_action(&resample);
@@ -412,7 +415,7 @@ fn build_system_menu(
 /// When the decode/resample ends the callback will set the start_button as
 /// sensitive again. If there is an error decoding/resampling will also show the
 /// error on the info_bar
-fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
+fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 
     // Create callbacks
 
@@ -516,14 +519,23 @@ fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
                         resample_step,
                     );
 
+                    let settings = config::DecodeSettings {
+                        input_filename,
+                        output_filename,
+                        sync,
+                        contrast_adjustment,
+                        export_wav: wav_steps,
+                        export_resample_filtered: resample_step,
+                        work_rate: settings.work_rate,
+                        resample_atten: settings.resample_atten,
+                        resample_delta_freq: settings.resample_delta_freq,
+                        resample_cutout: settings.resample_cutout,
+                        demodulation_atten: settings.demodulation_atten,
+                    };
+
                     callback(noaa_apt::decode(
                         context,
-                        input_filename.as_str(),
-                        output_filename.as_str(),
-                        contrast_adjustment,
-                        sync,
-                        settings.wav_resample_atten,
-                        Freq::pi_rad(settings.wav_resample_delta_freq),
+                        settings,
                     ));
                 });
             },
@@ -544,18 +556,19 @@ fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
                         resample_step,
                     );
 
-                    let work_rate = Rate::hz(settings.work_rate);
+                    let settings = config::ResampleSettings {
+                        input_filename,
+                        output_filename,
+                        output_rate: rate,
+                        export_wav: wav_steps,
+                        export_resample_filtered: resample_step,
+                        wav_resample_atten: settings.wav_resample_atten,
+                        wav_resample_delta_freq: settings.wav_resample_delta_freq,
+                    };
 
                     callback(noaa_apt::resample_wav(
                         context,
-                        input_filename.as_str(),
-                        output_filename.as_str(),
-                        Rate::hz(rate),
-                        work_rate,
-                        settings.resample_atten,
-                        settings.resample_delta_freq,
-                        settings.resample_cutout,
-                        settings.demodulation_atten,
+                        settings,
                     ));
                 });
             },

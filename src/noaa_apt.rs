@@ -9,6 +9,7 @@ use err;
 use filters;
 use context::{Context, Step};
 use telemetry;
+use config;
 use misc;
 
 
@@ -26,22 +27,24 @@ pub const CARRIER_FREQ: u32 = 2400;
 /// Load and resample WAV file.
 pub fn resample_wav(
     mut context: Context,
-    input_filename: &str,
-    output_filename: &str,
-    output_rate: Rate,
-    atten: u32,
-    delta_freq: Freq,
+    settings: config::ResampleSettings,
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
-    let (input_signal, input_spec) = wav::load_wav(input_filename)?;
+    let (input_signal, input_spec) = wav::load_wav(&settings.input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
 
     context.step(Step::signal("input", &input_signal, Some(input_rate)))?;
 
     info!("Resampling");
     let resampled = dsp::resample(
-        &mut context, &input_signal, input_rate, output_rate, atten, delta_freq)?;
+        &mut context,
+        &input_signal,
+        input_rate,
+        Rate::hz(settings.output_rate),
+        settings.wav_resample_atten,
+        Freq::pi_rad(settings.wav_resample_delta_freq),
+    )?;
 
     if resampled.is_empty() {
         return Err(err::Error::Internal(
@@ -52,14 +55,14 @@ pub fn resample_wav(
 
     let writer_spec = hound::WavSpec {
         channels: 1,
-        sample_rate: output_rate.get_hz(),
+        sample_rate: settings.output_rate,
         bits_per_sample: 32,
         sample_format: hound::SampleFormat::Float,
     };
 
-    info!("Writing WAV to '{}'", output_filename);
+    info!("Writing WAV to '{}'", settings.output_filename);
 
-    wav::write_wav(output_filename, &resampled, writer_spec)?;
+    wav::write_wav(&settings.output_filename, &resampled, writer_spec)?;
 
     Ok(())
 }
@@ -182,7 +185,7 @@ fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
 }
 
 /// Available settings for contrast adjustment.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Contrast {
     /// From telemetry bands, requires syncing to be enabled.
     Telemetry,
@@ -199,27 +202,21 @@ pub enum Contrast {
 /// Decode APT image from WAV file.
 pub fn decode(
     mut context: Context,
-    input_filename: &str,
-    output_filename: &str,
-    contrast_adjustment: Contrast,
-    sync: bool,
-    work_rate: Rate,
-    resample_atten: u32,
-    resample_delta_freq: u32,
-    resample_cutout: u32,
-    demodulation_atten: u32,
+    settings: config::DecodeSettings,
 ) -> err::Result<()>{
 
     // --------------------
 
     context.status(0.0, "Reading WAV file".to_string());
 
-    let (signal, input_spec) = wav::load_wav(input_filename)?;
+    let (signal, input_spec) = wav::load_wav(&settings.input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
     let final_rate = Rate::hz(FINAL_RATE);
 
     // Samples on each image row when at `WORK_RATE`.
-    let samples_per_work_row: u32 = PX_PER_ROW * work_rate.get_hz() / FINAL_RATE;
+    let samples_per_work_row: u32 = PX_PER_ROW * settings.work_rate / FINAL_RATE;
+
+    let work_rate = Rate::hz(settings.work_rate);
 
     context.step(Step::signal("input", &signal, Some(input_rate)))?;
 
@@ -230,14 +227,14 @@ pub fn decode(
     let filter = filters::LowpassDcRemoval {
         // Cutout frequency of the resampling filter, only the AM spectrum should go
         // through to avoid noise, 2 times the carrier frequency is enough
-        cutout: Freq::hz(resample_cutout, input_rate),
+        cutout: Freq::hz(settings.resample_cutout, input_rate),
 
-        atten: resample_atten,
+        atten: settings.resample_atten,
 
         // Width of transition band, we are using a DC removal filter that has a
         // transition band from zero to delta_w. I think that APT signals have
         // nothing below 500Hz.
-        delta_w: Freq::hz(resample_delta_freq, input_rate),
+        delta_w: Freq::hz(settings.resample_delta_freq, input_rate),
     };
     let signal = dsp::resample_with_filter(
         &mut context, &signal, input_rate, work_rate, filter)?;
@@ -261,7 +258,7 @@ pub fn decode(
     let cutout = Freq::pi_rad(FINAL_RATE as f32 / work_rate.get_hz() as f32);
     let filter = filters::Lowpass {
         cutout,
-        atten: demodulation_atten,
+        atten: settings.demodulation_atten,
         delta_w: cutout / 5.
     };
     // mut because on sync the signal is going to be modified
@@ -269,11 +266,11 @@ pub fn decode(
 
     // --------------------
 
-    if sync {
+    if settings.sync {
         context.status(0.5, "Syncing".to_string());
 
         // Get list of sync frames positions
-        let sync_pos = find_sync(&mut context, &signal)?;
+        let sync_pos = find_sync(&mut context, &signal, work_rate)?;
 
         if sync_pos.len() < 5 {
             return Err(err::Error::Internal(
@@ -325,10 +322,10 @@ pub fn decode(
         &mut context, &signal, work_rate, final_rate, filters::NoFilter)?;
 
 
-    let (low, high) = match contrast_adjustment {
+    let (low, high) = match settings.contrast_adjustment {
         Contrast::Telemetry => {
             info!("Adjusting contrast from telemetry");
-            if !sync {
+            if !settings.sync {
                 warn!("Reading telemetry without syncing, expect horrible results!");
             }
 
@@ -362,12 +359,12 @@ pub fn decode(
 
     // --------------------
 
-    context.status(0.95, format!("Writing PNG to '{}'", output_filename));
+    context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename));
 
     // To use encoder.set()
     use png::HasParameters;
 
-    let path = std::path::Path::new(output_filename);
+    let path = std::path::Path::new(&settings.output_filename);
     let file = std::fs::File::create(path)?;
     let buffer = &mut std::io::BufWriter::new(file);
 

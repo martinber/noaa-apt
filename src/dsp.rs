@@ -117,7 +117,7 @@ pub fn resample(
     signal: &Signal,
     input_rate: Rate,
     output_rate: Rate,
-    atten: u32,
+    atten: f32,
     delta_w: Freq,
 ) -> err::Result<Signal> {
 

@@ -8,72 +8,115 @@ use serde::Deserialize;
 use std::io::prelude::*;
 
 use noaa_apt::Contrast;
+use dsp::{Freq, Rate};
 use err;
 
 /// How to launch the program.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Mode {
     /// Open GUI.
-    Gui(Settings),
+    Gui(GuiSettings),
 
     /// Show version and quit.
     Version,
 
     /// Decode image from commandline.
-    Decode(Settings),
+    Decode(DecodeSettings),
 
     /// Resample image from commandline.
-    Resample(Settings),
+    Resample(ResampleSettings),
 }
 
-/// Holds every setting available.
-///
-/// Lots of settings are None if opening a GUI
-#[derive(Debug)]
-pub struct Settings {
+/// Settings for decoding
+#[derive(Clone, Debug)]
+pub struct DecodeSettings {
     /// Input filename.
-    pub input_filename: Option<String>,
+    pub input_filename: String,
 
-    /// Output filename.
-    pub output_filename: Option<String>,
+    /// Output filename
+    pub output_filename: String,
+
+    /// Sync image to sync frames. None if resampling.
+    pub sync: bool,
+
+    /// Contrast adjustment method. None if resampling.
+    pub contrast_adjustment: Contrast,
 
     /// If we are exporting steps to WAV.
-    pub wav_steps: Option<bool>,
+    pub export_wav: bool,
 
     /// If we are exporting the filtered signal on resample. When using
     /// `fast_resampling()` this step is VERY slow and RAM heavy (gigabytes!),
     /// so that function checks if this variable is set before doing extra work.
-    pub export_resample_filtered: Option<bool>,
+    pub export_resample_filtered: bool,
 
-    /// Sync image to sync frames. None if resampling.
-    pub sync: Option<bool>,
-
-    /// Contrast adjustment method. None if resampling.
-    pub contrast_adjustment: Option<Contrast>,
-
-    /// If resampling, sample rate to use.
-    pub resample_rate: Option<u32>,
-
-    /// Sample rate to use when processing in Hz.
+    /// Sample rate in Hz to use for intermediate processing.
     pub work_rate: u32,
 
     /// Attenuation in dB for the resampling filter.
-    pub resample_atten: u32,
+    pub resample_atten: f32,
 
     /// Transition band width in Hz for the resampling filter.
-    pub resample_delta_freq: u32,
+    pub resample_delta_freq: f32,
 
     /// Cutout frequency in Hz of the resampling filter.
-    pub resample_cutout: u32,
+    pub resample_cutout: f32,
 
     /// Attenuation in dB for the demodulation filter.
-    pub demodulation_atten: u32,
+    pub demodulation_atten: f32,
+}
 
-    /// Attenuation in dB, used when resampling a WAV into another WAV.
-    pub wav_resample_atten: u32,
+/// Settings for resampling
+#[derive(Clone, Debug)]
+pub struct ResampleSettings {
+    /// Input filename.
+    pub input_filename: String,
 
-    /// Transition band width in pi radians per second, used when resampling a
-    /// WAV into another WAV.
+    /// Output filename
+    pub output_filename: String,
+
+    /// If we are exporting steps to WAV.
+    pub export_wav: bool,
+
+    /// If we are exporting the filtered signal on resample. When using
+    /// `fast_resampling()` this step is VERY slow and RAM heavy (gigabytes!),
+    /// so that function checks if this variable is set before doing extra work.
+    pub export_resample_filtered: bool,
+
+    /// Sample rate in Hz to output.
+    pub output_rate: u32,
+
+    /// Attenuation in dB for the resampling filter.
+    pub wav_resample_atten: f32,
+
+    /// Transition band width in fractions of pi radians per second for the
+    /// resampling filter.
+    pub wav_resample_delta_freq: f32,
+}
+
+/// Settings for GUI decoding/resampling
+#[derive(Clone, Debug)]
+pub struct GuiSettings {
+    /// Sample rate to use for intermediate processing when decoding.
+    pub work_rate: u32,
+
+    /// Attenuation in dB for the resampling filter used when decoding.
+    pub resample_atten: f32,
+
+    /// Transition band width in Hz for the resampling filter used when decoding.
+    pub resample_delta_freq: f32,
+
+    /// Cutout frequency in Hz of the resampling filter used when decoding.
+    pub resample_cutout: f32,
+
+    /// Attenuation in dB for the demodulation filter used when decoding.
+    pub demodulation_atten: f32,
+
+    /// Attenuation in dB for the resampling filter used when resampling WAV.
+    pub wav_resample_atten: f32,
+
+    /// Transition band width in fractions of pi radians per second for the resamplin
+    /// filter used when resampling WAV.
     pub wav_resample_delta_freq: f32,
 }
 
@@ -108,24 +151,9 @@ struct DeProfile {
 /// Parse `DeSettings` from file
 fn parse_from_file(filename: &std::path::PathBuf) -> err::Result<DeSettings> {
     let mut file = std::fs::File::open(filename)?;
-    // if let Err(error) = file {
-        // error!("Could not open settings file: {}", error);
-        // return err::Result::from(Err(error));
-    // }
-
     let mut text = String::new();
-
     file.read_to_string(&mut text)?;
-    // if let Err(error) = result {
-        // error!("Could not read settings file: {}", error);
-        // return result;
-    // }
-
     Ok(toml::from_str(text.as_str())?)
-    // if let Err(error) = de_settings {
-        // error!("Could not parse settings file: {}", error);
-        // return de_settings;
-    // }
 }
 
 /// Load `DeSettings` from settings file.
@@ -281,20 +309,13 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         // If set, we are resampling, else we are decoding
         if let Some(rate) = resample_output {
 
-            let settings = Settings {
-                input_filename: Some(input_filename),
-                output_filename: Some(output_filename.unwrap_or("./output.png".to_string())),
-                wav_steps: Some(wav_steps),
-                export_resample_filtered: Some(export_resample_filtered),
-                sync: None,
-                contrast_adjustment: None,
-                resample_rate: Some(rate),
-                work_rate: profile.work_rate as u32,
-                resample_atten: profile.resample_atten as u32,
-                resample_delta_freq: profile.resample_delta_freq as u32,
-                resample_cutout: profile.resample_cutout as u32,
-                demodulation_atten: profile.demodulation_atten as u32,
-                wav_resample_atten: profile.wav_resample_atten as u32,
+            let settings = ResampleSettings {
+                input_filename,
+                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                export_wav: wav_steps,
+                export_resample_filtered,
+                output_rate: rate,
+                wav_resample_atten: profile.wav_resample_atten as f32,
                 wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
             };
 
@@ -317,21 +338,18 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 },
             };
 
-            let settings = Settings {
-                input_filename: Some(input_filename),
-                output_filename: Some(output_filename.unwrap_or("./output.png".to_string())),
-                wav_steps: Some(wav_steps),
-                export_resample_filtered: Some(export_resample_filtered),
-                sync: Some(sync),
-                contrast_adjustment: Some(contrast_adjustment),
-                resample_rate: None,
+            let settings = DecodeSettings {
+                input_filename,
+                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                export_wav: wav_steps,
+                export_resample_filtered,
+                sync,
+                contrast_adjustment,
                 work_rate: profile.work_rate as u32,
-                resample_atten: profile.resample_atten as u32,
-                resample_delta_freq: profile.resample_delta_freq as u32,
-                resample_cutout: profile.resample_cutout as u32,
-                demodulation_atten: profile.demodulation_atten as u32,
-                wav_resample_atten: profile.wav_resample_atten as u32,
-                wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
+                resample_atten: profile.resample_atten as f32,
+                resample_delta_freq: profile.resample_delta_freq as f32,
+                resample_cutout: profile.resample_cutout as f32,
+                demodulation_atten: profile.demodulation_atten as f32,
             };
 
             return (check_updates, verbosity, Mode::Decode(settings));
@@ -340,20 +358,13 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     // Input filename not set, launch GUI
     } else {
 
-        let settings = Settings {
-            input_filename: None,
-            output_filename: None,
-            wav_steps: None,
-            export_resample_filtered: None,
-            sync: None,
-            contrast_adjustment: None,
-            resample_rate: None,
+        let settings = GuiSettings {
             work_rate: profile.work_rate as u32,
-            resample_atten: profile.resample_atten as u32,
-            resample_delta_freq: profile.resample_delta_freq as u32,
-            resample_cutout: profile.resample_cutout as u32,
-            demodulation_atten: profile.demodulation_atten as u32,
-            wav_resample_atten: profile.wav_resample_atten as u32,
+            resample_atten: profile.resample_atten as f32,
+            resample_delta_freq: profile.resample_delta_freq as f32,
+            resample_cutout: profile.resample_cutout as f32,
+            demodulation_atten: profile.demodulation_atten as f32,
+            wav_resample_atten: profile.wav_resample_atten as f32,
             wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
         };
 

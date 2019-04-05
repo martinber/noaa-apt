@@ -82,22 +82,11 @@ fn main() -> err::Result<()> {
                 |_progress, description| info!("{}", description),
                 Rate::hz(settings.work_rate),
                 Rate::hz(noaa_apt::FINAL_RATE),
-                settings.wav_steps.expect("No wav_steps on settings"),
-                settings.export_resample_filtered.expect("No export_resample_filtered on settings"),
+                settings.export_wav,
+                settings.export_resample_filtered,
             );
 
-            match noaa_apt::decode(
-                context,
-                settings.input_filename.expect("No input_filename in settings").as_str(),
-                settings.output_filename.expect("No output_filename in settings").as_str(),
-                settings.contrast_adjustment.expect("No contrast_adjustment on settings"),
-                settings.sync.expect("No sync on Settings"),
-                Rate::hz(settings.work_rate),
-                settings.resample_atten,
-                settings.resample_delta_freq,
-                settings.resample_cutout,
-                settings.demodulation_atten,
-            ) {
+            match noaa_apt::decode(context, settings) {
                 Ok(_) => (),
                 Err(e) => error!("{}", e),
             };
@@ -111,20 +100,11 @@ fn main() -> err::Result<()> {
 
             let context = Context::resample(
                 |_progress, description| info!("{}", description),
-                settings.wav_steps.expect("No wav_steps on settings"),
-                settings.export_resample_filtered.expect("No export_resample_filtered on settings"),
+                settings.export_wav,
+                settings.export_resample_filtered,
             );
 
-            let work_rate = Rate::hz(settings.work_rate);
-
-            match noaa_apt::resample_wav(
-                context,
-                settings.input_filename.expect("No input_filename in settings").as_str(),
-                settings.output_filename.expect("No output_filename in settings").as_str(),
-                Rate::hz(settings.resample_rate.expect("No resample_rate on settings")),
-                settings.wav_resample_atten,
-                Freq::pi_rad(settings.wav_resample_delta_freq),
-            ) {
+            match noaa_apt::resample_wav(context, settings) {
                 Ok(_) => (),
                 Err(e) => error!("{}", e),
             };
