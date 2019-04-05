@@ -29,9 +29,8 @@ mod telemetry;
 mod config;
 #[cfg(feature = "gui")] mod gui;
 
-use dsp::{Freq, Rate};
+use dsp::Rate;
 use context::Context;
-use noaa_apt::Contrast;
 
 
 /// Defined by Cargo.toml

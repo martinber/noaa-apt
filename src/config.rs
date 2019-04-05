@@ -8,7 +8,6 @@ use serde::Deserialize;
 use std::io::prelude::*;
 
 use noaa_apt::Contrast;
-use dsp::{Freq, Rate};
 use err;
 
 /// How to launch the program.

@@ -19,7 +19,6 @@
 //! from another thread. In the end, we send the widgets to another thread and
 //! back.
 
-use std::env::args;
 use std::cell::RefCell;
 
 use gtk;
@@ -34,7 +33,7 @@ use noaa_apt::{self, Contrast};
 use context::Context;
 use misc;
 use config;
-use dsp::{Freq, Rate};
+use dsp::Rate;
 
 
 /// Defined by Cargo.toml
