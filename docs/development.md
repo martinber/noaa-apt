@@ -75,7 +75,7 @@ Notes:
 
 ## Things to do
 
-- Roadmap for 1.0.0:
+- Important:
 
     - Add warnings for short images when reading telemetry.
 
@@ -92,16 +92,11 @@ Notes:
         - Make sure that Rate cant overflow when resampling against strange
             sample rates.
 
-    - Remove help icons, add help menu instead.
-
-    - Improve GUI, show decoding progress.
+    - Write Usage webpage.
 
     - Show panics and errors on GUI. Remove terminal for Windows users.
 
 - Someday:
-
-    - The parameters used for filter design are hardcoded, maybe add a toml file
-        with constants?
 
     - Investigate about despeckle.
 
@@ -114,15 +109,8 @@ Notes:
 
     - Implement false color [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
 
-    - For some reason the `--debug` does not work when using the GUI. Maybe
-      replace argparse for something else.
-
     - Improve syncing performance. Make it faster and more resilent to noise,
         maybe working with the mean and variance?. Especially for Raspberry Pi.
-
-    - Try different `WORK_RATE`s.
-
-    - Looks like the Windows version has some icons missing.
 
     - Live decoding, from a TCP stream or using
         [librtlsdr](https://github.com/steve-m/librtlsdr/blob/master/include/rtl-sdr.h)

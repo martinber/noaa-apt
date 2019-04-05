@@ -1,4 +1,4 @@
-//! Manages configurations from commandline and setings file
+//! Manages configurations from commandline and settings file
 
 use directories;
 use toml;
@@ -33,13 +33,13 @@ pub struct DecodeSettings {
     /// Input filename.
     pub input_filename: String,
 
-    /// Output filename
+    /// Output filename.
     pub output_filename: String,
 
-    /// Sync image to sync frames. None if resampling.
+    /// Whether to sync frames.
     pub sync: bool,
 
-    /// Contrast adjustment method. None if resampling.
+    /// Contrast adjustment method.
     pub contrast_adjustment: Contrast,
 
     /// If we are exporting steps to WAV.
@@ -53,7 +53,7 @@ pub struct DecodeSettings {
     /// Sample rate in Hz to use for intermediate processing.
     pub work_rate: u32,
 
-    /// Attenuation in dB for the resampling filter.
+    /// Attenuation in positive dB for the resampling filter.
     pub resample_atten: f32,
 
     /// Transition band width in Hz for the resampling filter.
@@ -62,7 +62,7 @@ pub struct DecodeSettings {
     /// Cutout frequency in Hz of the resampling filter.
     pub resample_cutout: f32,
 
-    /// Attenuation in dB for the demodulation filter.
+    /// Attenuation in positive dB for the demodulation filter.
     pub demodulation_atten: f32,
 }
 
@@ -72,7 +72,7 @@ pub struct ResampleSettings {
     /// Input filename.
     pub input_filename: String,
 
-    /// Output filename
+    /// Output filename.
     pub output_filename: String,
 
     /// If we are exporting steps to WAV.
@@ -86,7 +86,7 @@ pub struct ResampleSettings {
     /// Sample rate in Hz to output.
     pub output_rate: u32,
 
-    /// Attenuation in dB for the resampling filter.
+    /// Attenuation in positive dB for the resampling filter.
     pub wav_resample_atten: f32,
 
     /// Transition band width in fractions of pi radians per second for the
@@ -100,7 +100,7 @@ pub struct GuiSettings {
     /// Sample rate to use for intermediate processing when decoding.
     pub work_rate: u32,
 
-    /// Attenuation in dB for the resampling filter used when decoding.
+    /// Attenuation in positive dB for the resampling filter used when decoding.
     pub resample_atten: f32,
 
     /// Transition band width in Hz for the resampling filter used when decoding.
@@ -109,14 +109,16 @@ pub struct GuiSettings {
     /// Cutout frequency in Hz of the resampling filter used when decoding.
     pub resample_cutout: f32,
 
-    /// Attenuation in dB for the demodulation filter used when decoding.
+    /// Attenuation in positive dB for the demodulation filter used when
+    /// decoding.
     pub demodulation_atten: f32,
 
-    /// Attenuation in dB for the resampling filter used when resampling WAV.
+    /// Attenuation in positive dB for the resampling filter used when
+    /// resampling WAV files.
     pub wav_resample_atten: f32,
 
-    /// Transition band width in fractions of pi radians per second for the resamplin
-    /// filter used when resampling WAV.
+    /// Transition band width in fractions of pi radians per second for the
+    /// resampling filter used when resampling WAV files.
     pub wav_resample_delta_freq: f32,
 }
 
@@ -175,9 +177,12 @@ fn load_de_settings() -> DeSettings {
         } else {
 
             let _result = std::fs::create_dir(proj_dirs.config_dir());
-
             if let Ok(mut file) = std::fs::File::create(&filename) {
-                println!("Created default settings file on {:?}", &filename);
+                println!(
+                    "Missing or corrupted settings file, created default \
+                    settings file on {:?}",
+                    &filename,
+                    );
                 file.write_all(default_settings_str.as_bytes())
                     .expect("Could not write to file");
             } else {
@@ -198,12 +203,10 @@ fn load_de_settings() -> DeSettings {
     }
 }
 
-/// Read commandline arguments and de_settings to decide the settings to return
-
-
-/// Get configuration from commandline and settings file
+/// Read commandline arguments and load settings to decide the settings to
+/// return.
 ///
-/// Returns if we should check for updates the verbosity and the mode including
+/// Returns if we should check for updates, the verbosity and the mode including
 /// the settings.
 pub fn get_config() -> (bool, log::Level, Mode) {
 
@@ -277,7 +280,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
     // Decide and merge commandline arguments and settings
 
+    // Select commandline profile, otherwise load default
     let profile: String = profile.unwrap_or(de_settings.profiles.default_profile);
+    // Translate string to struct
     let profile: DeProfile = match profile.as_str() {
         "standard" => de_settings.profiles.standard,
         "fast" => de_settings.profiles.fast,
@@ -302,11 +307,11 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         return (check_updates, verbosity, Mode::Version);
     }
 
-    // If set, then the program will be used as a command-line one, else we open
-    // the GUI
+    // If set, then the program will be used as a command-line one, otherwise we
+    // open the GUI
     if let Some(input_filename) = input_filename {
 
-        // If set, we are resampling, else we are decoding
+        // If set, we are resampling, otherwise we are decoding
         if let Some(rate) = resample_output {
 
             let settings = ResampleSettings {

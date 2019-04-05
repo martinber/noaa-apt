@@ -119,7 +119,7 @@ pub fn main(check_updates: bool, settings: config::GuiSettings) {
     });
     application.connect_activate(|_| {});
 
-    application.run(&args().collect::<Vec<_>>());
+    application.run(&[]);
 }
 
 /// Create empty window and call build_ui().
