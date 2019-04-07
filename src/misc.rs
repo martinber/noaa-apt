@@ -210,40 +210,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn access_denied_across_thread() {
-        let data = 1;
-        let guard = ThreadGuard::new(data);
-
-        thread::spawn(move || {
-            guard.borrow();
-        })
-        .join()
-        .unwrap();
-    }
-
-    #[test]
-    fn access_granted_from_correct_thread() {
-        let data = 1;
-        let guard = ThreadGuard::new(data);
-
-        guard.borrow();
-    }
-
-    #[test]
-    fn can_mutate() {
-        let data = 1;
-        let guard = ThreadGuard::new(data);
-
-        {
-            let mut data = guard.borrow_mut();
-            *data = 4;
-        }
-
-        assert_eq!(*guard.borrow(), 4);
-    }
-
-    #[test]
     fn test_percent() {
 
         use std::iter::Iterator;

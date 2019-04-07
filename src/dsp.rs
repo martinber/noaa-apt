@@ -383,7 +383,7 @@ mod tests {
     fn test_rate_overflow() {
 
         let result = resample_with_filter(
-            &mut Context::resample(|| {}, false, false), // Dummy context, not important
+            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
             &vec![0.0; 1000],
             Rate::hz(99371), // Two primes as sample rates
             Rate::hz(93911),
@@ -403,7 +403,7 @@ mod tests {
     #[test]
     fn test_fast_resampling() {
         let result = fast_resampling(
-            &mut Context::resample(|| {}, false, false), // Dummy context, not important
+            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
             &vec![0.0; 1000], // signal
             3, // l
             2, // m
@@ -420,7 +420,7 @@ mod tests {
     #[test]
     fn test_fast_resampling_short() {
         let result = fast_resampling(
-            &mut Context::resample(|| {}, false, false), // Dummy context, not important
+            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
             &vec![0.0; 100], // signal
             3, // l
             2, // m
