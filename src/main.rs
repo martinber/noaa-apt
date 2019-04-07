@@ -1,5 +1,7 @@
 //! NOAA APT image decoder
 
+#![windows_subsystem = "windows"]
+
 extern crate num;
 extern crate hound;
 extern crate rustfft;
