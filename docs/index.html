@@ -23,25 +23,33 @@ layout: landing
 			</header>
 
 			<p>
-				Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the
-				image. As an example,
+				You can buy a
+				<a href="https://osmocom.org/projects/rtl-sdr/wiki/Rtl-sdr">RTL-SDR</a>
+				for less than 30USD, it looks like a USB drive but it has a connector
+				for antennas. Using SDR software like <em>GQRX</em> and <em>SDR#</em>
+				you can receive FM signals, for example broadcast FM (around 100MHz) or
+				better, APT signals from NOAA satellites (around 137MHz).
+			</p>
+
+			<p>
+				<em>noaa-apt</em> takes a recorded WAV file (from <em>GQRX</em>,
+				<em>SDR#</em>, etc.) and decodes the image. As an example,
 				<a href="{{ site.baseurl }}/examples/argentina.wav">
 					this is a WAV file I recorded using GQRX</a>,
 				using a RTL-SDR and a double cross antenna.
-				When loading that file on noaa-apt, you get as a result
-				<a href="{{ site.baseurl }}/examples/argentina.png">
-					this image</a>.
+				When loading that file on <em>noaa-apt</em>, you get as a result
+				<a href="{{ site.baseurl }}/examples/argentina.png">this image</a>.
 			</p>
 
 			<h3>Why?</h3>
 
 			<p>
-				NOAA satellite reception is cheap and relatively easy. WXtoIMG, the
-				most popular software, it's propietary and
-				<a href="https://www.rtl-sdr.com/notice-wxtoimg-website-down/">no longer maintained</a>.
-				But you can get old recovered versions from an
-				<a href="https://wxtoimgrestored.xyz/">unofficial website</a>. Also,
-				the
+				NOAA satellite reception is fun, cheap and relatively easy. I made
+				<em>noaa-apt</em> because <em>WXtoIMG</em>, the most popular decoding
+				software, it's propietary and
+				<a href="https://www.rtl-sdr.com/notice-wxtoimg-website-down/">no longer maintained</a>,
+				but you can get old recovered versions from an
+				<a href="https://wxtoimgrestored.xyz/">unofficial website</a>. Also, the
 				<a href="{{ site.baseurl }}/guide.html#wxtoimg-guide">
 					steps required to decode WAV files on it
 				</a>

@@ -37,9 +37,8 @@ two things:
 ### Terminal
 
 ```
-$ ./noaa-apt --help
 Usage:
-  ./target/debug/noaa-apt [OPTIONS] [INPUT_FILENAME]
+  noaa-apt [OPTIONS] [INPUT_FILENAME]
 
 Decode NOAA APT images from WAV files. Run without arguments to launch the GUI
 
@@ -65,6 +64,8 @@ Optional arguments:
                         Contrast adjustment method for decode. Possible values:
                         "98_percent", "telemetry" or "disable". 98 Percent used
                         by default.
+  -p,--profile PROFILE  Profile to use, values loaded from settings file.
+                        Possible values: "standard", "fast" or "slow".
   -o,--output FILENAME  Set output path. When decoding images the default is
                         './output.png', when resampling the default is
                         './output.wav'.
@@ -75,7 +76,55 @@ Optional arguments:
 
 ## Advanced settings
 
-TODO
+### Disable syncing
+
+The program aligns the image to sync frames (the black and white stripes),
+disabling can help with some noisy images, see below on
+[Troubleshooting](./usage.html#troubleshooting).
+
+### Contrast adjustment
+
+You can choose between three contrast adjustment methods:
+
+- MinMax: It doesn't do anything, just maps the darkest pixel to black and the
+    brightest pixel to white.
+
+- 98 percent: I don't know how to name it, ignores the darkest 1% of pixels and
+    the brightest 1% of pixels. Something like a percentile, this is the
+    default method.
+
+- From telemetry: Checks the wedges from telemetry bands, those wedges have
+    shades of grey that go from black to white. This method is better than "98
+    percent" but can fail on noisy images.
+
+### Export WAV steps
+
+If enabled, the program will save lots of WAV files, one for each step done on
+the decoding process. I open those files on Audacity for debugging, check if the
+filters are working, etc. The directory where the files are saved is the
+working directory of the program, generally your home folder.
+
+Exporting the "resample filtered" is a very expensive operation, can take
+several GiB of both RAM and disk, so this step is not exported by default and
+has to be enabled separately.
+
+### Profile
+
+Only available as a commandline option, but you can change the default profile
+by editing the [configuration file](./usage.html#configuration-file). On
+Raspberry Pi I recommend using the "fast" profile. If you are having noisy
+images you can try the "slow" profile once just in case, but the "standard"
+profile should always work fine.
+
+### Configuration file
+
+The first time you open noaa-apt, a default configuration file will be created
+on `~/.config/noaa-apt/settings.toml` or
+`C:\Users\[USER]\AppData\Roaming\noaa-apt\settings.toml` depending on your
+operating system.
+
+There you can disable the update check, select the default profile to use (fast,
+standard or slow), or edit those profiles.
 
 ## Troubleshooting
 

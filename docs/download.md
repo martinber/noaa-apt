@@ -8,10 +8,9 @@ layout: main
 You can download everything from the
 [releases page on GitHub](https://github.com/martinber/noaa-apt/releases).
 
-The GUI version has a [window with buttons where you can
-click](./usage.html#gui) but you can [use it from the terminal
-too](./usage.html#terminal). The no-GUI version can be [used only from the
-terminal](./usage.html#terminal).
+The GUI version has an [easy to use interface](./usage.html#gui) but you can
+[use it from the terminal too](./usage.html#terminal). The no-GUI version can be
+[used only from the terminal](./usage.html#terminal).
 
 ### GNU/Linux 64 bit PC
 
@@ -42,10 +41,6 @@ terminal](./usage.html#terminal).
 - [Windows x86_64 zip][x86_64_windows_gnu_zip].
 
 ### Raspberry Pi 2+
-
-Note: Version 0.9.8 currently has a bug where output is truncated on depending
-on the input sample rate. Decode your WAV first to 48000Hz or 20800Hz, don't use
-11025Hz as input sample rate. Other rates may work or not.
 
 - Download the executable with GUI from:
 

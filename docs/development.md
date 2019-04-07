@@ -92,9 +92,9 @@ Notes:
         - Make sure that Rate cant overflow when resampling against strange
             sample rates.
 
-    - Write Usage webpage.
+    - Write Guide webpage.
 
-    - Show panics and errors on GUI. Remove terminal for Windows users.
+    - Show panics and errors on GUI.
 
 - Someday:
 
@@ -293,6 +293,9 @@ to Github and ``version_check`` is just a static file being served using Github
 pages, so currently I'm not logging any information. In the future I won't log
 anything other than the currently installed version.
 
+If you want to disable this you can do it from the
+[configuration file](./usage.html#configuration-file).
+
 ## Misc
 
 - When I tried to UDP stream from GQRX to `localhost` it didn't work, I had to
@@ -308,7 +311,8 @@ anything other than the currently installed version.
 
 ## Acknowledgements
 
-- RTL-SDR.com: For writing a blog post.
+- RTL-SDR.com: For writing
+    [a blog post](https://www.rtl-sdr.com/new-noaa-apt-image-decoder/).
 
 - pietern: I took the AM demodulator from his [apt137 decoder][apt137].
 
