@@ -56,8 +56,8 @@ pub fn resample_wav(
     let writer_spec = hound::WavSpec {
         channels: 1,
         sample_rate: settings.output_rate,
-        bits_per_sample: 32,
-        sample_format: hound::SampleFormat::Float,
+        bits_per_sample: 16,
+        sample_format: hound::SampleFormat::Int,
     };
 
     info!("Writing WAV to '{}'", settings.output_filename);

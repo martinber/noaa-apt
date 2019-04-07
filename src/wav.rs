@@ -60,6 +60,9 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 }
 
 /// Write signal to file.
+///
+/// Only works for 32 bit float and 16 bit integer. As an input this function
+/// takes always a `Signal` but converts samples according to the WAV specs.
 pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::Result<()> {
 
     debug!("Normalizing samples and writing WAV to '{}'", filename);
@@ -71,9 +74,29 @@ pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::
 
     let mut writer = hound::WavWriter::create(filename, spec)?;
 
-    for sample in signal.iter() {
-        writer.write_sample(*sample / max)?;
+    if spec.bits_per_sample == 32
+        && spec.sample_format == hound::SampleFormat::Float
+    {
+        for sample in signal.iter() {
+            writer.write_sample(*sample / max)?;
+        }
     }
+    else if spec.bits_per_sample == 16
+        && spec.sample_format == hound::SampleFormat::Int
+    {
+        for sample in signal.iter() {
+            writer.write_sample(
+                (*sample / max * (i16::max_value() as f32)) as i16
+            )?;
+        }
+    }
+    else
+    {
+        return Err(err::Error::Internal(
+            format!("Can't write WAV with spec {:?}", spec)
+        ));
+    }
+
     writer.finalize()?;
 
     debug!("Finished writing WAV");
