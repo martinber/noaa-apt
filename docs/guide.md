@@ -143,7 +143,8 @@ Here you can see a screenshot of GQRX, things to note:
 
 If you want to decode your WAV file on WXtoIMG:
 
-- Resample the recording to 11025Hz.
+- Resample the recording to 11025Hz,
+    [you can use noaa-apt for that](./usage.html).
 
 - Enable _Expert mode_, on _Options > GUI Options_.
 

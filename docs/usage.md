@@ -22,15 +22,17 @@ Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 When loading audio files with more than one channel (stereo), only the first one
 is used.
 
+When using a Raspberry Pi, I recommend the "fast" profile, you can enable it
+using `-p fast` or editing the
+[configuration file](./usage.html#configuration-file).
+
 ### GUI
 
-Run by clicking the executable, or from terminal without arguments. You can do
-two things:
+Run by clicking the executable, or from terminal without arguments.
 
-- Decode a WAV file into a PNG.
-
-- Resample a WAV into another WAV, this is useful if you want to try a program
-  like [atp-dec/apt-dec] that requires a specific sample rate.
+On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
+useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
+requires a specific sample rate.
 
 ![GUI]({{ site.baseurl }}/images/gui.png)
 

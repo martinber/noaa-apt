@@ -306,8 +306,8 @@ If you want to disable this you can do it from the
     `/build/generate_windows_icon.sh`.
 
 - Decode of `argentina.wav` on Raspberry Pi took approx 36s with WXtoImg
-    (pristine, no map, no despeckle) and 1:30s with noaa-apt. Something like 3X
-    slower.
+    (pristine, no map, no despeckle) and 46s with noaa-apt using the fast
+    profile.
 
 ## Acknowledgements
 

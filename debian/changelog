@@ -1,3 +1,17 @@
+noaa-apt (1.0.0-1) testing; urgency=medium
+
+  * Fixed truncation issues on Raspberry Pi and 32 bit systems.
+  * GUI redesign, including a progress bar.
+  * Improved performance.
+  * Added settings.toml and different profiles, so now most constants can be
+    edited.
+  * Hide terminal window on Windows.
+  * Export WAV as 16 bit integer when resampling so it can be used on WXtoIMG.
+  * Added checks against overflows when using strange sample rates.
+  * Added static OpenSSL as a Cargo feature.
+
+ -- Martin Bernardi <mbernardi@mbernardi-pc>  Sun, 07 Apr 2019 22:48:20 -0300
+
 noaa-apt (0.9.8-1) testing; urgency=medium
 
   * Automatic contrast adjustment.
