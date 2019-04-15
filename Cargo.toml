@@ -15,7 +15,6 @@ overflow-checks = true
 [features]
 default = ["gui"]
 gui = ["gtk", "gdk", "gio", "glib"]
-static_ssl = ["openssl/vendored"]
 
 [dependencies]
 num = "*"
@@ -30,7 +29,6 @@ reqwest = "*"
 directories = "*"
 toml = "*"
 serde = { version = "*", features = ["derive"] }
-openssl = "0.10"
 
 gtk = { version = "0.6.0", optional = true, features = ["v3_16"] }
 gdk = { version = "0.10.0", optional = true }

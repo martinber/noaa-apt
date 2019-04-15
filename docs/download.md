@@ -20,7 +20,7 @@ The GUI version has an [easy to use interface](./usage.html#gui) but you can
 
     [GNU/Linux x86_64 .deb package][amd64_deb].
 
-    Install it by running `sudo apt install ~/Downloads/noaa-apt_0.9.8-1_amd64.deb`.
+    Install it by running `sudo apt install ~/Downloads/noaa-apt_X.X.X-1_amd64.deb`.
 
 - If you are not going to use the GUI you can download the no-GUI executable from:
 
