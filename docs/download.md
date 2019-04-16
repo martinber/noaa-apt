@@ -38,10 +38,6 @@ The GUI version has an [easy to use interface](./usage.html#gui) but you can
 
 ### Windows 64 bit PC
 
-Right now you can download version 0.9.8 instead of 1.0.0.
-[I'm having problems building the binaries](https://github.com/gtk-rs/gtk/issues/794),
-sorry, I'm working on it.
-
 - [Windows x86_64 zip][x86_64_windows_gnu_zip].
 
 ### Raspberry Pi 2+
@@ -77,7 +73,7 @@ My builds use a statically linked libssl, so you don't need libssl unless you
 compiled noaa-apt yourself.
 
 [amd64_deb]: https://github.com/martinber/noaa-apt/releases/download/v1.0.0/noaa-apt_1.0.0-1_amd64.deb
-[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v0.9.8/noaa-apt-0.9.8-x86_64-windows-gnu.zip
+[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.0.0/noaa-apt-1.0.0-x86_64-windows-gnu.zip
 [x86_64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.0.0/noaa-apt-1.0.0-x86_64-linux-gnu.zip
 [x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.0.0/noaa-apt-1.0.0-x86_64-linux-gnu-nogui.zip
 [armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.0.0/noaa-apt-1.0.0-armv7-linux-gnueabihf.zip
