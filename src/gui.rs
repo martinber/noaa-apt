@@ -109,7 +109,7 @@ struct WidgetList {
 /// Build the window.
 pub fn main(check_updates: bool, settings: config::GuiSettings) {
     let application = gtk::Application::new(
-        "ar.com.mbernardi.noaa-apt",
+        Some("ar.com.mbernardi.noaa-apt"),
         gio::ApplicationFlags::empty(),
     ).expect("Initialization failed");
 
@@ -248,7 +248,7 @@ fn build_ui(
 
     // Set progress_bar and start_button to ready
 
-    widgets.progress_bar.set_text("Ready");
+    widgets.progress_bar.set_text(Some("Ready"));
     widgets.start_button.set_sensitive(true);
 
     if check_updates {
@@ -270,7 +270,7 @@ fn build_ui(
                 ("Cancel", gtk::ResponseType::Cancel.into()),
             ]);
 
-            if file_chooser.run() == Into::<i32>::into(gtk::ResponseType::Ok) {
+            if file_chooser.run() == gtk::ResponseType::Ok {
                 let filename = file_chooser.get_filename()
                     .expect("Couldn't get filename");
 
@@ -325,16 +325,16 @@ fn build_system_menu(
     let help_menu = gio::Menu::new();
     let tools_menu = gio::Menu::new();
 
-    tools_menu.append("_Decode", "app.decode");
-    tools_menu.append("_Resample WAV", "app.resample");
-    menu_bar.append_submenu("_Tools", &tools_menu);
+    tools_menu.append(Some("_Decode"), Some("app.decode"));
+    tools_menu.append(Some("_Resample WAV"), Some("app.resample"));
+    menu_bar.append_submenu(Some("_Tools"), &tools_menu);
 
-    help_menu.append("_Usage", "app.usage");
-    help_menu.append("_Guide", "app.guide");
-    help_menu.append("_About", "app.about");
-    menu_bar.append_submenu("_Help", &help_menu);
+    help_menu.append(Some("_Usage"), Some("app.usage"));
+    help_menu.append(Some("_Guide"), Some("app.guide"));
+    help_menu.append(Some("_About"), Some("app.about"));
+    menu_bar.append_submenu(Some("_Help"), &help_menu);
 
-    application.set_menubar(&menu_bar);
+    application.set_menubar(Some(&menu_bar));
 
     // Add actions to buttons
 
@@ -368,7 +368,7 @@ fn build_system_menu(
     let w = window.clone();
     usage.connect_activate(move |_, _| {
         gtk::show_uri(
-            &w.get_screen(),
+            w.get_screen().as_ref(),
             "https://noaa-apt.mbernardi.com.ar/usage.html",
             gtk::get_current_event_time(),
         ).expect("Failed to open usage webpage");
@@ -379,7 +379,7 @@ fn build_system_menu(
     let w = window.clone();
     guide.connect_activate(move |_, _| {
         gtk::show_uri(
-            &w.get_screen(),
+            w.get_screen().as_ref(),
             "https://noaa-apt.mbernardi.com.ar/guide.html",
             gtk::get_current_event_time(),
         ).expect("Failed to open guide webpage");
@@ -390,7 +390,7 @@ fn build_system_menu(
     about.connect_activate(|_, _| {
         let dialog = gtk::AboutDialog::new();
         dialog.set_program_name("noaa-apt");
-        dialog.set_version(VERSION);
+        dialog.set_version(Some(VERSION));
         dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
         dialog.set_website_label(Some("noaa-apt website"));
         dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
@@ -581,7 +581,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 fn set_progress(fraction: f32, description: String) {
     borrow_widgets(|widgets| {
         widgets.progress_bar.set_fraction(fraction as f64);
-        widgets.progress_bar.set_text(description.as_str());
+        widgets.progress_bar.set_text(Some(description.as_str()));
     });
 }
 
