@@ -1,6 +1,6 @@
 [package]
 name = "noaa-apt"
-version = "1.0.0"
+version = "1.0.1-dev"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 build = "src/build.rs"
 
@@ -36,3 +36,6 @@ gtk = { git = "https://github.com/EPashkin/gtk.git", branch = "fontchooserlevel_
 gdk = { git = "https://github.com/gtk-rs/gdk.git", optional = true }
 gio = { git = "https://github.com/gtk-rs/gio.git", optional = true }
 glib = { git = "https://github.com/gtk-rs/glib.git", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["shellapi"] }

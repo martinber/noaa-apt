@@ -367,22 +367,16 @@ fn build_system_menu(
     let usage = gio::SimpleAction::new("usage", None);
     let w = window.clone();
     usage.connect_activate(move |_, _| {
-        gtk::show_uri(
-            w.get_screen().as_ref(),
-            "https://noaa-apt.mbernardi.com.ar/usage.html",
-            gtk::get_current_event_time(),
-        ).expect("Failed to open usage webpage");
+        open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/usage.html")
+            .expect("Failed to open usage webpage");
     });
     application.add_action(&usage);
 
     let guide = gio::SimpleAction::new("guide", None);
     let w = window.clone();
     guide.connect_activate(move |_, _| {
-        gtk::show_uri(
-            w.get_screen().as_ref(),
-            "https://noaa-apt.mbernardi.com.ar/guide.html",
-            gtk::get_current_event_time(),
-        ).expect("Failed to open guide webpage");
+        open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/guide.html")
+            .expect("Failed to open usage webpage");
     });
     application.add_action(&guide);
 
@@ -638,4 +632,47 @@ fn check_updates_and_show() {
     std::thread::spawn(move || {
         callback(misc::check_updates(VERSION));
     });
+}
+
+/// Open webpage in browser.
+///
+/// GTK provides `gtk::show_uri` but it only works for `http://` targets when
+/// gvfs is present on the system. So in Windows I use the Windows API through
+/// the `winapi` crate.
+///
+/// `url` should include `http://`.
+///
+/// References:
+/// - https://github.com/gameblabla/pokemini/blob/37e3324ebf481a5f6ece725ae5c052332e3b84d1/sourcex/HelpSupport.c
+/// - https://gitlab.com/varasev/parity-ethereum/blob/0a170efaa5ee9a1df824630db2a997ad52f6ef57/parity/url.rs
+/// - https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
+fn open_in_browser(window: &gtk::ApplicationWindow, url: &str) -> err::Result<()> {
+
+    #[cfg(windows)]
+    {
+        use std::ffi::CString;
+        use std::ptr;
+
+        unsafe {
+            winapi::um::shellapi::ShellExecuteA(
+                ptr::null_mut(), // Window
+                CString::new("open").unwrap().as_ptr(), // Action
+                CString::new(url).unwrap().as_ptr(), // URL
+                ptr::null_mut(), // Parameters
+                ptr::null_mut(), // Working directory
+                winapi::um::winuser::SW_SHOWNORMAL // How to show the window
+            );
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(windows))]
+    {
+        gtk::show_uri(
+            window.get_screen().as_ref(),
+            url,
+            gtk::get_current_event_time(),
+        ).or(Err(err::Error::Internal("Could not open browser".to_string())))
+    }
 }

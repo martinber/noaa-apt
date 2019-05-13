@@ -85,6 +85,13 @@ Notes:
       compiling for GNU/Linux (and give the `openssl/vendored` feature to it).
       When compiling for Windows I have to remove the `openssl` dependency.
 
+    - Log everything to a file, especially for Windows since it doesn't have a
+      console to see output.
+
+    - Fix email and website link on About dialog on Windows.
+
+    - Explain on website that command window on Windows is invisible.
+
     - Add warnings for short images when reading telemetry.
 
     - Check things that can panic/can fail:
