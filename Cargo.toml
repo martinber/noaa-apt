@@ -15,7 +15,7 @@ overflow-checks = true
 [features]
 default = ["gui"]
 gui = ["gtk", "gdk", "gio", "glib"]
-# static_ssl = ["openssl/vendored"]
+static_ssl = ["openssl/vendored"] # Not valid for Windows
 
 [dependencies]
 num = "*"
@@ -30,9 +30,14 @@ reqwest = "*"
 directories = "*"
 toml = "*"
 serde = { version = "*", features = ["derive"] }
-# openssl = "0.10"
 
-gtk = { git = "https://github.com/EPashkin/gtk.git", branch = "fontchooserlevel_version", optional = true, features = ["v3_16"] }
+# openssl is a indirect dependency because of reqwest, I have to add openssl as
+# a direct dependency if I want to enable the "vendored" feature, but for
+# Windows it breaks the build. Looks like adding it as an optional dependency is
+# working for both cases
+openssl = { version = "0.10", optional = true }
+
+gtk = { git = "https://github.com/gtk-rs/gtk.git", optional = true, features = ["v3_16"] }
 gdk = { git = "https://github.com/gtk-rs/gdk.git", optional = true }
 gio = { git = "https://github.com/gtk-rs/gio.git", optional = true }
 glib = { git = "https://github.com/gtk-rs/glib.git", optional = true }

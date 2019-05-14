@@ -80,11 +80,6 @@ Notes:
     - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
       crates.io instead of git.
 
-    - Also try adding `openssl` as an optional dependency to be enabled when the
-      `static_ssl` feature is used. I need to add `openssl` as dependency when
-      compiling for GNU/Linux (and give the `openssl/vendored` feature to it).
-      When compiling for Windows I have to remove the `openssl` dependency.
-
     - Log everything to a file, especially for Windows since it doesn't have a
       console to see output.
 
