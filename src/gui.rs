@@ -391,6 +391,17 @@ fn build_system_menu(
         dialog.set_license_type(gtk::License::Gpl30);
         dialog.set_title("About noaa-apt");
         // dialog.set_transient_for(Some(&window)); // Not working?
+
+        // Override links on Windows, by default GTK uses `show_uri_on_window`, see
+        // documentation on `open_in_browser`
+        #[cfg(windows)]
+        {
+            dialog.connect_activate_link(|dialog, url| {
+                open_in_browser(dialog, url).expect("Failed to open link");
+                return gtk::Inhibit(true); // Override `show_uri_on_window`
+            });
+        }
+
         dialog.run();
         dialog.destroy();
     });
@@ -646,8 +657,10 @@ fn check_updates_and_show() {
 /// - https://github.com/gameblabla/pokemini/blob/37e3324ebf481a5f6ece725ae5c052332e3b84d1/sourcex/HelpSupport.c
 /// - https://gitlab.com/varasev/parity-ethereum/blob/0a170efaa5ee9a1df824630db2a997ad52f6ef57/parity/url.rs
 /// - https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
-fn open_in_browser(window: &gtk::ApplicationWindow, url: &str) -> err::Result<()> {
-
+#[allow(unused_variables)]
+fn open_in_browser<W>(window: &W, url: &str) -> err::Result<()>
+where W: gtk::IsA<gtk::Window>
+{
     #[cfg(windows)]
     {
         use std::ffi::CString;
@@ -670,7 +683,7 @@ fn open_in_browser(window: &gtk::ApplicationWindow, url: &str) -> err::Result<()
     #[cfg(not(windows))]
     {
         gtk::show_uri(
-            window.get_screen().as_ref(),
+            window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
             url,
             gtk::get_current_event_time(),
         ).or(Err(err::Error::Internal("Could not open browser".to_string())))
