@@ -12,6 +12,7 @@ extern crate argparse;
 extern crate reqwest;
 extern crate directories;
 extern crate toml;
+extern crate filetime;
 extern crate serde;
 #[cfg_attr(test, macro_use)] extern crate approx;
 #[cfg(feature = "gui")] extern crate gtk;

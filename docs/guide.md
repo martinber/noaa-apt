@@ -165,10 +165,10 @@ If you want map overlay:
     should be the moment of the end of the pass. Check with `stat file.wav`.
 
     - Generally you just have to copy the timestamp from the old file to the new
-      one using: `touch -r original_file.wav resampled_file.wav`.
+        one using: `touch -r original_file.wav resampled_file.wav`.
 
     - You can also set any timestamp you want with
-    `touch -d "2019-01-31 18:31:20.579283000" resampled_file.wav`.
+       `touch -d "2019-01-31 18:31:20.579283000" resampled_file.wav`.
 
 - Uncheck _Options > Disable map overlay_.
 

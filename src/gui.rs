@@ -39,11 +39,12 @@ use dsp::Rate;
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// If the user wants to decode or resample.
+/// If the user wants to decode, resample or change timestamps.
 #[derive(Debug, Clone, Copy)]
 enum Mode {
     Decode,
     Resample,
+    Timestamp,
 }
 
 // Stores the WidgetList.
@@ -90,7 +91,7 @@ struct WidgetList {
     window:                gtk::ApplicationWindow,
     outer_box:             gtk::Box,
     main_box:              gtk::Box,
-    progress_bar:          gtk::ProgressBar,
+    progress_bar:          Option<gtk::ProgressBar>,
     start_button:          gtk::Button,
     info_bar:              gtk::InfoBar,
     info_label:            gtk::Label,
@@ -99,8 +100,8 @@ struct WidgetList {
     rate_spinner:          Option<gtk::SpinButton>,
     input_file_chooser:    gtk::FileChooserButton,
     sync_check:            Option<gtk::CheckButton>,
-    wav_steps_check:       gtk::CheckButton,
-    resample_step_check:   gtk::CheckButton,
+    wav_steps_check:       Option<gtk::CheckButton>,
+    resample_step_check:   Option<gtk::CheckButton>,
     contrast_combo:        Option<gtk::ComboBoxText>,
 }
 
@@ -147,7 +148,8 @@ fn create_window(
 
 /// Build GUI.
 ///
-/// Loads GUI from glade file depending if decoding or resampling
+/// Loads GUI from glade file depending if decoding, resampling or changing
+/// timestamps.
 fn build_ui(
     check_updates: bool,
     settings: config::GuiSettings,
@@ -168,11 +170,15 @@ fn build_ui(
     let builder = match mode {
         Mode::Decode => Builder::new_from_string(include_str!("decode.glade")),
         Mode::Resample => Builder::new_from_string(include_str!("resample.glade")),
+        Mode::Timestamp => Builder::new_from_string(include_str!("timestamp.glade")),
     };
 
     let rate_spinner;
     let sync_check;
     let contrast_combo;
+    let progress_bar;
+    let wav_steps_check;
+    let resample_step_check;
     match mode {
         Mode::Decode => {
             rate_spinner = None;
@@ -180,13 +186,33 @@ fn build_ui(
                 .expect("Couldn't get sync_check"));
             contrast_combo = Some(builder.get_object("contrast_combo")
                 .expect("Couldn't get contrast_combo"));
+            progress_bar = Some(builder.get_object("progress_bar")
+                .expect("Couldn't get progress_bar"));
+            wav_steps_check = Some(builder.get_object("wav_steps_check")
+                .expect("Couldn't get wav_steps_check"));
+            resample_step_check = Some(builder.get_object("resample_step_check")
+                .expect("Couldn't get resample_step_check"));
         },
         Mode::Resample => {
             rate_spinner = Some(builder.get_object("rate_spinner")
                 .expect("Couldn't get sync_check"));
             sync_check = None;
             contrast_combo = None;
+            progress_bar = Some(builder.get_object("progress_bar")
+                .expect("Couldn't get progress_bar"));
+            wav_steps_check = Some(builder.get_object("wav_steps_check")
+                .expect("Couldn't get wav_steps_check"));
+            resample_step_check = Some(builder.get_object("resample_step_check")
+                .expect("Couldn't get resample_step_check"));
         },
+        Mode::Timestamp => {
+            rate_spinner = None;
+            sync_check = None;
+            contrast_combo = None;
+            progress_bar = None;
+            wav_steps_check = None;
+            resample_step_check = None;
+        }
     };
 
     let widgets = WidgetList {
@@ -200,12 +226,12 @@ fn build_ui(
         sync_check,
         contrast_combo,
         main_box:            builder.get_object("main_box"           ).expect("Couldn't get main_box"           ),
-        progress_bar:        builder.get_object("progress_bar"       ).expect("Couldn't get progress_bar"       ),
+        progress_bar,
         start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
         output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
         input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
-        wav_steps_check:     builder.get_object("wav_steps_check"    ).expect("Couldn't get wav_steps_check"    ),
-        resample_step_check: builder.get_object("resample_step_check").expect("Couldn't get resample_step_check"),
+        wav_steps_check,
+        resample_step_check,
     };
 
     // Add info_bar
@@ -246,10 +272,15 @@ fn build_ui(
 
     info!("GUI opened: {:?}", mode);
 
-    // Set progress_bar and start_button to ready
+    // Set progress_bar and buttons to ready
 
-    widgets.progress_bar.set_text(Some("Ready"));
+    if let Some(progress_bar) = widgets.progress_bar {
+        progress_bar.set_text(Some("Ready"));
+    }
     widgets.start_button.set_sensitive(true);
+    //if let Some(button) = widgets.start_button {
+        //button.set_sensitive(true);
+    //}
 
     if check_updates {
         check_updates_and_show();
@@ -283,18 +314,24 @@ fn build_ui(
 
     // Connect start button
 
-    let settings_clone = settings.clone();
-    widgets.start_button.connect_clicked(move |_| {
-        borrow_widgets(|widgets| {
-            widgets.info_revealer.set_reveal_child(false);
+    if let Mode::Timestamp = mode {
 
-            run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
-                show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
-                error!("{}", error);
-                widgets.start_button.set_sensitive(true);
+
+    } else {
+
+        let settings_clone = settings.clone();
+        widgets.start_button.connect_clicked(move |_| {
+            borrow_widgets(|widgets| {
+                widgets.info_revealer.set_reveal_child(false);
+
+                run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
+                    show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
+                    error!("{}", error);
+                    widgets.start_button.set_sensitive(true);
+                });
             });
         });
-    });
+    }
 
     // Finish and show
 
@@ -327,6 +364,7 @@ fn build_system_menu(
 
     tools_menu.append(Some("_Decode"), Some("app.decode"));
     tools_menu.append(Some("_Resample WAV"), Some("app.resample"));
+    tools_menu.append(Some("_Timestamp WAV"), Some("app.timestamp"));
     menu_bar.append_submenu(Some("_Tools"), &tools_menu);
 
     help_menu.append(Some("_Usage"), Some("app.usage"));
@@ -345,11 +383,6 @@ fn build_system_menu(
     decode.connect_activate(move |_, _| {
         build_ui(check_updates, s.clone(), Mode::Decode, &a, &w);
     });
-    if let Mode::Resample = mode {
-        application.add_action(&decode);
-    } else {
-        application.remove_action("decode");
-    }
 
     let resample = gio::SimpleAction::new("resample", None);
     let w = window.clone();
@@ -358,10 +391,22 @@ fn build_system_menu(
     resample.connect_activate(move |_, _| {
         build_ui(check_updates, s.clone(), Mode::Resample, &a, &w);
     });
-    if let Mode::Decode = mode {
-        application.add_action(&resample);
-    } else {
-        application.remove_action("resample");
+
+    let timestamp = gio::SimpleAction::new("timestamp", None);
+    let w = window.clone();
+    let a = application.clone();
+    let s = settings.clone();
+    timestamp.connect_activate(move |_, _| {
+        build_ui(check_updates, s.clone(), Mode::Timestamp, &a, &w);
+    });
+
+    application.add_action(&decode);
+    application.add_action(&resample);
+    application.add_action(&timestamp);
+    match mode {
+        Mode::Decode => application.remove_action("decode"),
+        Mode::Resample => application.remove_action("resample"),
+        Mode::Timestamp => application.remove_action("timestamp"),
     }
 
     let usage = gio::SimpleAction::new("usage", None);
@@ -481,15 +526,24 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
             return Err(err::Error::Internal("Select output filename".to_string()))
         }
 
-        let wav_steps = widgets.wav_steps_check.get_active();
-        let resample_step = widgets.resample_step_check.get_active();
-
         match mode {
             Mode::Decode => {
                 let sync = widgets
                     .clone() // Why I need this clone()?
                     .sync_check
                     .expect("Couldn't get sync_check")
+                    .get_active();
+
+                let wav_steps = widgets
+                    .clone() // Why I need this clone()?
+                    .wav_steps_check
+                    .expect("Couldn't get wav_steps_check")
+                    .get_active();
+
+                let resample_step = widgets
+                    .clone() // Why I need this clone()?
+                    .resample_step_check
+                    .expect("Couldn't get resample_step_check")
                     .get_active();
 
                 // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
@@ -542,6 +596,8 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                         settings,
                     ));
                 });
+
+                Ok(())
             },
             Mode::Resample => {
                 let rate = widgets
@@ -549,6 +605,18 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     .rate_spinner
                     .expect("Couldn't get rate_spinner")
                     .get_value_as_int() as u32;
+
+                let wav_steps = widgets
+                    .clone() // Why I need this clone()?
+                    .wav_steps_check
+                    .expect("Couldn't get wav_steps_check")
+                    .get_active();
+
+                let resample_step = widgets
+                    .clone() // Why I need this clone()?
+                    .resample_step_check
+                    .expect("Couldn't get resample_step_check")
+                    .get_active();
 
                 debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
 
@@ -575,18 +643,27 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                         settings,
                     ));
                 });
-            },
-        };
 
-        Ok(())
+                Ok(())
+            },
+            Mode::Timestamp => {
+                Err(err::Error::Internal(
+                    format!("Unexpected mode 'Timestamp'")
+                ))
+            },
+        }
     })
 }
 
 /// Set progress of ProgressBar
 fn set_progress(fraction: f32, description: String) {
     borrow_widgets(|widgets| {
-        widgets.progress_bar.set_fraction(fraction as f64);
-        widgets.progress_bar.set_text(Some(description.as_str()));
+        let progress_bar = widgets
+            .clone()
+            .progress_bar
+            .expect("Couldn't get progress_bar");
+        progress_bar.set_fraction(fraction as f64);
+        progress_bar.set_text(Some(description.as_str()));
     });
 }
 
