@@ -856,6 +856,7 @@ version = "1.0.1-dev"
 dependencies = [
  "approx 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "argparse 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "directories 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "filetime 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdk 0.10.0 (git+https://github.com/gtk-rs/gdk.git)",

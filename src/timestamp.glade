@@ -118,7 +118,7 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="halign">start</property>
-        <property name="label" translatable="yes">Modification date and time:</property>
+        <property name="label" translatable="yes">Modification date and time to write:</property>
       </object>
       <packing>
         <property name="expand">False</property>
@@ -139,7 +139,7 @@
             <property name="halign">center</property>
             <property name="spacing">5</property>
             <child>
-              <object class="GtkSpinButton" id="hour_spin">
+              <object class="GtkSpinButton" id="hour_spinner">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="orientation">vertical</property>
@@ -167,7 +167,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSpinButton" id="minute_spin">
+              <object class="GtkSpinButton" id="minute_spinner">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="orientation">vertical</property>
@@ -195,7 +195,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSpinButton" id="second_spin">
+              <object class="GtkSpinButton" id="second_spinner">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="orientation">vertical</property>

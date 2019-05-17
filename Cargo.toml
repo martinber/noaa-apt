@@ -30,6 +30,7 @@ reqwest = "*"
 directories = "*"
 toml = "*"
 filetime = "*"
+chrono = "*"
 serde = { version = "*", features = ["derive"] }
 
 # openssl is a indirect dependency because of reqwest, I have to add openssl as

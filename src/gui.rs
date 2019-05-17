@@ -20,6 +20,7 @@
 //! back.
 
 use std::cell::RefCell;
+use std::fs;
 
 use gtk;
 use gio;
@@ -27,6 +28,9 @@ use glib;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
+use filetime;
+use chrono;
+use chrono::prelude::*;
 
 use err;
 use noaa_apt::{self, Contrast};
@@ -103,6 +107,11 @@ struct WidgetList {
     wav_steps_check:       Option<gtk::CheckButton>,
     resample_step_check:   Option<gtk::CheckButton>,
     contrast_combo:        Option<gtk::ComboBoxText>,
+    read_button:           Option<gtk::Button>,
+    hour_spinner:          Option<gtk::SpinButton>,
+    minute_spinner:        Option<gtk::SpinButton>,
+    second_spinner:        Option<gtk::SpinButton>,
+    calendar:              Option<gtk::Calendar>,
 }
 
 /// Start GUI.
@@ -179,6 +188,11 @@ fn build_ui(
     let progress_bar;
     let wav_steps_check;
     let resample_step_check;
+    let read_button;
+    let hour_spinner;
+    let minute_spinner;
+    let second_spinner;
+    let calendar;
     match mode {
         Mode::Decode => {
             rate_spinner = None;
@@ -192,6 +206,11 @@ fn build_ui(
                 .expect("Couldn't get wav_steps_check"));
             resample_step_check = Some(builder.get_object("resample_step_check")
                 .expect("Couldn't get resample_step_check"));
+            read_button = None;
+            hour_spinner = None;
+            minute_spinner = None;
+            second_spinner = None;
+            calendar = None;
         },
         Mode::Resample => {
             rate_spinner = Some(builder.get_object("rate_spinner")
@@ -204,6 +223,11 @@ fn build_ui(
                 .expect("Couldn't get wav_steps_check"));
             resample_step_check = Some(builder.get_object("resample_step_check")
                 .expect("Couldn't get resample_step_check"));
+            read_button = None;
+            hour_spinner = None;
+            minute_spinner = None;
+            second_spinner = None;
+            calendar = None;
         },
         Mode::Timestamp => {
             rate_spinner = None;
@@ -212,6 +236,16 @@ fn build_ui(
             progress_bar = None;
             wav_steps_check = None;
             resample_step_check = None;
+            read_button = Some(builder.get_object("read_button")
+                .expect("Couldn't get read_button"));
+            hour_spinner = Some(builder.get_object("hour_spinner")
+                .expect("Couldn't get hour_spinner"));
+            minute_spinner = Some(builder.get_object("minute_spinner")
+                .expect("Couldn't get minute_spinner"));
+            second_spinner = Some(builder.get_object("second_spinner")
+                .expect("Couldn't get second_spinner"));
+            calendar = Some(builder.get_object("calendar")
+                .expect("Couldn't get calendar"));
         }
     };
 
@@ -232,6 +266,11 @@ fn build_ui(
         input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
         wav_steps_check,
         resample_step_check,
+        read_button,
+        hour_spinner,
+        minute_spinner,
+        second_spinner,
+        calendar,
     };
 
     // Add info_bar
@@ -274,7 +313,7 @@ fn build_ui(
 
     // Set progress_bar and buttons to ready
 
-    if let Some(progress_bar) = widgets.progress_bar {
+    if let Some(progress_bar) = widgets.progress_bar.as_ref() {
         progress_bar.set_text(Some("Ready"));
     }
     widgets.start_button.set_sensitive(true);
@@ -316,6 +355,22 @@ fn build_ui(
 
     if let Mode::Timestamp = mode {
 
+        let widgets_clone = widgets.clone();
+        widgets.start_button.connect_clicked(move |_| {
+            if let Err(error) = write_timestamp() {
+                show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
+                error!("{}", error);
+            }
+        });
+        let widgets_clone = widgets.clone();
+        widgets.read_button.expect("Couldn't get read_button")
+            .connect_clicked(move |_|
+        {
+            if let Err(error) = read_timestamp() {
+                show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
+                error!("{}", error);
+            }
+        });
 
     } else {
 
@@ -529,27 +584,27 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
         match mode {
             Mode::Decode => {
                 let sync = widgets
-                    .clone() // Why I need this clone()?
                     .sync_check
+                    .as_ref()
                     .expect("Couldn't get sync_check")
                     .get_active();
 
                 let wav_steps = widgets
-                    .clone() // Why I need this clone()?
                     .wav_steps_check
+                    .as_ref()
                     .expect("Couldn't get wav_steps_check")
                     .get_active();
 
                 let resample_step = widgets
-                    .clone() // Why I need this clone()?
                     .resample_step_check
+                    .as_ref()
                     .expect("Couldn't get resample_step_check")
                     .get_active();
 
                 // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
                 let contrast_adjustment: Contrast = match widgets
-                    .clone() // Why I need this clone()?
                     .contrast_combo
+                    .as_ref()
                     .expect("Couldn't get contrast_combo")
                     .get_active_text()
                     .as_ref()
@@ -655,12 +710,118 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
     })
 }
 
+fn read_timestamp() -> err::Result<()> {
+    borrow_widgets(|widgets| {
+
+        let calendar = widgets.calendar.as_ref().expect("Couldn't get calendar");
+        let hour_spinner = widgets.hour_spinner.as_ref().expect("Couldn't get hour_spinner");
+        let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
+        let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
+
+        let input_filename: String = widgets
+            .input_file_chooser
+            .get_filename() // Option<std::path::PathBuf>
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
+            .and_then(|path: std::path::PathBuf| {
+                 path.to_str()
+                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
+                     .map(|s: &str| s.to_string())
+            })?;
+
+        let metadata = fs::metadata(input_filename.as_str())
+            .map_err(|_| err::Error::Internal(
+                "Could not read metadata from input file".to_string()
+            ))?;
+
+        // Read modification timestamp from file. The filetime library returns
+        // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
+        // nanoseconds precision.
+        // I use the chrono library to convert seconds to date and time.
+        // As far as I know the unix_seconds are relative to 0:00:00hs UTC, then
+        // if I use chrono::Local I'm going to get time relative to my timezone.
+        let unix_seconds =
+            filetime::FileTime::from_last_modification_time(&metadata)
+            .unix_seconds();
+        let datetime = chrono::Local.timestamp(unix_seconds, 0);
+        println!("Zona: UTC {}", datetime.format("%:z"));
+
+        // GTK counts months from 0 to 11. Years and days are fine
+        calendar.select_month(datetime.month0() as u32, datetime.year() as u32);
+        calendar.select_day(datetime.day());
+        hour_spinner.set_value(datetime.hour() as f64);
+        minute_spinner.set_value(datetime.minute() as f64);
+        second_spinner.set_value(datetime.second() as f64);
+
+        Ok(())
+    })
+}
+
+fn write_timestamp() -> err::Result<()> {
+    borrow_widgets(|widgets| {
+
+        let calendar = widgets.calendar.as_ref().expect("Couldn't get calendar");
+        let hour_spinner = widgets.hour_spinner.as_ref().expect("Couldn't get hour_spinner");
+        let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
+        let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
+
+        let output_filename: String = widgets
+            .output_entry
+            .get_text()
+            .expect("Couldn't get decode_output_entry text")
+            .as_str()
+            .to_string();
+
+        let hour = hour_spinner.get_value_as_int();
+        let minute = minute_spinner.get_value_as_int();
+        let second = second_spinner.get_value_as_int();
+        let (year, month, day) = calendar.get_date();
+
+        println!(
+            "{}, {}, {}, {}, {}, {}",
+            year, month, day,
+            hour, minute, second,
+        );
+
+        // Write modification timestamp to file. The filetime library uses
+        // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
+        // nanoseconds precision.
+        // I use the chrono library to convert date and time to timestamp.
+        // As far as I know the timestamp unix_seconds will be relative to
+        // 0:00:00hs UTC.
+
+        // GTK counts months from 0 to 11. Years and days are fine
+        let datetime = match chrono::Local
+            .ymd_opt(year as i32, month + 1, day)
+            .and_hms_opt(hour as u32, minute as u32, second as u32)
+        {
+            chrono::offset::LocalResult::None =>
+                Err(err::Error::Internal("Invalid date or time".to_string())),
+            chrono::offset::LocalResult::Single(dt) =>
+                Ok(dt),
+            chrono::offset::LocalResult::Ambiguous(_, _) =>
+                Err(err::Error::Internal("Ambiguous date or time".to_string())),
+        }?;
+
+
+        let unix_seconds = datetime.timestamp();
+
+        filetime::set_file_mtime(
+            output_filename.as_str(),
+            filetime::FileTime::from_unix_time(unix_seconds, 0),
+        ).map_err(|_|
+            err::Error::Internal("Could not write timestamp to file".to_string())
+        )?;
+
+        Ok(())
+    })
+}
+
 /// Set progress of ProgressBar
 fn set_progress(fraction: f32, description: String) {
     borrow_widgets(|widgets| {
         let progress_bar = widgets
-            .clone()
             .progress_bar
+            .as_ref()
             .expect("Couldn't get progress_bar");
         progress_bar.set_fraction(fraction as f64);
         progress_bar.set_text(Some(description.as_str()));
