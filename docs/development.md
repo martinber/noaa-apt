@@ -102,9 +102,10 @@ Notes:
 
     - Write Guide webpage.
 
-    - Show panics and errors on GUI.
-
 - Someday:
+
+    - Add tool to change timestamps of WAV files, so timestamps are correct on
+      WXtoIMG.
 
     - Investigate about despeckle.
 
@@ -125,6 +126,17 @@ Notes:
         or from audio.
 
     - Add man page.
+
+    - Show panics from the decoding thread on GUI. Looks like I have to wait
+      until rust creates a simple way, the current alternatives are:
+
+        - `std::thread::JoinHandle::join()` returns `Err()` on a panic, but
+            blocks the GUI thread.
+
+        - `std::panic::catch_unwind` works "only" for unwinding panics, maybe
+            it's enough?
+
+        - `#[panic_handler]` looks useful for `no_std` applications.
 
 ## Compilation
 

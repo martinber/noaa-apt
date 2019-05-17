@@ -154,9 +154,28 @@ If you want to decode your WAV file on WXtoIMG:
 
 - Select _Satellite > NOAA_.
 
-- Select _Options > Disable map overlay_ because it's going to be wrong unless you correct the timestamp of the file.
+- Select _Options > Disable map overlay_ because it's going to be wrong unless
+    you correct the timestamp of the file.
 
 - _File > Decode_.
+
+If you want map overlay:
+
+- If you resampled the WAV file, the modification timestamp of the new file
+    should be the moment of the end of the pass. Check with `stat file.wav`.
+
+    - Generally you just have to copy the timestamp from the old file to the new
+      one using: `touch -r original_file.wav resampled_file.wav`.
+
+    - You can also set any timestamp you want with
+    `touch -d "2019-01-31 18:31:20.579283000" resampled_file.wav`.
+
+- Uncheck _Options > Disable map overlay_.
+
+- Set _Options > Ground Station Location_.
+
+- Use _Enhacements > Normal_ or any enhacement different than _Pristine_
+    (because it means no enhacements).
 
 Optional:
 
