@@ -3,6 +3,11 @@ title: How it works
 layout: main
 ---
 
+Receiving and decoding images from NOAA satellites
+
+[Check this article]({{ site.baseurl }}/receiving-and-decoding-images-from-satellites.html)
+too (Work in progress).
+
 ---
 
 **Contents**
