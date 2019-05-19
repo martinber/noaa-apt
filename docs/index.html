@@ -23,19 +23,9 @@ layout: landing
 			</header>
 
 			<p>
-				You can buy a
-				<a href="https://osmocom.org/projects/rtl-sdr/wiki/Rtl-sdr">RTL-SDR</a>
-				for less than 30USD, it looks like a USB drive but it has a connector
-				for antennas. Using SDR software like <em>GQRX</em> and <em>SDR#</em>
-				you can receive FM signals, for example broadcast FM (around 100MHz) or
-				better, APT signals from NOAA satellites (around 137MHz).
-			</p>
-
-			<p>
-				<em>noaa-apt</em> takes a recorded WAV file (from <em>GQRX</em>,
-				<em>SDR#</em>, etc.) and decodes the image. As an example,
-				<a href="{{ site.baseurl }}/examples/argentina.wav">
-					this is a WAV file I recorded using GQRX</a>
+				<em>noaa-apt</em> takes a recorded WAV file and decodes the image. As an
+				example,
+				<a href="{{ site.baseurl }}/examples/argentina.wav"> this is a WAV file I recorded using GQRX</a>
 				using a RTL-SDR and a double cross antenna.
 				When loading that file on <em>noaa-apt</em>, you get as a result
 				<a href="{{ site.baseurl }}/examples/argentina.png">this image</a>.
@@ -44,7 +34,17 @@ layout: landing
 			<h3>Why?</h3>
 
 			<p>
-				NOAA satellite reception is fun, cheap and relatively easy. I made
+				NOAA satellite reception is fun, cheap and relatively easy. You can buy
+				a <a href="https://osmocom.org/projects/rtl-sdr/wiki/Rtl-sdr">RTL-SDR</a>
+				for less than 30USD, it looks like a USB drive but it has a connector
+				for antennas. Using SDR software like <em>GQRX</em> and <em>SDR#</em>
+				you can receive FM signals, for example broadcast FM (around 100MHz) or
+				better, receive APT signals from NOAA satellites (around 137MHz) and
+				then decode them with <em>noaa-apt</em>.
+			</p>
+
+			<p>
+				I made
 				<em>noaa-apt</em> because <em>WXtoIMG</em>, the most popular decoding
 				software, it's propietary and
 				<a href="https://www.rtl-sdr.com/notice-wxtoimg-website-down/">no longer maintained</a>,
@@ -54,6 +54,14 @@ layout: landing
 					steps required to decode WAV files on it
 				</a>
 				are not that obvious.
+			</p>
+
+			<p>
+				<em>WXtoIMG</em> requires WAV files with a sample rate of 11025Hz, also
+				needs correct file modification timestamps for post processing. For
+				convenience, you can use <em>noaa-apt</em> for resampling your files to
+				any sample rate preserving the timestamps. <em>noaa-apt</em> also
+				includes a tool that allows to set arbitrary timestamps on your files
 			</p>
 
 			<p>
@@ -68,15 +76,16 @@ layout: landing
 			<h3>Disadvantages</h3>
 
 			<p>
-				WXtoIMG has lots of features you might want that noaa-apt does not have,
-				for example false-color images, live decoding or map overlay. Anyways,
-				the quality of the black and white image should be the same.
+				<em>WXtoIMG</em> has lots of features you might want that
+				<em>noaa-apt</em> does not have, for example false-color images, live
+				decoding or map overlay. Anyways, the quality of the black and white
+				image should be the same.
 			</p>
 
 			<p>
-				If you get some kind of error or bad result don't hesitate to open a
-				Issue or to send me an email. Also I'm not a native english speaker so
-				please correct me. Both the code and the website is on the
+				If you get some kind of error or bad result open a Issue or send me an
+				email. Also I'm not a native english speaker so please let me know where
+				I made mistakes. Both the code and the website is on the
 				<a href="https://github.com/martinber/noaa-apt">GitHub repository</a>.
 			</p>
 
@@ -84,6 +93,18 @@ layout: landing
 
 			<img src="images/gui.png" alt="GUI"/>
 
+			<h3>Features</h3>
+
+			<ul>
+				<li>Decode raw images from WAV files.</li>
+				<li>Really easy to use GUI.</li>
+				<li>You can disable syncing and export every step of the decoding
+					process, useful for corrupted recordings.</li>
+				<li>Telemetry band reading.</li>
+				<li>Resample WAV files preserving modification timestamps.</li>
+				<li>Modify timestamps of files.</li>
+				<li>Edit filter parameters from a configuration file.</li>
+			</ul>
 
 			<!-- Content -->
 			<!--

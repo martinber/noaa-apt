@@ -1,3 +1,12 @@
+noaa-apt (1.1.0-1) testing; urgency=medium
+
+  * GUI tool for editing file modification timestamps.
+  * Preserve file modification timestamps when resampling.
+  * Fixed Usage and Guide GUI buttons on Windows.
+  * Fixed progress bar on resample mode.
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Sun, 19 May 2019 14:52:20 -0300
+
 noaa-apt (1.0.0-1) testing; urgency=medium
 
   * Fixed truncation issues on Raspberry Pi and 32 bit systems.
@@ -10,7 +19,7 @@ noaa-apt (1.0.0-1) testing; urgency=medium
   * Added checks against overflows when using strange sample rates.
   * Added static OpenSSL as a Cargo feature.
 
- -- Martin Bernardi <mbernardi@mbernardi-pc>  Sun, 07 Apr 2019 22:48:20 -0300
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Sun, 07 Apr 2019 22:48:20 -0300
 
 noaa-apt (0.9.8-1) testing; urgency=medium
 
@@ -21,7 +30,7 @@ noaa-apt (0.9.8-1) testing; urgency=medium
   * Better font for GUI on Windows.
   * Small fixes and improvements.
 
- -- Martin Bernardi <mbernardi@mbernardi-pc>  Sat, 23 Feb 2019 20:08:25 -0300
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Sat, 23 Feb 2019 20:08:25 -0300
 
 noaa-apt (0.9.7+dev-1) testing; urgency=medium
 

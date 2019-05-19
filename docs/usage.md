@@ -34,6 +34,13 @@ On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
 useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
 requires a specific sample rate.
 
+On _Tools > Timestamp WAV_ you can change the modification date and time present
+on the metadata of a file. Useful when you want to decode a WAV file on
+[WXtoIMG] and you need to change the timestamp to fix the map overlay. You can
+load a timestamp from another file in the case you want to copy the timestamp
+from one file to another. Otherwise just select time, date and write the
+timestamp to your WAV recording.
+
 ![GUI]({{ site.baseurl }}/images/gui.png)
 
 ### Terminal
@@ -75,6 +82,18 @@ Optional arguments:
                         Resample WAV file to a given sample rate, no APT image
                         will be decoded.
 ```
+
+If resampling, the modification timestamp should be preserved correctly.
+
+The timestamp modification tool is only available via the GUI, if you need to
+set arbitrary timestamps to files using the terminal use your OS commands. On
+GNU/Linux:
+
+- Generally you just have to copy the timestamp from one file to another
+    one using: `touch -r reference_file.wav recording.wav`.
+
+- Set any timestamp you want with
+    `touch -d "2019-01-31 18:31:20.579283000" recording.wav`.
 
 ## Advanced settings
 
