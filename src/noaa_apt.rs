@@ -33,6 +33,8 @@ pub fn resample_wav(
 ) -> err::Result<()> {
 
     info!("Reading WAV file");
+    context.status(0.0, "Reading WAV file".to_string());
+
     let (input_signal, input_spec) = wav::load_wav(&settings.input_filename)?;
     let input_rate = Rate::hz(input_spec.sample_rate);
     let timestamp = misc::read_timestamp(&settings.input_filename)?;
@@ -40,6 +42,8 @@ pub fn resample_wav(
     context.step(Step::signal("input", &input_signal, Some(input_rate)))?;
 
     info!("Resampling");
+    context.status(0.2, format!("Resampling to {}", settings.output_rate));
+
     let resampled = dsp::resample(
         &mut context,
         &input_signal,
@@ -64,10 +68,12 @@ pub fn resample_wav(
     };
 
     info!("Writing WAV to '{}'", settings.output_filename);
+    context.status(0.8, format!("Writing WAV to '{}'", settings.output_filename));
 
     wav::write_wav(&settings.output_filename, &resampled, writer_spec)?;
     misc::write_timestamp(timestamp, &settings.output_filename)?;
 
+    context.status(1., "Finished".to_string());
     Ok(())
 }
 
