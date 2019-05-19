@@ -80,10 +80,8 @@ Notes:
     - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
       crates.io instead of git.
 
-    - Test timestamps on Windows, show time zone on GUI, explain Linux commands
+    - show time zone on GUI, explain Linux commands
       on the documentation, explain the feature everywhere on the documentation.
-
-    - Keep timestamps when resampling.
 
     - Log everything to a file, especially for Windows since it doesn't have a
       console to see output.

@@ -4,13 +4,11 @@
   <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="hour_adjustment">
     <property name="upper">23</property>
-    <property name="value">12</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="minute_adjustment">
     <property name="upper">59</property>
-    <property name="value">45</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -71,18 +69,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="output_entry">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hexpand">True</property>
-            <property name="secondary_icon_stock">gtk-save-as</property>
-          </object>
-          <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">1</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkButton" id="read_button">
             <property name="label" translatable="yes">Read timestamp</property>
             <property name="visible">True</property>
@@ -103,6 +89,18 @@
           </object>
           <packing>
             <property name="left_attach">2</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkEntry" id="output_entry">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="secondary_icon_stock">gtk-save-as</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
             <property name="top_attach">1</property>
           </packing>
         </child>
@@ -203,12 +201,25 @@
                 <property name="snap_to_ticks">True</property>
                 <property name="numeric">True</property>
                 <property name="wrap">True</property>
-                <property name="value">14</property>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="timezone_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Local time
+(Unknown)</property>
+                <property name="justify">center</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
               </packing>
             </child>
           </object>

@@ -1,6 +1,9 @@
 //! Small things that don't fit anywhere else.
 
+use std::fs;
+
 use reqwest;
+use filetime;
 
 use dsp::{self, Signal};
 use err;
@@ -180,6 +183,41 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
     Ok((low_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min,
         high_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min))
 
+}
+
+/// Read timestamp from file.
+///
+/// Returns the timestamp as the amount of seconds from the Unix epoch
+/// (Jan 1, 1970, 0:00:00hs UTC). I ignore the nanoseconds precision.
+pub fn read_timestamp(filename: &str) -> err::Result<i64> {
+    let metadata = fs::metadata(filename)
+        .map_err(|_| err::Error::Internal(
+            "Could not read metadata from input file".to_string()
+        ))?;
+
+    // Read modification timestamp from file. The filetime library returns
+    // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
+    // nanoseconds precision.
+    // I use the chrono library to convert seconds to date and time.
+    // As far as I know the unix_seconds are relative to 0:00:00hs UTC, then
+    // if I use chrono::Local I'm going to get time relative to my timezone.
+
+    Ok(filetime::FileTime::from_last_modification_time(&metadata).unix_seconds())
+}
+
+/// Write timestamp to file.
+///
+/// The argument timestamp is the amount of seconds from the Unix epoch
+/// (Jan 1, 1970, 0:00:00hs UTC).
+pub fn write_timestamp(timestamp: i64, filename: &str) -> err::Result<()> {
+    filetime::set_file_mtime(
+        filename,
+        filetime::FileTime::from_unix_time(timestamp, 0),
+    ).map_err(|_|
+        err::Error::Internal("Could not write timestamp to file".to_string())
+    )?;
+
+    Ok(())
 }
 
 #[cfg(test)]

@@ -20,7 +20,6 @@
 //! back.
 
 use std::cell::RefCell;
-use std::fs;
 
 use gtk;
 use gio;
@@ -28,7 +27,6 @@ use glib;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
-use filetime;
 use chrono;
 use chrono::prelude::*;
 
@@ -111,6 +109,7 @@ struct WidgetList {
     hour_spinner:          Option<gtk::SpinButton>,
     minute_spinner:        Option<gtk::SpinButton>,
     second_spinner:        Option<gtk::SpinButton>,
+    timezone_label:        Option<gtk::Label>,
     calendar:              Option<gtk::Calendar>,
 }
 
@@ -192,6 +191,7 @@ fn build_ui(
     let hour_spinner;
     let minute_spinner;
     let second_spinner;
+    let timezone_label;
     let calendar;
     match mode {
         Mode::Decode => {
@@ -210,6 +210,7 @@ fn build_ui(
             hour_spinner = None;
             minute_spinner = None;
             second_spinner = None;
+            timezone_label = None;
             calendar = None;
         },
         Mode::Resample => {
@@ -227,6 +228,7 @@ fn build_ui(
             hour_spinner = None;
             minute_spinner = None;
             second_spinner = None;
+            timezone_label = None;
             calendar = None;
         },
         Mode::Timestamp => {
@@ -244,6 +246,8 @@ fn build_ui(
                 .expect("Couldn't get minute_spinner"));
             second_spinner = Some(builder.get_object("second_spinner")
                 .expect("Couldn't get second_spinner"));
+            timezone_label = Some(builder.get_object("timezone_label")
+                .expect("Couldn't get timezone_label"));
             calendar = Some(builder.get_object("calendar")
                 .expect("Couldn't get calendar"));
         }
@@ -270,6 +274,7 @@ fn build_ui(
         hour_spinner,
         minute_spinner,
         second_spinner,
+        timezone_label,
         calendar,
     };
 
@@ -317,9 +322,17 @@ fn build_ui(
         progress_bar.set_text(Some("Ready"));
     }
     widgets.start_button.set_sensitive(true);
-    //if let Some(button) = widgets.start_button {
-        //button.set_sensitive(true);
-    //}
+
+    // Set timezone if on timestamp mode
+    if let Some(label) = widgets.timezone_label.as_ref() {
+        // Create any chrono::DateTime from chrono::Local, then ignore the
+        // result and only take the timezone
+        let time = chrono::Local::now();
+        label.set_text(format!(
+            "Local time\n(UTC{})",
+            time.format("%:z"),
+        ).as_str());
+    }
 
     if check_updates {
         check_updates_and_show();
@@ -728,22 +741,8 @@ fn read_timestamp() -> err::Result<()> {
                      .map(|s: &str| s.to_string())
             })?;
 
-        let metadata = fs::metadata(input_filename.as_str())
-            .map_err(|_| err::Error::Internal(
-                "Could not read metadata from input file".to_string()
-            ))?;
-
-        // Read modification timestamp from file. The filetime library returns
-        // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
-        // nanoseconds precision.
-        // I use the chrono library to convert seconds to date and time.
-        // As far as I know the unix_seconds are relative to 0:00:00hs UTC, then
-        // if I use chrono::Local I'm going to get time relative to my timezone.
-        let unix_seconds =
-            filetime::FileTime::from_last_modification_time(&metadata)
-            .unix_seconds();
-        let datetime = chrono::Local.timestamp(unix_seconds, 0);
-        println!("Zona: UTC {}", datetime.format("%:z"));
+        let timestamp = misc::read_timestamp(input_filename.as_str())?;
+        let datetime = chrono::Local.timestamp(timestamp, 0);
 
         // GTK counts months from 0 to 11. Years and days are fine
         calendar.select_month(datetime.month0() as u32, datetime.year() as u32);
@@ -776,12 +775,6 @@ fn write_timestamp() -> err::Result<()> {
         let second = second_spinner.get_value_as_int();
         let (year, month, day) = calendar.get_date();
 
-        println!(
-            "{}, {}, {}, {}, {}, {}",
-            year, month, day,
-            hour, minute, second,
-        );
-
         // Write modification timestamp to file. The filetime library uses
         // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
         // nanoseconds precision.
@@ -802,15 +795,7 @@ fn write_timestamp() -> err::Result<()> {
                 Err(err::Error::Internal("Ambiguous date or time".to_string())),
         }?;
 
-
-        let unix_seconds = datetime.timestamp();
-
-        filetime::set_file_mtime(
-            output_filename.as_str(),
-            filetime::FileTime::from_unix_time(unix_seconds, 0),
-        ).map_err(|_|
-            err::Error::Internal("Could not write timestamp to file".to_string())
-        )?;
+        misc::write_timestamp(datetime.timestamp(), output_filename.as_str())?;
 
         Ok(())
     })
