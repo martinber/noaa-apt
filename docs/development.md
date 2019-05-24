@@ -77,6 +77,11 @@ Notes:
 
 - Important:
 
+    - Fix `work_rate` on the standard profile so image from Florentin314 looks
+      right.
+
+    - Add troubleshooting about missing samples on the docs.
+
     - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
       crates.io instead of git.
 
@@ -328,7 +333,7 @@ If you want to disable this you can do it from the
     (pristine, no map, no despeckle) and 46s with noaa-apt using the fast
     profile.
 
-## Acknowledgements
+## Thank you to
 
 - RTL-SDR.com: For writing
     [a blog post](https://www.rtl-sdr.com/new-noaa-apt-image-decoder/).
@@ -337,9 +342,11 @@ If you want to disable this you can do it from the
 
 - Grant T. Olson: OSX build instructions.
 
-- wren84: Reported problems with input noise filtering.
-
 - FMighty: Helped with cross compilation to Raspberry Pi.
+
+- Peter Vogel: For writing about noaa-apt on the web.
+
+- wren84 and Florentin314: Reported problems with decoded images.
 
 ## References
 
