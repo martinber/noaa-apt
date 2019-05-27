@@ -706,9 +706,25 @@
 	width: 100%;
 }
 
-/* Images on sidebar otherwise have original size */
+/* Images on otherwise have original size */
 #main img {
 	max-width: 100%;
+}
+
+/* Set the size of youtube videos */
+/* https://css-tricks.com/NetMag/FluidWidthVideo/Article-FluidWidthVideo.php */
+.videoWrapper {
+	position: relative;
+	padding-bottom: 56.25%; /* 16:9 */
+	padding-top: 25px;
+	height: 0;
+}
+.videoWrapper iframe {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 }
 
 /* By default code has no style */

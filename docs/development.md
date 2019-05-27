@@ -73,6 +73,9 @@ Notes:
 - Changed font to Open Sans and now I'm loading from `default.html` instead of
   `style.css` because it's faster.
 
+- To set the sizes of youtube videos
+    [I use this](https://css-tricks.com/NetMag/FluidWidthVideo/Article-FluidWidthVideo.php).
+
 ## Things to do
 
 - Important:

@@ -35,7 +35,7 @@ to use noaa-apt check the [Usage](./usage.html) page.
 - The **images are upside down 50% of the time**, that's because the satellites
     sometimes go from south to north and sometimes fron north to south.
     WXtoImg calculates the orbit of the satellites and rotates the image
-    accordingly.
+    accordingly, but noaa-apt doesn't do that.
 
 - Images look **much better on daylight**, the satellites also send infrared
     images but I recommend midday passes.
@@ -56,27 +56,68 @@ to use noaa-apt check the [Usage](./usage.html) page.
 
 ## Guide
 
-**Work in progress**.
-
 Maybe this image helps to understand how everything works, maybe not:
 
 ![Diagram]({{ site.baseurl }}/images/diagram.png)
 
+### Things to buy
+
 You need a RTL-SDR, it looks like a USB drive but it has a connector for
 antennas too. You can try first with a
-[V-dipole antenna](https://www.rtl-sdr.com/simple-noaameteor-weather-satellite-antenna-137-mhz-v-dipole/),
+[V-dipole antenna](https://lna4all.blogspot.com/2017/02/diy-137-mhz-wx-sat-v-dipole-antenna.html),
 RG-58 coax cable and adapters. Later you can improve reception if necessary
 building a
 [Double Cross antenna](https://www.rtl-sdr.com/instructions-for-building-a-double-cross-antenna-great-for-noaameteor-weather-satellites/)
 or a QFH antenna.
 
-First you have to download some SDR software, for example GQRX (GNU/Linux) or
-SDR# (Windows). With it you can tune your SDR to any frequency and demodulate FM
+If you want a kit with everything you need I recommend
+[buying on RTL-SDR.com](https://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/)
+the "RTL-SDR Blog V3 dongle with dipole antenna kit". If you can also buy the
+"SMA Straight Antenna Adapter Set", useful if you plan on trying more antennas.
+
+Keep in mind that there is no "official" RTL-SDR dongle, [they were designed
+for receiving DVB-T TV, then people wrote custom
+drivers](https://rtlsdr.org/start)
+so it can receive anything else. There are lots of variations and all of them
+have similar performance.
+
+### Antenna
+
+The most simple antenna you can use is a
+[V-dipole antenna](https://lna4all.blogspot.com/2017/02/diy-137-mhz-wx-sat-v-dipole-antenna.html),
+consists of two wires or rods of 52cm, spread apart by 120 degrees.
+Instead of using a protactor you can use trigonometry, the distance between the
+tips of each rod should be around 90cm.
+
+![V-dipole]({{ site.baseurl }}/images/v-dipole.png)
+
+The antenna preferably should be placed horizontally and point to the north or
+to the south.
+
+### Set up
+
+First you have to download some SDR software and some drivers, then connect the
+RTL-SDR dongle and the antenna and open GQRX/SDR#.
+
+- GNU/Linux: Download GQRX and the rtl-sdr drivers, `sudo apt install rtl-sdr
+  qqrx-sdr` should be enough.
+
+- Windows: Download SDR# and install the drivers. Check the steps on the
+    [RTL-SDR.com guide](https://www.rtl-sdr.com/qsg) or on the video below.
+
+<div class="videoWrapper">
+<iframe src="https://www.youtube-nocookie.com/embed/Qds_VZcun3Q" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+With SDR# or GQRX you can tune your SDR to any frequency and demodulate FM
 signals, try it with broadcast radio first.
 
-To track the satellites positions you can use for example gpredict (GNU/Linux)
-or Heavens-Above (online or Android). You should look for passes during the day
-with at least 10° of max elevation.
+NOAA satellites can be received several times a day. To track the satellites you
+can use for example gpredict (GNU/Linux) or Heavens-Above (online or Android).
+You should look for passes with at least 20° of max elevation, but I recommend
+waiting for the passes during the day with at least 50° of max elevation.
+
+### Recording the WAV file
 
 Set your SDR software for FM demodulation and tune it to the correct frequency
 depending on the satellite:
@@ -87,36 +128,11 @@ depending on the satellite:
 
 - NOAA 19: 137.1MHz.
 
-I use the following configuration on GQRX. I don't know if these are the best
-settings, but it should work.
-
-- Demodulation: WFM (Wide FM, mono).
-
-- Filter Width: Custom, just wide enough so the signal fits as you can see
-  on the spectrum analyzer.
-
-- Filter Shape: Normal.
-
-- AGC: off.
-
-- Noise Blanker: No.
-
-- Squelch: Disabled (-150dB).
-
-- LNA gain: Max, but you can play with it and guess where it has the best
-    signal to noise ratio.
-
-- I don't use any of "DC remove", "I/Q Balance", etc.
-
-- Input rate: 1800000
-
-- Decimation: None.
-
 When the satellite is passing start recording a WAV file, you should hear the
 sound of the demodulated FM signal. When finished open the WAV file on noaa-apt
 to decode the image.
 
-Here you can see a screenshot of GQRX, things to note:
+If using GNU/Linux, here you can see a screenshot of GQRX, things to note:
 
 - I have "Freq zoom" at 4x so I can see the signal better on the spectrum
     analyzer, these signals have a very narrow bandwidth.
@@ -127,6 +143,44 @@ Here you can see a screenshot of GQRX, things to note:
 
 ![GQRX]({{ site.baseurl }}/images/gqrx.png)
 
+Check this video for instructions on recording with SDR# on Windows, if using
+GQRX you can watch it too so you know what you should be seeing when the
+satellite is passing.
+
+<div class="videoWrapper">
+<iframe src="https://www.youtube-nocookie.com/embed/j4begllwQls" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+This is the list of Settings I use, both for GQRX and SDR#. Some of them do not
+make much difference.
+
+- Demodulation: WFM (Wide FM, mono).
+
+- Filter Width/Bandwidth: Custom, just wide enough so the signal fits as you can
+    see on the spectrum analyzer.
+
+- Filter Shape: "Normal" on GQRX or "Blackman-Harris 4" with order 250 on SDR#.
+
+- AGC (Automatic Gain Control): off.
+
+- LNA gain: Max, but you can play with it and guess where it has the best
+    signal to noise ratio.
+
+- No "Noise Blanker" or "Noise Reduction".
+
+- Squelch: Disabled (-150dB).
+
+- I don't use any of "DC remove", "Correct I/Q", "I/Q Balance", "Swap I/Q", etc.
+
+- Input rate: Around 1,000,000 (1.00Msps).
+
+- Decimation: None.
+
+### Decoding the image
+
+Download noaa-apt and load the WAV file.
+[Check the usage page for details](./usage.html).
+
 ## Notes
 
 - [Example of a WAV file]({{ site.baseurl }}/examples/argentina.wav), hear it,
@@ -135,11 +189,12 @@ Here you can see a screenshot of GQRX, things to note:
 
 - You don't need a LNA or a high antenna. I'm using a Double Cross Antenna,
     roughly 2m above the ground and 3-4m of RG-58 coax. Probably helps being far
-    from big cities.
+    from big cities. The video above was recorded using the antenna from the
+    RTL-SDR.com kit instead.
 
-- Its not necessary to compensate doppler shift.
+- It is not necessary to compensate doppler shift.
 
-## WXtoIMG guide
+### Decoding WAV on WXtoImg
 
 If you want to decode your WAV file on WXtoIMG:
 
@@ -183,6 +238,10 @@ Optional:
 
 ## References
 
-- [WXtoIMG guide][1]
+- [RTL-SDR.com quick start guide][1]
+- [V-dipole antenna, on LNA4ALL.blogspot.com][2]
+- [WXtoIMG guide][3]
 
-[1]: https://www.wraase.de/download/wxtoimg/wxgui.pdf
+[1]: https://www.rtl-sdr.com/rtl-sdr-quick-start-guide/
+[2]: https://lna4all.blogspot.com/2017/02/diy-137-mhz-wx-sat-v-dipole-antenna.html
+[3]: https://www.wraase.de/download/wxtoimg/wxgui.pdf
