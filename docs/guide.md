@@ -16,7 +16,7 @@ layout: main
 
 This guide is meant for people that just heard about NOAA satellites, that just
 saw somewhere that you can receive images from satellites quite easily and
-cheap. Read this get started.
+cheap. Read this to get started.
 
 This is a guide about how to receive images, if you want information about how
 to use noaa-apt check the [Usage](./usage.html) page.
@@ -93,6 +93,27 @@ tips of each rod should be around 90cm.
 
 The antenna preferably should be placed horizontally and point to the north or
 to the south.
+
+If you are going to build one yourself you need:
+
+- Some coaxial cable, there are lots of types, you can use RG-58 or something
+    similar. Try using the shortest length you can, long cables lose more
+    signal. Coax cables have two conductors, one inside and another outside
+    called the shield.
+
+- At least some connector for the coax cable, there are
+    [lots of different connectors](https://dpdproductions.com/pages/connector-guide).
+    You need SMA female or MCX male because SDRs have a SMA male or MCX female
+    port. You can crimp the connectors yourself (you need a crimping tool) or
+    you can buy coax cables with connectors on both sides (and cut one side to
+    solder the antenna there). You can buy for example type N connectors and
+    then use adapters or pigtails (pigtails are short cables used as adapters,
+    they have different connectors on each side).
+
+- The rods can be made of any conductive material, hollow or solid, one of them
+    should be soldered to the inner conductor and the other one to the shield of
+    the coax cable. The diameter should be relatively small. Check
+    [this guide](https://lna4all.blogspot.com/2017/02/diy-137-mhz-wx-sat-v-dipole-antenna.html).
 
 ### Set up
 

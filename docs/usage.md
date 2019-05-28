@@ -169,19 +169,22 @@ spot as you can see on this screenshot.
 ### Syncing
 
 This program starts a new line when it receives a sync frame (those seven white
-and black stripes), works well if the signal has clear sync frames.
-
-The first time I recorded a NOAA APT signal using a FM amateur radio the bright
-parts had lot's of noise (had saturation when receiving white, I don't know
-why), the sync frames were really low quality and the alignment was really bad.
-Anyways, when using SDR that doesn't happen.
-
-Every decoder I've tested, excluding [WXtoIMG], has the same problem.
+and black stripes), works well if the signal has clear sync frames but can
+produce horizontal lines on some images.
 
 You can disable the syncing (on GUI there is a checkbox, for commandline the
-option is `--no-sync`). Then you should manually edit and straighten the image.
+option is `--no-sync`). The image should have a minor slant and you can manually
+edit and straighten the image. If without syncing the image looks worse, you
+have missing samples, see below.
 
 ![Example of syncing problems]({{ site.baseurl }}/images/disable_sync.jpg)
+
+### Lost samples
+
+Sometimes the computer has hiccups and skips samples when receiving and creating
+the WAV file, this can cause short horizontal black lines or syncing problems
+(producing long horizontal lines). You can try receiving on another computer,
+closing programs or giving more priority to the SDR receiver process.
 
 ### Noise
 
