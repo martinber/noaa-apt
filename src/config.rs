@@ -175,7 +175,7 @@ fn load_de_settings() -> DeSettings {
 
         } else {
 
-            let _result = std::fs::create_dir(proj_dirs.config_dir());
+            let _result = std::fs::create_dir_all(proj_dirs.config_dir());
             if let Ok(mut file) = std::fs::File::create(&filename) {
                 println!(
                     "Missing or corrupted settings file, created default \
