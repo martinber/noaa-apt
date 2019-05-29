@@ -43,7 +43,7 @@ default_profile = "standard"
     # it should be barely visible
     [profiles.fast]
 
-    work_rate = 12480
+    work_rate = 16640
     resample_atten = 30
     resample_delta_freq = 3000
     resample_cutout = 4800
