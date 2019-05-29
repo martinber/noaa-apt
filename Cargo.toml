@@ -15,7 +15,8 @@ overflow-checks = true
 [features]
 default = ["gui"]
 gui = ["gtk", "gdk", "gio", "glib"]
-static_ssl = ["openssl/vendored"] # Not valid for Windows
+static_ssl = ["openssl/vendored"] # Not valid for Microsoft Windows
+windows_console = [] # Show console on Microsoft Windows
 
 [dependencies]
 num = "*"

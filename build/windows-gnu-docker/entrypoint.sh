@@ -11,13 +11,16 @@ GUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$GUI_PACKAGE_NAME"
 # GTK_INSTALL_PATH=/usr/i686-w64-mingw32
 GTK_INSTALL_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/
 
-/home/rustacean/.cargo/bin/cargo build --target=x86_64-pc-windows-gnu --release
-
 rm -r "$GUI_PACKAGE_FOLDER" || true
 mkdir -p "$GUI_PACKAGE_FOLDER"
 
-# Copy exe
-cp ./target/x86_64-pc-windows-gnu/release/*.exe "$GUI_PACKAGE_FOLDER"
+# Build and copy executable
+/home/rustacean/.cargo/bin/cargo build --target=x86_64-pc-windows-gnu --release
+cp ./target/x86_64-pc-windows-gnu/release/noaa-apt.exe "$GUI_PACKAGE_FOLDER"
+# Build and copy executable with console
+/home/rustacean/.cargo/bin/cargo build --target=x86_64-pc-windows-gnu \
+    --release --features windows_console
+cp ./target/x86_64-pc-windows-gnu/release/noaa-apt.exe "$GUI_PACKAGE_FOLDER/noaa-apt-console.exe"
 
 # Copy GTK files
 cp "$GTK_INSTALL_PATH"/bin/*.dll "$GUI_PACKAGE_FOLDER"
