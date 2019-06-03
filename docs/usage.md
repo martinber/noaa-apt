@@ -32,7 +32,8 @@ Run by clicking the executable, or from terminal without arguments.
 
 On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
 useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
-requires a specific sample rate.
+requires a specific sample rate. If resampling, the modification timestamp
+should be preserved correctly.
 
 On _Tools > Timestamp WAV_ you can change the modification date and time present
 on the metadata of a file. Useful when you want to decode a WAV file on
@@ -43,7 +44,17 @@ timestamp to your WAV recording.
 
 ![GUI]({{ site.baseurl }}/images/gui.png)
 
+If you are having problems, you can try running noaa-apt from a console. On
+GNU/Linux run `noaa-apt` from your terminal, on Windows double click
+`noaa-apt-console.exe` or run it from Powershell.
+
 ### Terminal
+
+On GNU/Linux run `noaa-apt` from your terminal. On Windows you should use
+`noaa-apt-console.exe` to be able to see console output.
+
+If you run the program without arguments the GUI will open, so make sure to at
+least give the input filename as an option.
 
 ```
 Usage:
@@ -100,8 +111,10 @@ GNU/Linux:
 ### Disable syncing
 
 The program aligns the image to sync frames (the black and white stripes),
-disabling can help with some noisy images, see below on
-[Troubleshooting](./usage.html#troubleshooting).
+disabling can help with some noisy images, but the resulting image has some
+slant. See also [Troubleshooting](./usage.html#troubleshooting).
+
+![Comparison between synced and not synced image]({{ site.baseurl }}/images/syncing.jpg)
 
 ### Contrast adjustment
 
@@ -149,6 +162,11 @@ standard or slow), or edit those profiles.
 
 ## Troubleshooting
 
+### Problems with noaa-apt
+
+If the program crashes or you want more information, run noaa-apt with console
+output, see above.
+
 ### Upside down images
 
 These satellites have polar orbits, so sometimes you see them go from north to
@@ -162,29 +180,59 @@ another one, check the advanced settings.
 
 If the image needs more contrast you can adjust it with an image editor.
 I use GIMP and the tool _Colors > Levels_. You can pick a white spot and a black
-spot as you can see on this screenshot.
+spot as you can see on this screenshot or you can move the _Input Levels_
+sliders manually.
 
 ![Contrast correction using GIMP]({{ site.baseurl }}/images/contrast.jpg)
 
-### Syncing
+Also, images taken during the night (taken using a infrared sensor) or close to
+sunrise/sunset have very little contrast, I recommend to take images during the
+day with the sun high above the horizon.
+
+Check these images for a comparison. On the left image ignore the noise (caused
+by a bad antenna) and note how the right channel changed the active sensor from
+visible to infrared and went from a dark to a bright image.
+
+![Comparison between night and day images]({{ site.baseurl }}/images/night_day.jpg)
+
+### Syncing problems
 
 This program starts a new line when it receives a sync frame (those seven white
 and black stripes), works well if the signal has clear sync frames but can
 produce horizontal lines on some images.
 
 You can disable the syncing (on GUI there is a checkbox, for commandline the
-option is `--no-sync`). The image should have a minor slant and you can manually
-edit and straighten the image. If without syncing the image looks worse, you
-have missing samples, see below.
+option is `--no-sync`). The image should have a
+[smooth slant](./usage.html#disable-syncing) and you can manually edit and
+straighten the image. If without syncing the image looks worse, you have missing
+samples, see below.
 
 ![Example of syncing problems]({{ site.baseurl }}/images/disable_sync.jpg)
 
-### Lost samples
+### Missing samples
 
 Sometimes the computer has hiccups and skips samples when receiving and creating
-the WAV file, this can cause short horizontal black lines or syncing problems
-(producing long horizontal lines). You can try receiving on another computer,
-closing programs or giving more priority to the SDR receiver process.
+the WAV file (this is not caused by noaa-apt), this can cause short horizontal
+black lines or syncing problems (producing long horizontal lines).
+
+You can try:
+
+- Receiving on another computer.
+- Using a smaller RF sample rate 1,000,000 (1Msps) should be fine.
+- Closing unused programs.
+- Giving more priority to the SDR receiver process.
+- Increasing the audio buffer, I am aware that at least SDR-Console has this
+    setting. On SDR# I think that increasing the _Latency_ setting on the
+    _Audio_ panel should give the same result.
+
+If you think that your receiver might be skipping samples, you can try disabling
+syncing, you should see a mess instead of a
+[smooth slant](./usage.html#disable-syncing), thank you _xxretartistxx_ and
+_unknownantipatriot_ for these images:
+
+![Example of missing samples]({{ site.baseurl }}/images/missing_samples.jpg)
+
+![Another example of missing samples]({{ site.baseurl }}/images/missing_samples_2.jpg)
 
 ### Noise
 
@@ -199,6 +247,9 @@ You can set the option to export a WAV file with the samples used in each step
 of the decoding process, then open each WAV on something like Audacity to see
 where things went wrong. I use Audacity because it shows the samples clearly and
 _Analyze > Plot Spectrum_ is really useful.
+
+Otherwise you can send me the WAV file so I can take a look, it could be a
+problem with my decoder.
 
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
 [WXtoImg]: http://wxtoimg.com/

@@ -80,9 +80,6 @@ Notes:
 
 - Important:
 
-    - Fix `work_rate` on the standard profile so image from Florentin314 looks
-      right.
-
     - Add troubleshooting about missing samples on the docs.
 
     - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
@@ -350,6 +347,9 @@ If you want to disable this you can do it from the
 - Peter Vogel: For writing about noaa-apt on the web.
 
 - wren84 and Florentin314: Reported problems with decoded images.
+
+- xxretartistxx and unknownantipatriot: Provided example image of missing
+    samples.
 
 ## References
 
