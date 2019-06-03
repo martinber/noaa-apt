@@ -499,6 +499,13 @@ fn build_system_menu(
         dialog.set_program_name("noaa-apt");
         dialog.set_version(Some(VERSION));
         dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
+        dialog.add_credit_section("Thank you",
+                &[
+                    "RTL-SDR.com", "pietern", "Grant T. Olson", "FMighty",
+                    "Peter Vogel", "wren84", "Florentin314", "xxretartistxx",
+                    "unknownantipatriot",
+                ]);
+
         dialog.set_website_label(Some("noaa-apt website"));
         dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
         dialog.set_license_type(gtk::License::Gpl30);
