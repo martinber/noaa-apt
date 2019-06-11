@@ -80,15 +80,8 @@ Notes:
 
 - Important:
 
-    - Add troubleshooting about missing samples on the docs.
-
     - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
       crates.io instead of git.
-
-    - Log everything to a file, especially for Windows since it doesn't have a
-      console to see output.
-
-    - Explain on website that command window on Windows is invisible.
 
     - Add warnings for short images when reading telemetry.
 
@@ -105,11 +98,12 @@ Notes:
         - Make sure that Rate cant overflow when resampling against strange
             sample rates.
 
-    - Write Guide webpage.
-
 - Someday:
 
     - Show telemetry bands on GUI.
+
+    - Log everything to a file, especially for Windows since it doesn't have a
+      console to see output.
 
     - Investigate about despeckle.
 
