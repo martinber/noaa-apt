@@ -80,9 +80,6 @@ Notes:
 
 - Important:
 
-    - Wait for new release of gtk-rs and point dependencies on `Cargo.toml` to
-      crates.io instead of git.
-
     - Add warnings for short images when reading telemetry.
 
     - Check things that can panic/can fail:

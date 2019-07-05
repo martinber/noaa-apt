@@ -1,6 +1,6 @@
 [package]
 name = "noaa-apt"
-version = "1.1.1-dev"
+version = "1.1.1"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 build = "src/build.rs"
 
@@ -40,10 +40,10 @@ serde = { version = "*", features = ["derive"] }
 # working for both cases
 openssl = { version = "0.10", optional = true }
 
-gtk = { git = "https://github.com/gtk-rs/gtk.git", optional = true, features = ["v3_16"] }
-gdk = { git = "https://github.com/gtk-rs/gdk.git", optional = true }
-gio = { git = "https://github.com/gtk-rs/gio.git", optional = true }
-glib = { git = "https://github.com/gtk-rs/glib.git", optional = true }
+gtk = { version = "0.7.0", optional = true, features = ["v3_16"] }
+gdk = { version = "0.11.0", optional = true }
+gio = { version = "0.7.0", optional = true }
+glib = { version = "0.8.0", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["shellapi"] }

@@ -1,3 +1,11 @@
+noaa-apt (1.1.1-1) testing; urgency=medium
+
+  * Bigger default work_rate to fix banding on some images
+  * Fixed missing configuration file on Windows
+  * Added people to credits
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Fri, 05 Jul 2019 16:27:21 -0300
+
 noaa-apt (1.1.0-1) testing; urgency=medium
 
   * GUI tool for editing file modification timestamps.
