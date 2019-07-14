@@ -265,8 +265,9 @@ I use Clippy too:
 
     - Windows.
 
-- [Check required glibc version](https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html),
-    should be less than the version shown on the Download page.
+- Check required glibc version, should be less than the version shown on the
+    Download page. Use `/build/check_glibc.sh`, e.g.:
+    `./build/check_glibc.sh ./target/docker_builds/noaa-apt-?.?.?-x86_64-linux-gnu/noaa-apt`
 
 - Check archives, names should be:
 
