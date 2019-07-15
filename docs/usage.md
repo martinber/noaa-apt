@@ -215,6 +215,10 @@ Sometimes the computer has hiccups and skips samples when receiving and creating
 the WAV file (this is not caused by noaa-apt), this can cause short horizontal
 black lines or syncing problems (producing long horizontal lines).
 
+This problem is more evident when using WXtoIMG or when disabling syncing,
+because you can see the image somewhere but it has lots of cuts and strange
+things, see the examples below.
+
 You can try:
 
 - Receiving on another computer.
@@ -225,14 +229,16 @@ You can try:
     setting. On SDR# I think that increasing the _Latency_ setting on the
     _Audio_ panel should give the same result.
 
-If you think that your receiver might be skipping samples, you can try disabling
+If you think that your receiver might be skipping samples, try disabling
 syncing, you should see a mess instead of a
-[smooth slant](./usage.html#disable-syncing), thank you _xxretartistxx_ and
-_unknownantipatriot_ for these images:
+[smooth slant](./usage.html#disable-syncing), thank you _Gagootron_,
+_xxretartistxx_ and _unknownantipatriot_ for these images:
 
-![Example of missing samples]({{ site.baseurl }}/images/missing_samples.jpg)
+![Example of missing samples]({{ site.baseurl }}/images/missing_samples_3.jpg)
 
-![Another example of missing samples]({{ site.baseurl }}/images/missing_samples_2.jpg)
+![Another example of missing samples]({{ site.baseurl }}/images/missing_samples.jpg)
+
+![A third example of missing samples]({{ site.baseurl }}/images/missing_samples_2.jpg)
 
 ### Noise
 

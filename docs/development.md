@@ -340,8 +340,8 @@ If you want to disable this you can do it from the
 
 - wren84 and Florentin314: Reported problems with decoded images.
 
-- xxretartistxx and unknownantipatriot: Provided example image of missing
-    samples.
+- Gagootron, xxretartistxx and unknownantipatriot: Provided example images of
+    missing samples.
 
 ## References
 

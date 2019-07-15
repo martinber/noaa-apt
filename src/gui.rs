@@ -502,8 +502,8 @@ fn build_system_menu(
         dialog.add_credit_section("Thank you",
                 &[
                     "RTL-SDR.com", "pietern", "Grant T. Olson", "FMighty",
-                    "Peter Vogel", "wren84", "Florentin314", "xxretartistxx",
-                    "unknownantipatriot",
+                    "Peter Vogel", "wren84", "Florentin314", "Gagootron",
+                    "xxretartistxx", "unknownantipatriot",
                 ]);
 
         dialog.set_website_label(Some("noaa-apt website"));
