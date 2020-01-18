@@ -315,7 +315,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             let settings = ResampleSettings {
                 input_filename,
-                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                output_filename: output_filename.unwrap_or_else(|| "./output.png".to_string()),
                 export_wav: wav_steps,
                 export_resample_filtered,
                 output_rate: rate,
@@ -344,7 +344,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             let settings = DecodeSettings {
                 input_filename,
-                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                output_filename: output_filename.unwrap_or_else(|| "./output.png".to_string()),
                 export_wav: wav_steps,
                 export_resample_filtered,
                 sync,

@@ -76,7 +76,7 @@ pub fn resample_with_filter(
 
     if l > 1 { // If we need interpolation
         // Reference the frequencies to the rate we have after interpolation
-        let interpolated_rate = input_rate.checked_mul(l).ok_or(
+        let interpolated_rate = input_rate.checked_mul(l).ok_or_else(||
             err::Error::RateOverflow(format!(
                 "Can't resample, looks like the sample rates do not have a big
                 divisor in common. input_rate: {}, output_rate: {}, l: {}, m: {}",
