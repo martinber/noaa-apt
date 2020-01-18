@@ -360,7 +360,7 @@ mod tests {
 
     /// Check if two floats are equal given some margin of precision
     fn assert_roughly_equal(a: f32, b: f32) {
-        assert_ulps_eq!(a, b, max_ulps = 10)
+        approx::assert_ulps_eq!(a, b, max_ulps = 10)
     }
 
     #[test]

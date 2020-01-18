@@ -2,12 +2,13 @@
 
 use num::Integer; // For u32.gcd(u32)
 use num::ToPrimitive;
+use log::{debug, error};
 
-pub use frequency::Freq;
-pub use frequency::Rate;
-use err;
-use filters;
-use context::{Context, Step};
+pub use crate::frequency::Freq;
+pub use crate::frequency::Rate;
+use crate::err;
+use crate::filters;
+use crate::context::{Context, Step};
 
 
 /// Represents a signal, it's just a `Vec<f32>`.

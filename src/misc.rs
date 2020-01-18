@@ -2,11 +2,12 @@
 
 use std::fs;
 
-use reqwest;
 use filetime;
+use log::warn;
+use reqwest;
 
-use dsp::{self, Signal};
-use err;
+use crate::dsp::{self, Signal};
+use crate::err;
 
 
 /// Lookup table for numbers used in `bessel_i0()`
@@ -222,6 +223,7 @@ pub fn write_timestamp(timestamp: i64, filename: &str) -> err::Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use approx::assert_relative_eq;
 
     use super::*;
 
