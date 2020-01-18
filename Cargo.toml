@@ -28,7 +28,7 @@ filetime = "0.2"
 hound = "3"
 log = "0.4"
 num = "0.2"
-png = "0.14"
+png = "0.15"
 reqwest = {version = "0.10", features = [ "blocking" ] }
 rustfft = "3"
 serde = { version = "1", features = ["derive"] }

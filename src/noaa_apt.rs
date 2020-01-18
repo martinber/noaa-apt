@@ -372,9 +372,6 @@ pub fn decode(
 
     context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename));
 
-    // To use encoder.set()
-    use png::HasParameters;
-
     let path = std::path::Path::new(&settings.output_filename);
     let file = std::fs::File::create(path)?;
     let buffer = &mut std::io::BufWriter::new(file);
@@ -382,7 +379,8 @@ pub fn decode(
     let height = signal.len() as u32 / PX_PER_ROW;
 
     let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
-    encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
+    encoder.set_color(png::ColorType::Grayscale);
+    encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
 
     writer.write_image_data(&signal[..])?;
