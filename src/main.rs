@@ -2,24 +2,7 @@
 
 #![cfg_attr(not(feature = "windows_console"), windows_subsystem = "windows")]
 
-extern crate num;
-extern crate hound;
-extern crate rustfft;
-extern crate png;
-#[macro_use] extern crate log;
-extern crate simple_logger;
-extern crate argparse;
-extern crate reqwest;
-extern crate directories;
-extern crate toml;
-extern crate filetime;
-extern crate chrono;
-extern crate serde;
-#[cfg_attr(test, macro_use)] extern crate approx;
-#[cfg(feature = "gui")] extern crate gtk;
-#[cfg(feature = "gui")] extern crate gdk;
-#[cfg(feature = "gui")] extern crate gio;
-#[cfg(feature = "gui")] extern crate glib;
+use log::{debug, error, info};
 
 mod noaa_apt;
 mod dsp;

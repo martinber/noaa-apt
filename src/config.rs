@@ -7,8 +7,8 @@ use serde::Deserialize;
 // For std::fs::File.read_to_string()
 use std::io::prelude::*;
 
-use noaa_apt::Contrast;
-use err;
+use crate::noaa_apt::Contrast;
+use crate::err;
 
 /// How to launch the program.
 #[derive(Clone, Debug)]

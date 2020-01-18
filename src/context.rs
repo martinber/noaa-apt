@@ -1,10 +1,11 @@
 //! Contains the Context struct.
 
-use dsp::{Signal, Rate};
-use noaa_apt::PX_PER_ROW;
-use err;
-use wav;
+use log::debug;
 
+use crate::dsp::{Signal, Rate};
+use crate::noaa_apt::PX_PER_ROW;
+use crate::err;
+use crate::wav;
 
 /// Different kinds of steps available.
 #[derive(Debug, PartialEq)]

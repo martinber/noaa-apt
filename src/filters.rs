@@ -1,8 +1,9 @@
 //! Filter definitions.
 
 use std::f32::consts::PI;
+use log::debug;
 
-use dsp::{Signal, Rate, Freq};
+use crate::dsp::{Signal, Rate, Freq};
 
 
 /// Some kind of filter
@@ -137,7 +138,7 @@ impl Filter for LowpassDcRemoval {
 ///
 /// The length depends on the parameters given, and it's always odd.
 fn kaiser(atten: f32, delta_w: Freq) -> Signal {
-    use misc::bessel_i0 as bessel;
+    use crate::misc::bessel_i0 as bessel;
 
     debug!("Designing Kaiser window, \
            attenuation: {}dB, delta_w: pi*{}rad/s",
@@ -214,7 +215,7 @@ mod tests {
         // [(a1, b1), (a2, b2), (a3, b3), ...]
         let mut values = a.iter().zip(b.iter());
         // Check if every pair have similar values
-        values.all(|(&a, &b)| ulps_eq!(a, b))
+        values.all(|(&a, &b)| approx::ulps_eq!(a, b))
     }
 
     #[test]
