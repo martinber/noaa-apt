@@ -1,6 +1,7 @@
 //! Small things that don't fit anywhere else.
 
 use std::fs;
+use std::path::Path;
 
 use reqwest;
 use filetime;
@@ -189,7 +190,7 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
 ///
 /// Returns the timestamp as the amount of seconds from the Unix epoch
 /// (Jan 1, 1970, 0:00:00hs UTC). I ignore the nanoseconds precision.
-pub fn read_timestamp(filename: &str) -> err::Result<i64> {
+pub fn read_timestamp(filename: &Path) -> err::Result<i64> {
     let metadata = fs::metadata(filename)
         .map_err(|_| err::Error::Internal(
             "Could not read metadata from input file".to_string()
@@ -209,7 +210,7 @@ pub fn read_timestamp(filename: &str) -> err::Result<i64> {
 ///
 /// The argument timestamp is the amount of seconds from the Unix epoch
 /// (Jan 1, 1970, 0:00:00hs UTC).
-pub fn write_timestamp(timestamp: i64, filename: &str) -> err::Result<()> {
+pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
     filetime::set_file_mtime(
         filename,
         filetime::FileTime::from_unix_time(timestamp, 0),

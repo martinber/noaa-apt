@@ -1,5 +1,7 @@
 //! Functions for loading and saving WAV files.
 
+use std::path::Path;
+
 use hound;
 
 use dsp;
@@ -8,9 +10,8 @@ use err;
 
 
 /// Load wav file, return `Signal` and specs.
-pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
-
-    debug!("Loading WAV: {}", filename);
+pub fn load_wav(filename: &Path) -> err::Result<(Signal, hound::WavSpec)> {
+    debug!("Loading WAV: {}", filename.display());
 
     let mut reader = hound::WavReader::open(filename)?;
     let spec = reader.spec();
@@ -63,9 +64,8 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 ///
 /// Only works for 32 bit float and 16 bit integer. As an input this function
 /// takes always a `Signal` but converts samples according to the WAV specs.
-pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::Result<()> {
-
-    debug!("Normalizing samples and writing WAV to '{}'", filename);
+pub fn write_wav(filename: &Path, signal: &Signal, spec: hound::WavSpec) -> err::Result<()> {
+    debug!("Normalizing samples and writing WAV to '{}'", filename.display());
 
     let max = dsp::get_max(&signal)?;
     debug!("Max: {}", max);
