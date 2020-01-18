@@ -19,20 +19,20 @@ static_ssl = ["openssl/vendored"] # Not valid for Microsoft Windows
 windows_console = [] # Show console on Microsoft Windows
 
 [dependencies]
-num = "*"
-hound = "*"
-rustfft = "*"
-approx = "*"
-png = "*"
-log = "*"
-simple_logger = "*"
-argparse = "*"
-reqwest = "*"
-directories = "*"
-toml = "*"
-filetime = "*"
-chrono = "*"
-serde = { version = "*", features = ["derive"] }
+approx = "0.3"
+argparse = "0.2"
+chrono = "0.4"
+directories = "2"
+filetime = "0.2"
+hound = "3"
+log = "0.4"
+num = "0.2"
+png = "0.14"
+reqwest = "0.9"
+rustfft = "3"
+serde = { version = "1", features = ["derive"] }
+simple_logger = "1"
+toml = "0.5"
 
 # openssl is a indirect dependency because of reqwest, I have to add openssl as
 # a direct dependency if I want to enable the "vendored" feature, but for
