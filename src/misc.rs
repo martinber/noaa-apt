@@ -63,8 +63,8 @@ pub fn bessel_i0(x: f32) -> f32 {
 pub fn check_updates(current: &str) -> Option<(bool, String)> {
     let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
 
-    let latest: Option<String> = match reqwest::get(addr.as_str()) {
-        Ok(mut response) => {
+    let latest: Option<String> = match reqwest::blocking::get(addr.as_str()) {
+        Ok(response) => {
             match response.text() {
                 Ok(text) => {
                     Some(text.trim().to_string())
