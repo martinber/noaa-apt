@@ -29,7 +29,7 @@ hound = "3"
 log = "0.4"
 num = "0.2"
 png = "0.14"
-reqwest = "0.9"
+reqwest = {version = "0.10", features = [ "blocking" ] }
 rustfft = "3"
 serde = { version = "1", features = ["derive"] }
 simple_logger = "1"
