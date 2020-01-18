@@ -119,7 +119,7 @@ pub struct Context {
     index: usize,
 
     /// Callback to notify the UI
-    ui_callback: Box<FnMut(f32, String)>,
+    ui_callback: Box<dyn FnMut(f32, String)>,
 }
 
 impl Context {
@@ -130,7 +130,7 @@ impl Context {
     }
 
     /// Export step.
-    pub fn step(&mut self, step: Step) -> err::Result<()> {
+    pub fn step(&mut self, step: Step<'_>) -> err::Result<()> {
         if self.export_wav {
 
             debug!("Got step: {}", step.id);

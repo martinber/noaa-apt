@@ -350,8 +350,8 @@ fn build_ui(
             );
 
             file_chooser.add_buttons(&[
-                ("Ok", gtk::ResponseType::Ok.into()),
-                ("Cancel", gtk::ResponseType::Cancel.into()),
+                ("Ok", gtk::ResponseType::Ok),
+                ("Cancel", gtk::ResponseType::Cancel),
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
@@ -544,7 +544,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 
     // Create callbacks
 
-    let callback = move |result| {
+    let callback = move |result: err::Result<()>| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {
                 widgets.start_button.set_sensitive(true);
@@ -555,7 +555,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     },
                     Err(ref e) => {
                         set_progress(1., "Error".to_string());
-                        show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
+                        show_info(&widgets, gtk::MessageType::Error, &e.to_string());
 
                         error!("{}", e);
                     },
@@ -724,7 +724,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
             },
             Mode::Timestamp => {
                 Err(err::Error::Internal(
-                    format!("Unexpected mode 'Timestamp'")
+                    "Unexpected mode 'Timestamp'".to_string()
                 ))
             },
         }
@@ -862,7 +862,7 @@ fn check_updates_and_show() {
                         show_info(
                             &widgets,
                             gtk::MessageType::Info,
-                            format!("Error checking for updates, do you have an internet connection?").as_str(),
+                            "Error checking for updates, do you have an internet connection?",
                         );
                     },
                 }
@@ -917,6 +917,6 @@ where W: glib::object::IsA<gtk::Window>
             window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
             url,
             gtk::get_current_event_time(),
-        ).or(Err(err::Error::Internal("Could not open browser".to_string())))
+        ).or_else(|_| Err(err::Error::Internal("Could not open browser".to_string())))
     }
 }

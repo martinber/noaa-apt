@@ -250,7 +250,7 @@ mod tests {
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
             let coeff = Lowpass { cutout, atten, delta_w }.design();
-            let mut fft = abs_fft(&coeff);
+            let fft = abs_fft(&coeff);
 
             println!("cutout: {}, atten: {}, delta_w: {}",
                      cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
@@ -288,7 +288,7 @@ mod tests {
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
             let coeff = LowpassDcRemoval { cutout, atten, delta_w }.design();
-            let mut fft = abs_fft(&coeff);
+            let fft = abs_fft(&coeff);
 
             println!("cutout: {}, atten: {}, delta_w: {}",
                      cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
