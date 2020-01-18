@@ -561,13 +561,13 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     },
                 }
             });
-            gtk::Continue(false)
+            Continue(false)
         });
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
             set_progress(progress, description.clone());
-            gtk::Continue(false)
+            Continue(false)
         });
     };
 
@@ -867,7 +867,7 @@ fn check_updates_and_show() {
                     },
                 }
             });
-            gtk::Continue(false)
+            Continue(false)
         });
     };
 
@@ -890,7 +890,7 @@ fn check_updates_and_show() {
 /// - https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
 #[allow(unused_variables)]
 fn open_in_browser<W>(window: &W, url: &str) -> err::Result<()>
-where W: gtk::IsA<gtk::Window>
+where W: glib::object::IsA<gtk::Window>
 {
     #[cfg(windows)]
     {
