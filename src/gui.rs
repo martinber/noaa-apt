@@ -498,9 +498,9 @@ fn build_system_menu(
         dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
         dialog.add_credit_section("Thank you",
                 &[
-                    "RTL-SDR.com", "pietern", "Grant T. Olson", "FMighty",
-                    "Peter Vogel", "wren84", "Florentin314", "Gagootron",
-                    "xxretartistxx", "unknownantipatriot",
+                    "RTL-SDR.com", "pietern", "Ossi Herrala", "Grant T. Olson",
+                    "FMighty", "Peter Vogel", "wren84", "Florentin314",
+                    "Gagootron", "xxretartistxx", "unknownantipatriot",
                 ]);
 
         dialog.set_website_label(Some("noaa-apt website"));

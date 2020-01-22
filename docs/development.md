@@ -343,6 +343,8 @@ If you want to disable this you can do it from the
 
 - pietern: I took the AM demodulator from his [apt137 decoder][apt137].
 
+- Ossi Herrala: Did some fixes and updated dependencies.
+
 - Grant T. Olson: OSX build instructions.
 
 - FMighty: Helped with cross compilation to Raspberry Pi.
