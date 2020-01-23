@@ -1,6 +1,5 @@
 //! Functions for loading and saving WAV files.
 
-use hound;
 use log::{debug, warn};
 
 use crate::dsp::{self, Signal};

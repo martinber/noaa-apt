@@ -2,10 +2,10 @@
 
 use log::{debug, info};
 
-use crate::noaa_apt::PX_PER_ROW;
+use crate::context::{Context, Step};
 use crate::dsp::Signal;
 use crate::err;
-use crate::context::{Context, Step};
+use crate::noaa_apt::PX_PER_ROW;
 
 
 /// Determines if working channel A or B.

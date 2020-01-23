@@ -1,9 +1,5 @@
 //! Contains my Error type.
 
-use hound;
-use png;
-use log;
-
 
 /// Uses my custom error type.
 pub type Result<T> = std::result::Result<T, Error>;

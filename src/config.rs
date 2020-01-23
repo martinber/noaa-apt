@@ -1,14 +1,13 @@
 //! Manages configurations from commandline and settings file
 
-use directories;
-use toml;
-use serde::Deserialize;
-
 // For std::fs::File.read_to_string()
 use std::io::prelude::*;
 
-use crate::noaa_apt::Contrast;
+use serde::Deserialize;
+
 use crate::err;
+use crate::noaa_apt::Contrast;
+
 
 /// How to launch the program.
 #[derive(Clone, Debug)]

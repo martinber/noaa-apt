@@ -21,22 +21,18 @@
 
 use std::cell::RefCell;
 
-use gtk;
-use gio;
-use glib;
+use chrono::prelude::*;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
-use chrono;
-use chrono::prelude::*;
 use log::{debug, error, info};
 
-use crate::err;
-use crate::noaa_apt::{self, Contrast};
-use crate::context::Context;
-use crate::misc;
 use crate::config;
+use crate::context::Context;
 use crate::dsp::Rate;
+use crate::err;
+use crate::misc;
+use crate::noaa_apt::{self, Contrast};
 
 
 /// Defined by Cargo.toml

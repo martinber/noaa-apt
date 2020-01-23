@@ -3,9 +3,10 @@
 use log::debug;
 
 use crate::dsp::{Signal, Rate};
-use crate::noaa_apt::PX_PER_ROW;
 use crate::err;
+use crate::noaa_apt::PX_PER_ROW;
 use crate::wav;
+
 
 /// Different kinds of steps available.
 #[derive(Debug, PartialEq)]
