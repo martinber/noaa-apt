@@ -1,6 +1,7 @@
 //! Filter definitions.
 
 use std::f32::consts::PI;
+
 use log::debug;
 
 use crate::dsp::{Signal, Rate, Freq};

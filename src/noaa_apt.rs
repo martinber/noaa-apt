@@ -1,17 +1,15 @@
 //! High-level functions for decoding APT.
 
-use hound;
-use png;
 use log::{info, warn};
 
-use crate::wav;
+use crate::config;
+use crate::context::{Context, Step};
 use crate::dsp::{self, Signal, Rate, Freq};
 use crate::err;
 use crate::filters;
-use crate::context::{Context, Step};
-use crate::telemetry;
-use crate::config;
 use crate::misc;
+use crate::telemetry;
+use crate::wav;
 
 
 /// Final signal sample rate.

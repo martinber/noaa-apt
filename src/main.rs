@@ -2,19 +2,19 @@
 
 #![cfg_attr(not(feature = "windows_console"), windows_subsystem = "windows")]
 
-use log::{debug, error, info};
-
-mod noaa_apt;
+mod config;
+mod context;
 mod dsp;
-mod frequency;
-mod wav;
-mod misc;
 mod err;
 mod filters;
-mod context;
-mod telemetry;
-mod config;
+mod frequency;
 #[cfg(feature = "gui")] mod gui;
+mod misc;
+mod noaa_apt;
+mod telemetry;
+mod wav;
+
+use log::{debug, error, info};
 
 use dsp::Rate;
 use context::Context;

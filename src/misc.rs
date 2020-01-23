@@ -2,9 +2,7 @@
 
 use std::fs;
 
-use filetime;
 use log::warn;
-use reqwest;
 
 use crate::dsp::{self, Signal};
 use crate::err;
