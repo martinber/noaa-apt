@@ -98,6 +98,13 @@ Notes:
 
 - Someday:
 
+    - Give focus to the "Decode" or "Resample" button so they are activated by
+        the Enter key.
+
+    - Show a message on the GUI when a timestamp is set.
+
+    - Command-line options to read/write timestamps?.
+
     - Use new Rust `async` syntax.
 
     - Show telemetry bands on GUI.
