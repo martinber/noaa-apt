@@ -20,6 +20,7 @@
 //! back.
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 
 use chrono::prelude::*;
 use gio::prelude::*;
@@ -570,31 +571,19 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 
         widgets.start_button.set_sensitive(false);
 
-        // input_filename has to be a String instead of GString because I need it to
-        // implement Sync
-
-        let input_filename: String = widgets
+        let input_filename: PathBuf = widgets
             .input_file_chooser
             .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-            .and_then(|path: std::path::PathBuf| {
-                 path.to_str()
-                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                     .map(|s: &str| s.to_string())
-            })?;
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
 
-        // output_filename has to be a String instead of GString because I need it
-        // to implement Sync
-
-        let output_filename: String = widgets
+        let output_filename: PathBuf = widgets
             .output_entry
             .get_text()
-            .expect("Couldn't get decode_output_entry text")
-            .as_str()
-            .to_string();
+            .map(|text| PathBuf::from(text.as_str()))
+            .ok_or_else(|| err::Error::Internal("Could not get decode_output_entry text".to_string()))?;
 
-        if output_filename == "" {
-            return Err(err::Error::Internal("Select output filename".to_string()))
+        if output_filename.as_os_str().is_empty() {
+            return Err(err::Error::Internal("Select output filename".to_string()));
         }
 
         match mode {
@@ -637,7 +626,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     )),
                 }?;
 
-                debug!("Decode {} to {}", input_filename, output_filename);
+                debug!("Decode {} to {}", input_filename.display(), output_filename.display());
 
                 std::thread::spawn(move || {
                     let context = Context::decode(
@@ -689,7 +678,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     .expect("Couldn't get resample_step_check")
                     .get_active();
 
-                debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
+                debug!("Resample {} as {} to {}", input_filename.display(), rate, output_filename.display());
 
                 widgets.start_button.set_sensitive(false);
                 std::thread::spawn(move || {
@@ -734,17 +723,12 @@ fn read_timestamp() -> err::Result<()> {
         let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
         let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
 
-        let input_filename: String = widgets
+        let input_filename: PathBuf = widgets
             .input_file_chooser
             .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-            .and_then(|path: std::path::PathBuf| {
-                 path.to_str()
-                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                     .map(|s: &str| s.to_string())
-            })?;
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
 
-        let timestamp = misc::read_timestamp(input_filename.as_str())?;
+        let timestamp = misc::read_timestamp(&input_filename)?;
         let datetime = chrono::Local.timestamp(timestamp, 0);
 
         // GTK counts months from 0 to 11. Years and days are fine
@@ -766,12 +750,11 @@ fn write_timestamp() -> err::Result<()> {
         let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
         let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
 
-        let output_filename: String = widgets
+        let output_filename: PathBuf = widgets
             .output_entry
             .get_text()
-            .expect("Couldn't get decode_output_entry text")
-            .as_str()
-            .to_string();
+            .map(|text| PathBuf::from(text.as_str()))
+            .ok_or_else(|| err::Error::Internal("Could not get decode_output_entry text".to_string()))?;
 
         let hour = hour_spinner.get_value_as_int();
         let minute = minute_spinner.get_value_as_int();
@@ -798,7 +781,7 @@ fn write_timestamp() -> err::Result<()> {
                 Err(err::Error::Internal("Ambiguous date or time".to_string())),
         }?;
 
-        misc::write_timestamp(datetime.timestamp(), output_filename.as_str())?;
+        misc::write_timestamp(datetime.timestamp(), &output_filename)?;
 
         Ok(())
     })

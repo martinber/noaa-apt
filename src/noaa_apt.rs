@@ -66,8 +66,8 @@ pub fn resample_wav(
         sample_format: hound::SampleFormat::Int,
     };
 
-    info!("Writing WAV to '{}'", settings.output_filename);
-    context.status(0.8, format!("Writing WAV to '{}'", settings.output_filename));
+    info!("Writing WAV to '{}'", settings.output_filename.display());
+    context.status(0.8, format!("Writing WAV to '{}'", settings.output_filename.display()));
 
     wav::write_wav(&settings.output_filename, &resampled, writer_spec)?;
     misc::write_timestamp(timestamp, &settings.output_filename)?;
@@ -368,10 +368,9 @@ pub fn decode(
 
     // --------------------
 
-    context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename));
+    context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename.display()));
 
-    let path = std::path::Path::new(&settings.output_filename);
-    let file = std::fs::File::create(path)?;
+    let file = std::fs::File::create(&settings.output_filename)?;
     let buffer = &mut std::io::BufWriter::new(file);
 
     let height = signal.len() as u32 / PX_PER_ROW;

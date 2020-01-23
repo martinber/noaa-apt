@@ -1,5 +1,7 @@
 //! Contains the Context struct.
 
+use std::path::PathBuf;
+
 use log::debug;
 
 use crate::dsp::{Signal, Rate};
@@ -180,10 +182,8 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = metadata.filename.to_string();
-                    filename.push_str(".wav");
-
-                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
+                    let filename = PathBuf::from(metadata.filename).with_extension("wav");
+                    wav::write_wav(&filename, &step.signal, writer_spec)?;
                 },
                 Variant::Signal => {
 
@@ -200,10 +200,8 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = metadata.filename.to_string();
-                    filename.push_str(".wav");
-
-                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
+                    let filename = PathBuf::from(metadata.filename).with_extension("wav");
+                    wav::write_wav(&filename, &step.signal, writer_spec)?;
                 },
             };
         }
