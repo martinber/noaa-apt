@@ -62,6 +62,7 @@ impl<'a> Step<'a> {
 
 /// Holds information about each step.
 struct StepMetadata {
+    #[allow(dead_code)] // For the description, maybe someday I'm going to use it
     description: &'static str,
     id: &'static str,
     filename: &'static str,
@@ -89,8 +90,8 @@ struct StepMetadata {
 /// (`Context.step()`). Then the `Context` will save them as WAV or do nothing
 /// depending on the user's settings.
 ///
-/// Also the `Context` has information (`StepMetadata`) about each Step: like a
-/// description and filename to use when saving to disk.
+/// Also the `Context` has information (`StepMetadata`) about each Step: like
+/// the filename and sample rate to use when saving to disk.
 ///
 /// One problem I had is that the Context needs the sample rates of every signal
 /// for correct WAV export, so the `Rate` is given when calling

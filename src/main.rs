@@ -1,6 +1,18 @@
 //! NOAA APT image decoder
 
+// Do not show terminal window on MS Windows
 #![cfg_attr(not(feature = "windows_console"), windows_subsystem = "windows")]
+
+
+// I like to use `return` when it makes things clearer
+#![allow(clippy::needless_return)]
+// Gives a warning when I take `&Signal` (alias of `Vec<f32>`) as arguments
+// instead of slices. Writing `&Signal` makes the code clearer
+#![allow(clippy::ptr_arg)]
+// Makes code clearer, see
+// https://doc.rust-lang.org/edition-guide/rust-2018/ownership-and-lifetimes/the-anonymous-lifetime.html
+#![warn(elided_lifetimes_in_paths)]
+
 
 mod config;
 mod context;

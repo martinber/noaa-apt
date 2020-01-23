@@ -460,9 +460,8 @@ fn build_system_menu(
     let timestamp = gio::SimpleAction::new("timestamp", None);
     let w = window.clone();
     let a = application.clone();
-    let s = settings.clone();
     timestamp.connect_activate(move |_, _| {
-        build_ui(check_updates, s.clone(), Mode::Timestamp, &a, &w);
+        build_ui(check_updates, settings.clone(), Mode::Timestamp, &a, &w);
     });
 
     application.add_action(&decode);
