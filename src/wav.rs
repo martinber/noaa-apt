@@ -64,6 +64,9 @@ pub fn load_wav(filename: &str) -> err::Result<(Signal, hound::WavSpec)> {
 /// takes always a `Signal` but converts samples according to the WAV specs.
 pub fn write_wav(filename: &str, signal: &Signal, spec: hound::WavSpec) -> err::Result<()> {
 
+    // Clippy gives a false-positive here
+    #![allow(clippy::suspicious_else_formatting)]
+
     debug!("Normalizing samples and writing WAV to '{}'", filename);
 
     let max = dsp::get_max(&signal)?;
