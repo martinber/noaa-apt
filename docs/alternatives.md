@@ -24,6 +24,9 @@ found, as of August 2018:
 - [zacstewart/apt-decoder], written in Python, slower than the others but really
   simple. I wrote the syncing algorithm.
 
+- [Alexander-Barth/APTDecoder.jl], written in Julia. Never tested it but has
+  false color and map overlay.
+
 - [ThatcherC/APT3000], written in JavaScript, looks very fast.
 
 - [rsj56/apitran], fork of [zacstewart/apt-decoder] with some extra automation.
@@ -61,3 +64,4 @@ made a comparison of the results on `./extra/comparison.ods`.
 [la1k/wxfetch]: https://github.com/la1k/wxfetch
 [pietern/apt137]: https://github.com/pietern/apt137
 [SopaXorzTaker/napt]: https://github.com/SopaXorzTaker/napt
+[Alexander-Barth/APTDecoder.jl]: https://github.com/Alexander-Barth/APTDecoder.jl
