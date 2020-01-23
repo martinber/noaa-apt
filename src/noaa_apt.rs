@@ -384,11 +384,26 @@ pub fn decode(
     encoder.set(png::ColorType::Grayscale).set(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
 
-    writer.write_image_data(&signal[..])?;
+    if settings.rotate_image {
+        context.status(0.98, "Rotating output image".to_string());
+        debug!("Rotating image");
+
+        let mut rotated_image = signal.clone();
+        rotated_image.reverse();
+
+        // Now channels A and B have swapped places, need to fix this
+        // by taking the last PX_PER_ROW / 2 bytes and making sure they end up at the beginning:
+        let (first, last) = rotated_image.split_at(signal.len() - (PX_PER_ROW / 2) as usize);
+        let fixed_image: Vec<u8> = last.iter().chain(first.iter()).map(|&x| x).collect();
+        writer.write_image_data(&fixed_image[..])?;
+    } else {
+        writer.write_image_data(&signal[..])?;
+    }
 
     // --------------------
 
     context.status(1., "Finished".to_string());
+    debug!("Finished");
     Ok(())
 }
 

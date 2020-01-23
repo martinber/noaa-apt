@@ -49,6 +49,10 @@ pub struct DecodeSettings {
     /// so that function checks if this variable is set before doing extra work.
     pub export_resample_filtered: bool,
 
+    /// If we are rotating the image.
+    /// Useful for ascending passes (satellite goes South -> North).
+    pub rotate_image: bool,
+
     /// Sample rate in Hz to use for intermediate processing.
     pub work_rate: u32,
 
@@ -218,6 +222,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let mut export_resample_filtered = false;
     let mut sync = true;
     let mut contrast_adjustment: Option<String> = None;
+    let mut rotate_image = false;
     let mut profile: Option<String> = None;
     let mut print_version = false;
     let mut output_filename: Option<String> = None;
@@ -257,6 +262,10 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             "Contrast adjustment method for decode. Possible values: \
             \"98_percent\", \"telemetry\" or \"disable\". 98 Percent used by \
             default.");
+        parser.refer(&mut rotate_image)
+            .add_option(&["--rotate-image"], argparse::StoreTrue,
+            "Rotate the image 180 degrees, useful when the satellite had an  \
+            ascending pass (South to North) and the image appears upside down.");
         parser.refer(&mut profile)
             .add_option(&["-p", "--profile"], argparse::StoreOption,
             "Profile to use, values loaded from settings file. Possible values: \
@@ -349,6 +358,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 export_resample_filtered,
                 sync,
                 contrast_adjustment,
+                rotate_image,
                 work_rate: profile.work_rate as u32,
                 resample_atten: profile.resample_atten as f32,
                 resample_delta_freq: profile.resample_delta_freq as f32,
