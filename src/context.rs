@@ -1,9 +1,13 @@
 //! Contains the Context struct.
 
-use dsp::{Signal, Rate};
-use noaa_apt::PX_PER_ROW;
-use err;
-use wav;
+use std::path::PathBuf;
+
+use log::debug;
+
+use crate::dsp::{Signal, Rate};
+use crate::err;
+use crate::noaa_apt::PX_PER_ROW;
+use crate::wav;
 
 
 /// Different kinds of steps available.
@@ -60,6 +64,7 @@ impl<'a> Step<'a> {
 
 /// Holds information about each step.
 struct StepMetadata {
+    #[allow(dead_code)] // For the description, maybe someday I'm going to use it
     description: &'static str,
     id: &'static str,
     filename: &'static str,
@@ -87,8 +92,8 @@ struct StepMetadata {
 /// (`Context.step()`). Then the `Context` will save them as WAV or do nothing
 /// depending on the user's settings.
 ///
-/// Also the `Context` has information (`StepMetadata`) about each Step: like a
-/// description and filename to use when saving to disk.
+/// Also the `Context` has information (`StepMetadata`) about each Step: like
+/// the filename and sample rate to use when saving to disk.
 ///
 /// One problem I had is that the Context needs the sample rates of every signal
 /// for correct WAV export, so the `Rate` is given when calling
@@ -118,7 +123,7 @@ pub struct Context {
     index: usize,
 
     /// Callback to notify the UI
-    ui_callback: Box<FnMut(f32, String)>,
+    ui_callback: Box<dyn FnMut(f32, String)>,
 }
 
 impl Context {
@@ -129,7 +134,7 @@ impl Context {
     }
 
     /// Export step.
-    pub fn step(&mut self, step: Step) -> err::Result<()> {
+    pub fn step(&mut self, step: Step<'_>) -> err::Result<()> {
         if self.export_wav {
 
             debug!("Got step: {}", step.id);
@@ -177,10 +182,8 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = metadata.filename.to_string();
-                    filename.push_str(".wav");
-
-                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
+                    let filename = PathBuf::from(metadata.filename).with_extension("wav");
+                    wav::write_wav(&filename, &step.signal, writer_spec)?;
                 },
                 Variant::Signal => {
 
@@ -197,10 +200,8 @@ impl Context {
                         sample_format: hound::SampleFormat::Float,
                     };
 
-                    let mut filename = metadata.filename.to_string();
-                    filename.push_str(".wav");
-
-                    wav::write_wav(filename.as_str(), &step.signal, writer_spec)?;
+                    let filename = PathBuf::from(metadata.filename).with_extension("wav");
+                    wav::write_wav(&filename, &step.signal, writer_spec)?;
                 },
             };
         }

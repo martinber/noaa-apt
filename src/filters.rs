@@ -2,7 +2,9 @@
 
 use std::f32::consts::PI;
 
-use dsp::{Signal, Rate, Freq};
+use log::debug;
+
+use crate::dsp::{Signal, Rate, Freq};
 
 
 /// Some kind of filter
@@ -137,7 +139,7 @@ impl Filter for LowpassDcRemoval {
 ///
 /// The length depends on the parameters given, and it's always odd.
 fn kaiser(atten: f32, delta_w: Freq) -> Signal {
-    use misc::bessel_i0 as bessel;
+    use crate::misc::bessel_i0 as bessel;
 
     debug!("Designing Kaiser window, \
            attenuation: {}dB, delta_w: pi*{}rad/s",
@@ -214,7 +216,7 @@ mod tests {
         // [(a1, b1), (a2, b2), (a3, b3), ...]
         let mut values = a.iter().zip(b.iter());
         // Check if every pair have similar values
-        values.all(|(&a, &b)| ulps_eq!(a, b))
+        values.all(|(&a, &b)| approx::ulps_eq!(a, b))
     }
 
     #[test]
@@ -249,7 +251,7 @@ mod tests {
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
             let coeff = Lowpass { cutout, atten, delta_w }.design();
-            let mut fft = abs_fft(&coeff);
+            let fft = abs_fft(&coeff);
 
             println!("cutout: {}, atten: {}, delta_w: {}",
                      cutout.get_pi_rad(), atten, delta_w.get_pi_rad());
@@ -287,7 +289,7 @@ mod tests {
             let ripple = 10_f32.powf(-atten/20.); // 10^(-atten/20)
 
             let coeff = LowpassDcRemoval { cutout, atten, delta_w }.design();
-            let mut fft = abs_fft(&coeff);
+            let fft = abs_fft(&coeff);
 
             println!("cutout: {}, atten: {}, delta_w: {}",
                      cutout.get_pi_rad(), atten, delta_w.get_pi_rad());

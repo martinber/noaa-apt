@@ -1,14 +1,14 @@
 //! Manages configurations from commandline and settings file
 
-use directories;
-use toml;
+
+use std::io::prelude::*; // For std::fs::File.read_to_string()
+use std::path::PathBuf;
+
 use serde::Deserialize;
 
-// For std::fs::File.read_to_string()
-use std::io::prelude::*;
+use crate::err;
+use crate::noaa_apt::Contrast;
 
-use noaa_apt::Contrast;
-use err;
 
 /// How to launch the program.
 #[derive(Clone, Debug)]
@@ -30,10 +30,10 @@ pub enum Mode {
 #[derive(Clone, Debug)]
 pub struct DecodeSettings {
     /// Input filename.
-    pub input_filename: String,
+    pub input_filename: PathBuf,
 
     /// Output filename.
-    pub output_filename: String,
+    pub output_filename: PathBuf,
 
     /// Whether to sync frames.
     pub sync: bool,
@@ -73,10 +73,10 @@ pub struct DecodeSettings {
 #[derive(Clone, Debug)]
 pub struct ResampleSettings {
     /// Input filename.
-    pub input_filename: String,
+    pub input_filename: PathBuf,
 
     /// Output filename.
-    pub output_filename: String,
+    pub output_filename: PathBuf,
 
     /// If we are exporting steps to WAV.
     pub export_wav: bool,
@@ -215,7 +215,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
     // Parse commandline
 
-    let mut input_filename: Option<String> = None;
+    let mut input_filename: Option<PathBuf> = None;
     let mut debug = false;
     let mut quiet = false;
     let mut wav_steps = false;
@@ -225,7 +225,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let mut rotate_image = false;
     let mut profile: Option<String> = None;
     let mut print_version = false;
-    let mut output_filename: Option<String> = None;
+    let mut output_filename: Option<PathBuf> = None;
     let mut resample_output: Option<u32> = None;
     {
         let mut parser = argparse::ArgumentParser::new();
@@ -324,7 +324,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             let settings = ResampleSettings {
                 input_filename,
-                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.png")),
                 export_wav: wav_steps,
                 export_resample_filtered,
                 output_rate: rate,
@@ -353,7 +353,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             let settings = DecodeSettings {
                 input_filename,
-                output_filename: output_filename.unwrap_or("./output.png".to_string()),
+                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.png")),
                 export_wav: wav_steps,
                 export_resample_filtered,
                 sync,

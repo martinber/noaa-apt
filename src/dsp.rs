@@ -1,13 +1,15 @@
 //! Functions for digital signal processing.
 
+use log::{debug, error};
 use num::Integer; // For u32.gcd(u32)
-use num::ToPrimitive;
+use num::ToPrimitive; // For u64.to_usize()
 
-pub use frequency::Freq;
-pub use frequency::Rate;
-use err;
-use filters;
-use context::{Context, Step};
+pub use crate::frequency::Freq;
+pub use crate::frequency::Rate;
+
+use crate::context::{Context, Step};
+use crate::err;
+use crate::filters;
 
 
 /// Represents a signal, it's just a `Vec<f32>`.
@@ -75,7 +77,7 @@ pub fn resample_with_filter(
 
     if l > 1 { // If we need interpolation
         // Reference the frequencies to the rate we have after interpolation
-        let interpolated_rate = input_rate.checked_mul(l).ok_or(
+        let interpolated_rate = input_rate.checked_mul(l).ok_or_else(||
             err::Error::RateOverflow(format!(
                 "Can't resample, looks like the sample rates do not have a big
                 divisor in common. input_rate: {}, output_rate: {}, l: {}, m: {}",

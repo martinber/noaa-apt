@@ -1,37 +1,32 @@
 //! NOAA APT image decoder
 
+// Do not show terminal window on MS Windows
 #![cfg_attr(not(feature = "windows_console"), windows_subsystem = "windows")]
 
-extern crate num;
-extern crate hound;
-extern crate rustfft;
-extern crate png;
-#[macro_use] extern crate log;
-extern crate simple_logger;
-extern crate argparse;
-extern crate reqwest;
-extern crate directories;
-extern crate toml;
-extern crate filetime;
-extern crate chrono;
-extern crate serde;
-#[cfg_attr(test, macro_use)] extern crate approx;
-#[cfg(feature = "gui")] extern crate gtk;
-#[cfg(feature = "gui")] extern crate gdk;
-#[cfg(feature = "gui")] extern crate gio;
-#[cfg(feature = "gui")] extern crate glib;
 
-mod noaa_apt;
+// I like to use `return` when it makes things clearer
+#![allow(clippy::needless_return)]
+// Gives a warning when I take `&Signal` (alias of `Vec<f32>`) as arguments
+// instead of slices. Writing `&Signal` makes the code clearer
+#![allow(clippy::ptr_arg)]
+// Makes code clearer, see
+// https://doc.rust-lang.org/edition-guide/rust-2018/ownership-and-lifetimes/the-anonymous-lifetime.html
+#![warn(elided_lifetimes_in_paths)]
+
+
+mod config;
+mod context;
 mod dsp;
-mod frequency;
-mod wav;
-mod misc;
 mod err;
 mod filters;
-mod context;
-mod telemetry;
-mod config;
+mod frequency;
 #[cfg(feature = "gui")] mod gui;
+mod misc;
+mod noaa_apt;
+mod telemetry;
+mod wav;
+
+use log::{debug, error, info};
 
 use dsp::Rate;
 use context::Context;

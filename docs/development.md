@@ -31,18 +31,17 @@ The available documentation is:
 - Docstrings: Try to document everything, follow [RFC-1574] without using links
   or examples.
 
-- Order of `use` in code:
+- Order of `use` in code (generally also alphabetically):
 
     ```
-    extern crate thirdparty;
     pub mod ...;
     mod ...;
     pub use std::...;
     pub use thirdparty::...;
-    pub use internal::...;
+    pub use crate::...;
     use std::...;
     use thirdparty::...;
-    use internal::...;
+    use crate::...;
     ```
 
 [Style guidelines]: https://doc.rust-lang.org/1.0.0/style/
@@ -82,6 +81,8 @@ Notes:
 
     - Add warnings for short images when reading telemetry.
 
+    - Histogram equalization
+
     - Check things that can panic/can fail:
 
         - Integer substraction.
@@ -97,6 +98,15 @@ Notes:
 
 - Someday:
 
+    - Give focus to the "Decode" or "Resample" button so they are activated by
+        the Enter key.
+
+    - Show a message on the GUI when a timestamp is set.
+
+    - Command-line options to read/write timestamps?.
+
+    - Use new Rust `async` syntax.
+
     - Show telemetry bands on GUI.
 
     - Log everything to a file, especially for Windows since it doesn't have a
@@ -111,7 +121,12 @@ Notes:
 
     - [Compile as a library and create an Android client](https://mozilla.github.io/firefox-browser-architecture/experiments/2017-09-21-rust-on-android.html)
 
+    - Post-processing GUI window for rotating images, false color, histogram
+      equalization, telemetry bands, etc.
+
     - Implement false color [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
+
+    - Implement a map overlay, see [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
 
     - Improve syncing performance. Make it faster and more resilent to noise,
         maybe working with the mean and variance?. Especially for Raspberry Pi.
@@ -235,7 +250,10 @@ I use Clippy too:
 
 ## Release checklist
 
-- Update dependencies: `cargo update`.
+- Update dependency version constraints on `Cargo.toml`:
+    `cargo install cargo-edit; cargo upgrade`.
+
+- Update dependencies (on `Cargo.lock`): `cargo update`.
 
 - Unit tests: `cargo test`.
 
@@ -331,6 +349,8 @@ If you want to disable this you can do it from the
     [a blog post](https://www.rtl-sdr.com/new-noaa-apt-image-decoder/).
 
 - pietern: I took the AM demodulator from his [apt137 decoder][apt137].
+
+- Ossi Herrala: Did some fixes and updated dependencies.
 
 - Grant T. Olson: OSX build instructions.
 

@@ -4,7 +4,7 @@ NOAA APT image decoder. Runs on GNU/Linux, Windows, Raspberry Pi 2+ and OSX.
 
 [Visit the website](http://noaa-apt.mbernardi.com.ar/).
 
-Pull requests welcome, see [the development page](https://noaa-apt.mbernardi.com.ar/development.html#things-to-do).
+Pull requests welcome, see [things to do on the development page](https://noaa-apt.mbernardi.com.ar/development.html#things-to-do).
 
 ## About docker
 

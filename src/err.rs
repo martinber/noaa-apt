@@ -1,11 +1,5 @@
 //! Contains my Error type.
 
-use std::error::Error as StdError;
-
-use hound;
-use png;
-use log;
-
 
 /// Uses my custom error type.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -40,7 +34,7 @@ pub enum Error {
 }
 
 impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             Error::Io(ref err) => err.fmt(f),
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
@@ -76,7 +70,7 @@ impl From<hound::Error> for Error {
 
 impl From<log::SetLoggerError> for Error {
     fn from(err: log::SetLoggerError) -> Self {
-        Error::Internal(err.description().to_string())
+        Error::Internal(err.to_string())
     }
 }
 
@@ -84,13 +78,13 @@ impl From<png::EncodingError> for Error {
     fn from(err: png::EncodingError) -> Self {
         match err {
             png::EncodingError::IoError(io_error) => Error::Io(io_error),
-            png::EncodingError::Format(_) => Error::PngWrite(err.description().to_string()),
+            png::EncodingError::Format(_) => Error::PngWrite(err.to_string()),
         }
     }
 }
 
 impl From<toml::de::Error> for Error {
     fn from(err: toml::de::Error) -> Self {
-        Error::Deserialize(err.description().to_string())
+        Error::Deserialize(err.to_string())
     }
 }

@@ -1,9 +1,11 @@
 //! Code for telemetry decoding.
 
-use noaa_apt::PX_PER_ROW;
-use dsp::Signal;
-use err;
-use context::{Context, Step};
+use log::{debug, info};
+
+use crate::context::{Context, Step};
+use crate::dsp::Signal;
+use crate::err;
+use crate::noaa_apt::PX_PER_ROW;
 
 
 /// Determines if working channel A or B.
@@ -217,7 +219,7 @@ mod tests {
 
     /// Check if two floats are equal given some margin of precision
     fn assert_roughly_equal(a: f32, b: f32) {
-        assert_ulps_eq!(a, b, max_ulps = 10)
+        approx::assert_ulps_eq!(a, b, max_ulps = 10)
     }
 
     #[test]

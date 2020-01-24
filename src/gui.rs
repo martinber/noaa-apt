@@ -20,22 +20,20 @@
 //! back.
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 
-use gtk;
-use gio;
-use glib;
+use chrono::prelude::*;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
-use chrono;
-use chrono::prelude::*;
+use log::{debug, error, info};
 
-use err;
-use noaa_apt::{self, Contrast};
-use context::Context;
-use misc;
-use config;
-use dsp::Rate;
+use crate::config;
+use crate::context::Context;
+use crate::dsp::Rate;
+use crate::err;
+use crate::misc;
+use crate::noaa_apt::{self, Contrast};
 
 
 /// Defined by Cargo.toml
@@ -356,8 +354,8 @@ fn build_ui(
             );
 
             file_chooser.add_buttons(&[
-                ("Ok", gtk::ResponseType::Ok.into()),
-                ("Cancel", gtk::ResponseType::Cancel.into()),
+                ("Ok", gtk::ResponseType::Ok),
+                ("Cancel", gtk::ResponseType::Cancel),
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
@@ -470,9 +468,8 @@ fn build_system_menu(
     let timestamp = gio::SimpleAction::new("timestamp", None);
     let w = window.clone();
     let a = application.clone();
-    let s = settings.clone();
     timestamp.connect_activate(move |_, _| {
-        build_ui(check_updates, s.clone(), Mode::Timestamp, &a, &w);
+        build_ui(check_updates, settings.clone(), Mode::Timestamp, &a, &w);
     });
 
     application.add_action(&decode);
@@ -508,9 +505,9 @@ fn build_system_menu(
         dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
         dialog.add_credit_section("Thank you",
                 &[
-                    "RTL-SDR.com", "pietern", "Grant T. Olson", "FMighty",
-                    "Peter Vogel", "wren84", "Florentin314", "Gagootron",
-                    "xxretartistxx", "unknownantipatriot",
+                    "RTL-SDR.com", "pietern", "Ossi Herrala", "Grant T. Olson",
+                    "FMighty", "Peter Vogel", "wren84", "Florentin314",
+                    "Gagootron", "xxretartistxx", "unknownantipatriot",
                 ]);
 
         dialog.set_website_label(Some("noaa-apt website"));
@@ -550,7 +547,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 
     // Create callbacks
 
-    let callback = move |result| {
+    let callback = move |result: err::Result<()>| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {
                 widgets.start_button.set_sensitive(true);
@@ -561,19 +558,19 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     },
                     Err(ref e) => {
                         set_progress(1., "Error".to_string());
-                        show_info(&widgets, gtk::MessageType::Error, format!("{}", e).as_str());
+                        show_info(&widgets, gtk::MessageType::Error, &e.to_string());
 
                         error!("{}", e);
                     },
                 }
             });
-            gtk::Continue(false)
+            Continue(false)
         });
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
             set_progress(progress, description.clone());
-            gtk::Continue(false)
+            Continue(false)
         });
     };
 
@@ -581,31 +578,19 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
 
         widgets.start_button.set_sensitive(false);
 
-        // input_filename has to be a String instead of GString because I need it to
-        // implement Sync
-
-        let input_filename: String = widgets
+        let input_filename: PathBuf = widgets
             .input_file_chooser
             .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-            .and_then(|path: std::path::PathBuf| {
-                 path.to_str()
-                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                     .map(|s: &str| s.to_string())
-            })?;
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
 
-        // output_filename has to be a String instead of GString because I need it
-        // to implement Sync
-
-        let output_filename: String = widgets
+        let output_filename: PathBuf = widgets
             .output_entry
             .get_text()
-            .expect("Couldn't get decode_output_entry text")
-            .as_str()
-            .to_string();
+            .map(|text| PathBuf::from(text.as_str()))
+            .ok_or_else(|| err::Error::Internal("Could not get decode_output_entry text".to_string()))?;
 
-        if output_filename == "" {
-            return Err(err::Error::Internal("Select output filename".to_string()))
+        if output_filename.as_os_str().is_empty() {
+            return Err(err::Error::Internal("Select output filename".to_string()));
         }
 
         match mode {
@@ -654,7 +639,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     .expect("Couldn't get rotate_image_check")
                     .get_active();
 
-                debug!("Decode {} to {}", input_filename, output_filename);
+                debug!("Decode {} to {}", input_filename.display(), output_filename.display());
 
                 std::thread::spawn(move || {
                     let context = Context::decode(
@@ -707,7 +692,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     .expect("Couldn't get resample_step_check")
                     .get_active();
 
-                debug!("Resample {} as {} to {}", input_filename, rate, output_filename);
+                debug!("Resample {} as {} to {}", input_filename.display(), rate, output_filename.display());
 
                 widgets.start_button.set_sensitive(false);
                 std::thread::spawn(move || {
@@ -737,7 +722,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
             },
             Mode::Timestamp => {
                 Err(err::Error::Internal(
-                    format!("Unexpected mode 'Timestamp'")
+                    "Unexpected mode 'Timestamp'".to_string()
                 ))
             },
         }
@@ -752,17 +737,12 @@ fn read_timestamp() -> err::Result<()> {
         let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
         let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
 
-        let input_filename: String = widgets
+        let input_filename: PathBuf = widgets
             .input_file_chooser
             .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))
-            .and_then(|path: std::path::PathBuf| {
-                 path.to_str()
-                     .ok_or_else(|| err::Error::Internal("Invalid character on input path".to_string()))
-                     .map(|s: &str| s.to_string())
-            })?;
+            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
 
-        let timestamp = misc::read_timestamp(input_filename.as_str())?;
+        let timestamp = misc::read_timestamp(&input_filename)?;
         let datetime = chrono::Local.timestamp(timestamp, 0);
 
         // GTK counts months from 0 to 11. Years and days are fine
@@ -784,12 +764,11 @@ fn write_timestamp() -> err::Result<()> {
         let minute_spinner = widgets.minute_spinner.as_ref().expect("Couldn't get minute_spinner");
         let second_spinner = widgets.second_spinner.as_ref().expect("Couldn't get second_spinner");
 
-        let output_filename: String = widgets
+        let output_filename: PathBuf = widgets
             .output_entry
             .get_text()
-            .expect("Couldn't get decode_output_entry text")
-            .as_str()
-            .to_string();
+            .map(|text| PathBuf::from(text.as_str()))
+            .ok_or_else(|| err::Error::Internal("Could not get decode_output_entry text".to_string()))?;
 
         let hour = hour_spinner.get_value_as_int();
         let minute = minute_spinner.get_value_as_int();
@@ -816,7 +795,7 @@ fn write_timestamp() -> err::Result<()> {
                 Err(err::Error::Internal("Ambiguous date or time".to_string())),
         }?;
 
-        misc::write_timestamp(datetime.timestamp(), output_filename.as_str())?;
+        misc::write_timestamp(datetime.timestamp(), &output_filename)?;
 
         Ok(())
     })
@@ -875,12 +854,12 @@ fn check_updates_and_show() {
                         show_info(
                             &widgets,
                             gtk::MessageType::Info,
-                            format!("Error checking for updates, do you have an internet connection?").as_str(),
+                            "Error checking for updates, do you have an internet connection?",
                         );
                     },
                 }
             });
-            gtk::Continue(false)
+            Continue(false)
         });
     };
 
@@ -903,7 +882,7 @@ fn check_updates_and_show() {
 /// - https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
 #[allow(unused_variables)]
 fn open_in_browser<W>(window: &W, url: &str) -> err::Result<()>
-where W: gtk::IsA<gtk::Window>
+where W: glib::object::IsA<gtk::Window>
 {
     #[cfg(windows)]
     {
@@ -930,6 +909,6 @@ where W: gtk::IsA<gtk::Window>
             window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
             url,
             gtk::get_current_event_time(),
-        ).or(Err(err::Error::Internal("Could not open browser".to_string())))
+        ).or_else(|_| Err(err::Error::Internal("Could not open browser".to_string())))
     }
 }
