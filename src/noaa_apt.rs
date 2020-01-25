@@ -1,5 +1,7 @@
 //! High-level functions for decoding APT.
 
+use itertools::interleave;
+use itertools::Itertools;
 use log::{info, warn, debug};
 
 use crate::config;
@@ -19,6 +21,9 @@ pub const FINAL_RATE: u32 = 4160;
 
 /// Pixels per image row.
 pub const PX_PER_ROW: u32 = 2080;
+
+/// Pixels per channel.
+pub const PX_PER_CHANNEL: u32 = PX_PER_ROW / 2;
 
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
@@ -384,14 +389,21 @@ pub fn decode(
         context.status(0.98, "Rotating output image".to_string());
         debug!("Rotating image");
 
-        let mut rotated_image = signal.clone();
-        rotated_image.reverse();
+        let (b, a): (Vec<(usize, &u8)>, Vec<(usize, &u8)>) = signal
+            .iter()
+            .rev()       // reverse
+            .enumerate() // add index to each element; split into A and B:
+            .partition(|&(i, _)| (i as u32 % PX_PER_ROW) < PX_PER_CHANNEL);
 
-        // Now channels A and B have swapped places, need to fix this
-        // by taking the last PX_PER_ROW / 2 bytes and making sure they end up at the beginning:
-        let (first, last) = rotated_image.split_at(signal.len() - (PX_PER_ROW / 2) as usize);
-        let fixed_image: Vec<u8> = last.iter().chain(first.iter()).map(|&x| x).collect();
-        writer.write_image_data(&fixed_image[..])?;
+        let a: Vec<u8> = a.iter().map(|(_, &n)| n).collect(); // get rid of indices
+        let b: Vec<u8> = b.iter().map(|(_, &n)| n).collect(); // get rid of indices
+
+        let merged: Vec<u8> = interleave(
+            &a.into_iter().chunks(PX_PER_CHANNEL as usize),
+            &b.into_iter().chunks(PX_PER_CHANNEL as usize),
+        ).flatten().collect();
+
+        writer.write_image_data(&merged[..])?;
     } else {
         writer.write_image_data(&signal[..])?;
     }

@@ -657,7 +657,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                         contrast_adjustment,
                         rotate_image,
                         export_wav: wav_steps,
-                        export_resample_filtered: resample_step,                        
+                        export_resample_filtered: resample_step,
                         work_rate: settings.work_rate,
                         resample_atten: settings.resample_atten,
                         resample_delta_freq: settings.resample_delta_freq,
