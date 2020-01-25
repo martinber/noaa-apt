@@ -100,9 +100,9 @@ pub struct Rate {
 
 impl Rate {
     /// Create rate from Hertz.
-    pub fn hz<T: num::Integer + num::ToPrimitive>(r: T) -> Self {
+    pub fn hz(r: u32) -> Self {
         // Should panic only when r < 0
-        Self { hz: num::NumCast::from(r).unwrap() }
+        Self { hz: r }
     }
     /// Get rate on Hertz.
     pub fn get_hz(self) -> u32 {
@@ -111,9 +111,7 @@ impl Rate {
 
     /// Multiplication against u32 with overflow check
     pub fn checked_mul(self, other: u32) -> Option<Self> {
-        self.hz.checked_mul(other).map(
-            |r| Self { hz: r }
-        )
+        self.hz.checked_mul(other).map(Self::hz)
     }
 }
 
@@ -519,12 +517,6 @@ mod tests {
     #[allow(unused_must_use)]
     fn test_rate_overflow() {
         Rate::hz(1) - Rate::hz(2);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_rate_negative() {
-        Rate::hz(-1);
     }
 
     #[test]
