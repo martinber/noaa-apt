@@ -1,7 +1,5 @@
 //! High-level functions for decoding APT.
 
-use itertools::interleave;
-use itertools::Itertools;
 use log::{info, warn, debug};
 
 use crate::config;
@@ -180,6 +178,25 @@ fn find_sync(
     info!("Found {} sync frames", peaks.len());
 
     Ok(peaks.iter().map(|(index, _value)| *index).collect())
+}
+
+/// Takes an interleaved array and swaps the order of the chunks.
+///
+/// Used for rotating the image. Takes a Vec and the length of each chunk.
+///
+/// `reinterleave(array, 4)` will take this array
+///
+///     [a1, a2, a3, a4, b1, b2, b3, b4, a5, a6, a7, a8, b5, b6, b7, b8]
+///
+/// And return:
+///
+///     [b1, b2, b3, b4, a1, a2, a3, a4, b5, b6, b7, b8, a5, a6, a7, a8]
+fn reinterleave(signal: &Vec<u8>, chunk_size: usize) -> Vec<u8> {
+
+    let a_chunks = signal.chunks(chunk_size).step_by(2);
+    let b_chunks = signal.chunks(chunk_size).skip(1).step_by(2);
+
+    itertools::interleave(b_chunks, a_chunks).flatten().copied().collect()
 }
 
 /// Maps float signal values to `u8`.
@@ -363,13 +380,30 @@ pub fn decode(
         }
     };
 
-    let signal = map(&signal, low, high);
+    // mut because it can be modified if we are rotating the image
+    let mut signal = map(&signal, low, high);
 
     context.step(Step::signal(
             "mapped",
             &signal.iter().map(|x| f32::from(*x)).collect(),
             Some(final_rate)
     ))?;
+
+    // --------------------
+
+    if settings.rotate_image {
+
+        context.status(0.93, "Rotating output image".to_string());
+
+        // Reverses the array and keeps the A channel on the left. Care is taken to
+        // leave lines from the A channel at the same height as the B channel.
+        // Otherwise there is a vertical offset of one pixel between each channel.
+        // This is done by swapping the interleaving chunks corresponding to A and B
+        // frames.
+
+        let reversed: Vec<u8> = signal.iter().rev().copied().collect();
+        signal = reinterleave(&reversed, PX_PER_CHANNEL as usize);
+    }
 
     // --------------------
 
@@ -385,28 +419,7 @@ pub fn decode(
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
 
-    if settings.rotate_image {
-        context.status(0.98, "Rotating output image".to_string());
-        debug!("Rotating image");
-
-        let (b, a): (Vec<(usize, &u8)>, Vec<(usize, &u8)>) = signal
-            .iter()
-            .rev()       // reverse
-            .enumerate() // add index to each element; split into A and B:
-            .partition(|&(i, _)| (i as u32 % PX_PER_ROW) < PX_PER_CHANNEL);
-
-        let a: Vec<u8> = a.iter().map(|(_, &n)| n).collect(); // get rid of indices
-        let b: Vec<u8> = b.iter().map(|(_, &n)| n).collect(); // get rid of indices
-
-        let merged: Vec<u8> = interleave(
-            &a.into_iter().chunks(PX_PER_CHANNEL as usize),
-            &b.into_iter().chunks(PX_PER_CHANNEL as usize),
-        ).flatten().collect();
-
-        writer.write_image_data(&merged[..])?;
-    } else {
-        writer.write_image_data(&signal[..])?;
-    }
+    writer.write_image_data(&signal[..])?;
 
     // --------------------
 
@@ -484,5 +497,17 @@ mod tests {
         let high = 255. * 123.123 - 234.234;
 
         assert_eq!(expected, map(&shifted_values, low, high));
+    }
+
+    #[test]
+    fn test_reinterleave() {
+        let expected = vec![ 6,  7,  8,  9, 10,  1,  2,  3,  4,  5,
+                            16, 17, 18, 19, 20, 11, 12, 13, 14, 15,
+                            26, 27, 28, 29, 30, 21, 22, 23, 24, 25,
+                            36, 37, 38, 39, 40, 31, 32, 33, 34, 35];
+
+        let test_values = (1..=40).collect();
+
+        assert_eq!(expected, reinterleave(&test_values, 5));
     }
 }

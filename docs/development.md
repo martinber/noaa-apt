@@ -352,6 +352,8 @@ If you want to disable this you can do it from the
 
 - Ossi Herrala: Did some fixes and updated dependencies.
 
+- Arcadie Z.: Added a feature for rotating images.
+
 - Grant T. Olson: OSX build instructions.
 
 - FMighty: Helped with cross compilation to Raspberry Pi.
