@@ -24,8 +24,8 @@ found, as of August 2018:
 - [zacstewart/apt-decoder], written in Python, slower than the others but really
   simple. I wrote the syncing algorithm.
 
-- [Alexander-Barth/APTDecoder.jl], written in Julia. Never tested it but has
-  false color and map overlay.
+- [Alexander-Barth/APTDecoder.jl], written in Julia. Never tested it but has map
+  overlay.
 
 - [ThatcherC/APT3000], written in JavaScript, looks very fast.
 
