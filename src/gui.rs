@@ -103,6 +103,7 @@ struct WidgetList {
     wav_steps_check:       Option<gtk::CheckButton>,
     resample_step_check:   Option<gtk::CheckButton>,
     contrast_combo:        Option<gtk::ComboBoxText>,
+    rotate_image_check:    Option<gtk::CheckButton>,
     read_button:           Option<gtk::Button>,
     hour_spinner:          Option<gtk::SpinButton>,
     minute_spinner:        Option<gtk::SpinButton>,
@@ -182,6 +183,7 @@ fn build_ui(
     let rate_spinner;
     let sync_check;
     let contrast_combo;
+    let rotate_image_check;
     let progress_bar;
     let wav_steps_check;
     let resample_step_check;
@@ -198,6 +200,8 @@ fn build_ui(
                 .expect("Couldn't get sync_check"));
             contrast_combo = Some(builder.get_object("contrast_combo")
                 .expect("Couldn't get contrast_combo"));
+            rotate_image_check = Some(builder.get_object("rotate_image_check")
+                .expect("Couldn't get rotate_image_check"));
             progress_bar = Some(builder.get_object("progress_bar")
                 .expect("Couldn't get progress_bar"));
             wav_steps_check = Some(builder.get_object("wav_steps_check")
@@ -216,6 +220,7 @@ fn build_ui(
                 .expect("Couldn't get sync_check"));
             sync_check = None;
             contrast_combo = None;
+            rotate_image_check = None;
             progress_bar = Some(builder.get_object("progress_bar")
                 .expect("Couldn't get progress_bar"));
             wav_steps_check = Some(builder.get_object("wav_steps_check")
@@ -236,6 +241,7 @@ fn build_ui(
             progress_bar = None;
             wav_steps_check = None;
             resample_step_check = None;
+            rotate_image_check = None;
             read_button = Some(builder.get_object("read_button")
                 .expect("Couldn't get read_button"));
             hour_spinner = Some(builder.get_object("hour_spinner")
@@ -261,6 +267,7 @@ fn build_ui(
         rate_spinner,
         sync_check,
         contrast_combo,
+        rotate_image_check,
         main_box:            builder.get_object("main_box"           ).expect("Couldn't get main_box"           ),
         progress_bar,
         start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
@@ -626,6 +633,12 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     )),
                 }?;
 
+                let rotate_image = widgets
+                    .rotate_image_check
+                    .as_ref()
+                    .expect("Couldn't get rotate_image_check")
+                    .get_active();
+
                 debug!("Decode {} to {}", input_filename.display(), output_filename.display());
 
                 std::thread::spawn(move || {
@@ -642,6 +655,7 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                         output_filename,
                         sync,
                         contrast_adjustment,
+                        rotate_image,
                         export_wav: wav_steps,
                         export_resample_filtered: resample_step,
                         work_rate: settings.work_rate,

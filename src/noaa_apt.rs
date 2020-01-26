@@ -1,6 +1,8 @@
 //! High-level functions for decoding APT.
 
-use log::{info, warn};
+use itertools::interleave;
+use itertools::Itertools;
+use log::{info, warn, debug};
 
 use crate::config;
 use crate::context::{Context, Step};
@@ -19,6 +21,9 @@ pub const FINAL_RATE: u32 = 4160;
 
 /// Pixels per image row.
 pub const PX_PER_ROW: u32 = 2080;
+
+/// Pixels per channel.
+pub const PX_PER_CHANNEL: u32 = PX_PER_ROW / 2;
 
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
@@ -380,11 +385,33 @@ pub fn decode(
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
 
-    writer.write_image_data(&signal[..])?;
+    if settings.rotate_image {
+        context.status(0.98, "Rotating output image".to_string());
+        debug!("Rotating image");
+
+        let (b, a): (Vec<(usize, &u8)>, Vec<(usize, &u8)>) = signal
+            .iter()
+            .rev()       // reverse
+            .enumerate() // add index to each element; split into A and B:
+            .partition(|&(i, _)| (i as u32 % PX_PER_ROW) < PX_PER_CHANNEL);
+
+        let a: Vec<u8> = a.iter().map(|(_, &n)| n).collect(); // get rid of indices
+        let b: Vec<u8> = b.iter().map(|(_, &n)| n).collect(); // get rid of indices
+
+        let merged: Vec<u8> = interleave(
+            &a.into_iter().chunks(PX_PER_CHANNEL as usize),
+            &b.into_iter().chunks(PX_PER_CHANNEL as usize),
+        ).flatten().collect();
+
+        writer.write_image_data(&merged[..])?;
+    } else {
+        writer.write_image_data(&signal[..])?;
+    }
 
     // --------------------
 
     context.status(1., "Finished".to_string());
+    debug!("Finished");
     Ok(())
 }
 

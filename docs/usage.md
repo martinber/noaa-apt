@@ -84,6 +84,8 @@ Optional arguments:
                         Contrast adjustment method for decode. Possible values:
                         "98_percent", "telemetry" or "disable". 98 Percent used
                         by default.
+  --rotate-image        Rotate the image 180 degrees, useful when the satellite had an
+                        ascending pass (South to North) and the image appears upside down.
   -p,--profile PROFILE  Profile to use, values loaded from settings file.
                         Possible values: "standard", "fast" or "slow".
   -o,--output FILENAME  Set output path. When decoding images the default is
@@ -171,7 +173,8 @@ output, see above.
 
 These satellites have polar orbits, so sometimes you see them go from north to
 south and sometimes from south to north. If the satellite went from south to
-north you should rotate the image.
+north you should rotate the image by checking the "Rotate image" checkbox in
+"Advanced settings".
 
 ### Bad contrast, dark images
 

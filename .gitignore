@@ -14,3 +14,5 @@ salida*.png
 /debian/files
 /debian/.debhelper/
 /debian/debhelper-build-stamp
+
+**/.DS_Store
