@@ -5,50 +5,75 @@ layout: main
 
 ## Download
 
-You can download everything from the
-[releases page on GitHub](https://github.com/martinber/noaa-apt/releases).
+The relevant downloads from the
+[releases page on GitHub](https://github.com/martinber/noaa-apt/releases) are
+listed below. You can also download/clone the GitHub repository, but I recommend
+using one of the links below.
 
-The GUI version has an [easy to use interface](./usage.html#gui) but you can
-[use it from the terminal too](./usage.html#terminal). The no-GUI version can be
-[used only from the terminal](./usage.html#terminal).
+The GUI version has [an easy to use graphical interface](./usage.html#gui) but
+you can [use it from the terminal too](./usage.html#terminal). The no-GUI
+version can be [used only from the terminal](./usage.html#terminal).
+
+After downloading and installing, visit [the Usage page](./usage.html).
 
 ### GNU/Linux 64 bit PC
 
-#### Debian-based distros
+#### Debian-based distros (Ubuntu, Linux Mint, etc.)
 
-- For Debian, Ubuntu, Linux Mint, etc. download the `.deb` package:
+- GUI version `.deb` package:
 
     [GNU/Linux x86_64 .deb package][amd64_deb].
 
-    Install it by running `sudo apt install ~/Downloads/noaa-apt_X.X.X-1_amd64.deb`.
+    You can install it on some distros by double clicking the file and clicking
+    an "Install" button. Otherwise open a terminal and install it by running:
 
-- If you are not going to use the GUI you can download the no-GUI executable from:
+    ```
+    sudo apt install ~/Downloads/noaa-apt_X.X.X-1_amd64.deb
+    ```
+
+- Executable without GUI:
 
     [GNU/Linux x86_64 (no-GUI) zip][x86_64_linux_gnu_nogui_zip].
+
+    To install, extract the zip file anywhere.
+
+#### Arch Linux and similar distros
+
+- Sylogista maintains an [AUR package](https://aur.archlinux.org/packages/noaa-apt/)
 
 #### Other distros
 
-- Download the executable with GUI from:
+- Executable with GUI:
 
     [GNU/Linux x86_64 zip][x86_64_linux_gnu_zip].
 
-- Download the executable without GUI from:
+    To install, extract the zip file anywhere.
+
+- Executable without GUI:
 
     [GNU/Linux x86_64 (no-GUI) zip][x86_64_linux_gnu_nogui_zip].
+
+    To install, extract the zip file anywhere.
 
 ### Windows 64 bit PC
 
 - [Windows x86_64 zip][x86_64_windows_gnu_zip].
 
+    To install, extract the zip file anywhere.
+
 ### Raspberry Pi 2+
 
-- Download the executable with GUI from:
+- Executable with GUI:
 
     [GNU/Linux armv7 zip][armv7_linux_gnueabihf_zip].
 
-- Download the executable without GUI from:
+    To install, extract the zip file anywhere.
+
+- Executable without GUI:
 
     [GNU/Linux armv7 (no-GUI) zip][armv7_linux_gnueabihf_nogui_zip].
+
+    To install, extract the zip file anywhere.
 
 ### OSX
 

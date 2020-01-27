@@ -506,8 +506,8 @@ fn build_system_menu(
         dialog.add_credit_section("Thank you",
                 &[
                     "RTL-SDR.com", "pietern", "Ossi Herrala", "Arcadie Z.",
-                    "Grant T. Olson", "FMighty", "Peter Vogel", "wren84",
-                    "Florentin314", "Gagootron", "xxretartistxx",
+                    "Grant T. Olson", "FMighty", "Sylogista", "Peter Vogel",
+                    "wren84", "Florentin314", "Gagootron", "xxretartistxx",
                     "unknownantipatriot",
                 ]);
 

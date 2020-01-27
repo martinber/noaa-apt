@@ -12,6 +12,58 @@ layout: main
 
 ---
 
+## Running
+
+It depends on your system and how you installed the program:
+
+### GUI
+
+The GUI version can open a graphical window, this is the easiest way to run the
+program.
+
+- On Windows, double click the executable.
+
+- On GNU/Linux, if you installed the `.deb` file, open a terminal and run:
+
+    ```
+    noaa-apt
+    ```
+
+- On GNU/Linux, if you extracted the `.zip` file, open a terminal and run it
+    indicating where it was saved. E.g:
+
+    ```
+    ~/Desktop/folder/noaa-apt
+    ```
+
+### Terminal
+
+Both the GUI and no-GUI versions can be used from the terminal. If you run the
+program without arguments the GUI will open, so make sure to at least give the
+input filename as an option.
+
+- On Windows, use the `noaa-apt-console.exe` executable to be able to see
+    console output. E.g:
+
+    ```
+    noaa-apt-console.exe input.wav -o output.png
+    ```
+
+- On GNU/Linux, if you installed the `.deb` file, open a terminal and run:
+
+    ```
+    noaa-apt input.wav -o output.png
+    ```
+
+- On GNU/Linux, if you extracted the `.zip` file, open a terminal and run it
+    indicating where it was saved. E.g:
+
+    ```
+    ~/Desktop/folder/noaa-apt input.wav -o output.png
+    ```
+
+See below for more command-line options.
+
 ## Program usage
 
 Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
@@ -28,8 +80,6 @@ using `-p fast` or editing the
 
 ### GUI
 
-Run by clicking the executable, or from terminal without arguments.
-
 On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
 useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
 requires a specific sample rate. If resampling, the modification timestamp
@@ -44,17 +94,7 @@ timestamp to your WAV recording.
 
 ![GUI]({{ site.baseurl }}/images/gui.png)
 
-If you are having problems, you can try running noaa-apt from a console. On
-GNU/Linux run `noaa-apt` from your terminal, on Windows double click
-`noaa-apt-console.exe` or run it from Powershell.
-
 ### Terminal
-
-On GNU/Linux run `noaa-apt` from your terminal. On Windows you should use
-`noaa-apt-console.exe` to be able to see console output.
-
-If you run the program without arguments the GUI will open, so make sure to at
-least give the input filename as an option.
 
 ```
 Usage:

@@ -316,6 +316,8 @@ I use Clippy too:
 - Edit release on GitHub. Leave "Release title" empty, leave changelog as
     description. Upload files.
 
+- Ask Sylogista to update the [AUR package](https://aur.archlinux.org/packages/noaa-apt/).
+
 ## Check for updates
 
 The program sends a HTTP GET request and receives the latest version available,
@@ -357,6 +359,8 @@ If you want to disable this you can do it from the
 - Grant T. Olson: OSX build instructions.
 
 - FMighty: Helped with cross compilation to Raspberry Pi.
+
+- Sylogista: Maintains an [AUR package](https://aur.archlinux.org/packages/noaa-apt/).
 
 - Peter Vogel: For writing about noaa-apt on the web.
 
