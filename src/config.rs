@@ -324,7 +324,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             let settings = ResampleSettings {
                 input_filename,
-                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.png")),
+                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.wav")),
                 export_wav: wav_steps,
                 export_resample_filtered,
                 output_rate: rate,
