@@ -328,11 +328,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         // resample_output option not set, decode WAV file
         } else {
 
-            // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
-            let contrast_adjustment: Contrast = match contrast_adjustment
-                .as_ref()
-                .map(|s| s.as_str())
-            {
+            let contrast_adjustment: Contrast = match contrast_adjustment.as_deref() {
                 Some("telemetry") => Contrast::Telemetry,
                 Some("disable") => Contrast::MinMax,
                 Some("98_percent") | None => Contrast::Percent(0.98),
