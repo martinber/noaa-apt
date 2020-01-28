@@ -2,8 +2,8 @@
 
 use std::convert::TryFrom;
 
+use gcd::Gcd;
 use log::{debug, error};
-use num::Integer; // For u32.gcd(u32)
 
 pub use crate::frequency::Freq;
 pub use crate::frequency::Rate;
@@ -70,7 +70,7 @@ pub fn resample_with_filter(
         return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
     }
 
-    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let gcd = input_rate.get_hz().gcd(output_rate.get_hz());
     let l = output_rate.get_hz() / gcd; // interpolation factor
     let m = input_rate.get_hz() / gcd; // decimation factor
 
