@@ -1,8 +1,9 @@
 //! Functions for digital signal processing.
 
+use std::convert::TryFrom;
+
+use gcd::Gcd;
 use log::{debug, error};
-use num::Integer; // For u32.gcd(u32)
-use num::ToPrimitive; // For u64.to_usize()
 
 pub use crate::frequency::Freq;
 pub use crate::frequency::Rate;
@@ -69,7 +70,7 @@ pub fn resample_with_filter(
         return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
     }
 
-    let gcd = input_rate.get_hz().gcd(&output_rate.get_hz());
+    let gcd = input_rate.get_hz().gcd(output_rate.get_hz());
     let l = output_rate.get_hz() / gcd; // interpolation factor
     let m = input_rate.get_hz() / gcd; // decimation factor
 
@@ -193,15 +194,15 @@ fn fast_resampling(
     // Save expanded and filtered signal if we need to export that step
     let mut expanded_filtered = if context.export_resample_filtered  {
         // Very likely to overflow usize on 32 bits systems
-        match interpolated_len.to_usize() {
-            Some(l) => Vec::with_capacity(l),
-            None => {
+        match usize::try_from(interpolated_len) {
+            Ok(l) => Vec::with_capacity(l),
+            Err(_) => {
                 error!("Expanded filtered signal can't fit in memory, skipping step");
-                Vec::with_capacity(0) // Not going to be used
+                Vec::new() // Not going to be used
             }
         }
     } else {
-        Vec::with_capacity(0) // Not going to be used
+        Vec::new() // Not going to be used
     };
 
     // Filter delay in the n axis, half of filter width
