@@ -192,12 +192,13 @@ fn fast_resampling(
     let mut output: Signal = Vec::with_capacity(output_len as usize);
 
     // Save expanded and filtered signal if we need to export that step
-    let mut expanded_filtered = if context.export_resample_filtered  {
+    let mut expanded_filtered = if context.export_resample_filtered {
         // Very likely to overflow usize on 32 bits systems
         match usize::try_from(interpolated_len) {
             Ok(l) => Vec::with_capacity(l),
             Err(_) => {
                 error!("Expanded filtered signal can't fit in memory, skipping step");
+                context.export_resample_filtered = false;
                 Vec::new() // Not going to be used
             }
         }
@@ -309,6 +310,30 @@ fn decimate(signal: &Signal, m: u32) -> Signal {
 ///
 /// Expression taken from
 /// [apt137](https://github.com/pietern/apt137/blob/master/decoder.c).
+///
+/// MIT License
+///
+/// Copyright (c) 2015 Pieter Noordhuis, Martin Bernardi
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
+
+
 pub fn demodulate(
     context: &mut Context,
     signal: &Signal,

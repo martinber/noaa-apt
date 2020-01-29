@@ -101,9 +101,9 @@ pub struct Rate {
 impl Rate {
     /// Create rate from Hertz.
     pub fn hz(r: u32) -> Self {
-        // Should panic only when r < 0
         Self { hz: r }
     }
+
     /// Get rate on Hertz.
     pub fn get_hz(self) -> u32 {
         self.hz
