@@ -1,139 +1,119 @@
+/// Functions for georreferencing images.
+///
+/// Most functions taken from
+/// [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
+///
+/// Consider this module MIT licensed.
+///
+/// MIT License
+///
+/// Copyright (c) 2019-2020 Alexander Barth, Martin Bernardi
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
+///
+use std::f32::consts::PI;
+
 use chrono::prelude::*;
 
-/*
 /// Compute the great-circle distance between two points
 ///
 /// The units of all input and output parameters are degrees.
+fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+    // https://en.wikipedia.org/w/index.php?title=Great-circle_distance&oldid=749078136#Computational_formulas
+
+    // Convert to radians
+    let delta_lon = PI/180. * (lon2 - lon1);
+    let lat1 = PI/180. * lat1;
+    let lat2 = PI/180. * lat2;
+
+    let cos_central_angle = lat1.sin()*lat2.sin()
+                            + lat1.cos()*lat2.cos()*delta_lon.cos();
+
+    let cos_central_angle = cos_central_angle.max(-1.).min(1.);
+
+    180./PI * cos_central_angle.acos()
+}
+
+/// Compute azimuth of line between two points.
 ///
-/// From [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
+/// The angle between the line segment defined by the points (`lat1`,`lon1`)
+/// and (`lat2`,`lon2`) and the North.
 ///
-/// MIT License
+/// The units of all input and output parameters are degrees.
+fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+    // https://en.wikipedia.org/w/index.php?title=Azimuth&oldid=750059816#Calculating_azimuth
+
+    // Convert to radians
+    let delta_lon = PI/180. * (lon2 - lon1);
+    let lat1 = PI/180. * lat1;
+    let lat2 = PI/180. * lat2;
+
+    let azimuth = delta_lon.sin().atan2(lat1.cos()*lat2.tan() - lat1.sin()*delta_lon.cos());
+
+    180./PI * azimuth
+}
+
+/// Compute the coordinates of the end-point of a displacement on a sphere.
 ///
-/// Copyright (c) 2019 Alexander Barth, Martin Bernardi
+/// `lat`,`lon` are the coordinates of the starting point, `range` is the
+/// covered distance of the displacements along a great circle and `azimuth` is
+/// the direction of the displacement relative to the North.
 ///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to deal
-/// in the Software without restriction, including without limitation the rights
-/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-/// copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
+/// The units of all input and output parameters are degrees.
 ///
-/// The above copyright notice and this permission notice shall be included in all
-/// copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-/// SOFTWARE.
-"""
-function distance(lat1,lon1,lat2,lon2)
-    #https://en.wikipedia.org/w/index.php?title=Great-circle_distance&oldid=749078136#Computational_formulas
+/// This function can also be used to define a spherical coordinate system with
+/// rotated poles.
+fn reckon(lat: f32, lon: f32, range: f32, azimuth: f32) -> (f32, f32) {
 
-    Δλ = π/180 * (lon2 - lon1)
-    ϕ1 = π/180 * lat1
-    ϕ2 = π/180 * lat2
+    // Based on reckon from Alexander Barth
+    // https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
+    // relicenced to LGPL-v3
 
-    cosΔσ = sin(ϕ1)*sin(ϕ2) + cos(ϕ1)*cos(ϕ2)*cos(Δλ)
+    let deg2rad = PI/180.;
 
-    eins = one(cosΔσ)
-    cosΔσ = max(min(cosΔσ,eins),-eins)
-    Δσ = acos(cosΔσ)
-    return 180/π * Δσ
-end
+    let lat = lat * deg2rad;
+    let lon = lon * deg2rad;
+    let range = range * deg2rad;
+    let azimuth = azimuth * deg2rad;
 
-"""
-    az = azimuth(lat1,lon1,lat2,lon2)
-Compute azimuth, i.e. the angle between the line segment defined by the points (`lat1`,`lon1`) and (`lat2`,`lon2`)
-and the North.
-The units of all input and output parameters are degrees.
-/// From [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
-///
-/// MIT License
-///
-/// Copyright (c) 2019 Alexander Barth, Martin Bernardi
-///
-/// Permission is hereby granted, free of charge, to any person obtaining a copy
-/// of this software and associated documentation files (the "Software"), to deal
-/// in the Software without restriction, including without limitation the rights
-/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-/// copies of the Software, and to permit persons to whom the Software is
-/// furnished to do so, subject to the following conditions:
-///
-/// The above copyright notice and this permission notice shall be included in all
-/// copies or substantial portions of the Software.
-///
-/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-/// SOFTWARE.
-function azimuth(lat1,lon1,lat2,lon2)
-    # https://en.wikipedia.org/w/index.php?title=Azimuth&oldid=750059816#Calculating_azimuth
+    let mut tmp = lat.sin() * range.cos() + lat.cos() * range.sin() * azimuth.cos();
 
-    Δλ = π/180 * (lon2 - lon1)
-    ϕ1 = π/180 * lat1
-    ϕ2 = π/180 * lat2
+    // clip tmp to -1 and 1
+    tmp = tmp.max(-1.).min(1.);
 
-    α = atan(sin(Δλ), cos(ϕ1)*tan(ϕ2) - sin(ϕ1)*cos(Δλ))
-    return 180/π * α
-end
+    let lato = PI/2. - tmp.acos();
 
-# Base on reckon from myself
-# https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
-# relicenced to LGPL-v3
+    let cos_y = (range.cos() - lato.sin() * lat.sin()) / (lato.cos() * lat.cos());
+    let sin_y = azimuth.sin() * range.sin() / lato.cos();
 
-"""
-    lato,lono = reckon(lat,lon,range,azimuth)
-Compute the coordinates of the end-point of a displacement on a
-sphere. `lat`,`lon` are the coordinates of the starting point, `range`
-is the covered distance of the displacements along a great circle and
-`azimuth` is the direction of the displacement relative to the North.
-The units of all input and output parameters are degrees.
-This function can also be used to define a spherical coordinate system
-with rotated poles.
-"""
-function reckon(lat,lon,range,azimuth)
+    let y = sin_y.atan2(cos_y);
 
-    # convert to radian
-    rad2deg = π/180
+    let mut lono = lon + y;
 
-    lat = lat*rad2deg
-    lon = lon*rad2deg
-    range = range*rad2deg
-    azimuth = azimuth*rad2deg
+    // bring the lono in the interval [-π π[
 
-    tmp = sin.(lat).*cos.(range) + cos.(lat).*sin.(range).*cos.(azimuth)
+    lono = (lono + PI) % (2.*PI) - PI;
 
-    # clip tmp to -1 and 1
-    eins = one(eltype(tmp))
-    tmp = max.(min.(tmp,eins),-eins)
+    // convert to degrees
 
-    lato = π/2 .- acos.(tmp)
-
-    cos_γ = (cos.(range) - sin.(lato).*sin.(lat))./(cos.(lato).*cos.(lat))
-    sin_γ = sin.(azimuth).*sin.(range)./cos.(lato)
-
-    γ = atan.(sin_γ,cos_γ)
-
-    lono = lon .+ γ
-
-    # bring the lono in the interval [-π π[
-
-    lono = mod.(lono .+ π,2*π) .- π
-
-    # convert to degrees
-
-    lono = lono/rad2deg
-    lato = lato/rad2deg
-
-    return lato,lono
-end
-*/
+    (lato/deg2rad, lono/deg2rad)
+}
 
 
 #[cfg(test)]
@@ -144,6 +124,61 @@ mod tests {
 
     // Checks for equality allowing a difference of epsilon
     // assert_abs_diff_eq!(a, b, epsilon);
+
+    #[test]
+    fn test_distance() {
+        let tolerance = 0.001; // Degrees
+        assert_abs_diff_eq!(distance(  0.,   0.,   0.,  30.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0.,  30.,   0.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0., -30.,   0.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance( 30.,   0.,   0.,   0.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(-30.,   0.,   0.,   0.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,  30.,   0.,   0.),  30., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0., 180.,   0.), 180., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0.,   0., 180.), 180., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0.,   0.,-180.), 180., epsilon = tolerance);
+        assert_abs_diff_eq!(distance( 60.,   0.,  80., 180.),  40., epsilon = tolerance);
+
+        // The function is less precise for small angles
+        let tolerance = 0.036; // Roughly the angular distance of a pixel
+        assert_abs_diff_eq!(distance(  0.,   0.,   0., 0.1 ), 0.1 , epsilon = tolerance);
+        assert_abs_diff_eq!(distance( 40.,  40.,  40.,  40.),   0., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,   0.,   0., 360.),   0., epsilon = tolerance);
+    }
+
+    #[test]
+    fn test_azimuth() {
+        let tolerance = 0.001; // Degrees
+        assert_abs_diff_eq!(azimuth(  0.,   0.,   0.,  30.),  90., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth(  0.,   0.,  30.,   0.),   0., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth(  0.,   0., -30.,   0.), 180., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth( 30.,   0.,   0.,   0.), 180., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth(-30.,   0.,   0.,   0.),   0., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth(  0.,  30.,   0.,   0.), -90., epsilon = tolerance);
+    }
+
+    #[test]
+    fn test_reckon() {
+        // Test against the distance() and azimuth() functions
+
+        let tolerance = 0.001; // Degrees
+
+        let test_values = [
+            (   0.,    0.,  10.,   0.),
+            ( 180., -100.,  50.,  40.),
+            (  20.,   30.,  10., 170.),
+            ( 123.,  234.,  34.,  99.),
+            (  20.,   30.,  10., 300.),
+        ];
+
+        for test in test_values.iter() {
+            let (lat1, lon1, dist, az) = *test;
+            let (lat2, lon2) = reckon(lat1, lon1, dist, az);
+            println!("{}, {}", lat2, lon2);
+            assert_abs_diff_eq!(distance(lat1, lon1, lat2, lon2), dist, epsilon = tolerance)
+        }
+
+    }
 
     /// Load a NOAA 18 test Satrec object from `test_tle.txt`.
     fn load_test_sat(name: &str) -> satellite::io::Satrec {
