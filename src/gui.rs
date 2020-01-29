@@ -856,7 +856,7 @@ fn read_timestamp() -> err::Result<()> {
             .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
 
         let timestamp = misc::read_timestamp(&input_filename)?;
-        let datetime = chrono::Local.timestamp(timestamp, 0);
+        let datetime = chrono::Local.timestamp(timestamp, 0); // 0 milliseconds
 
         // GTK counts months from 0 to 11. Years and days are fine
         calendar.select_month(datetime.month0() as u32, datetime.year() as u32);

@@ -32,6 +32,7 @@ log = "0.4.8"
 png = "0.15.3"
 reqwest = { version = "0.10.1", features = [ "blocking" ] }
 rustfft = "3.0.1"
+satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
 serde = { version = "1.0.104", features = ["derive"] }
 simple_logger = "1.5.0"
 toml = "0.5.6"

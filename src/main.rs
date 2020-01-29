@@ -20,6 +20,7 @@ mod dsp;
 mod err;
 mod filters;
 mod frequency;
+mod geo;
 #[cfg(feature = "gui")] mod gui;
 mod misc;
 mod noaa_apt;
