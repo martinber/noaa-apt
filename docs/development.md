@@ -98,9 +98,6 @@ Notes:
 
 - Someday:
 
-    - Give focus to the "Decode" or "Resample" button so they are activated by
-        the Enter key.
-
     - Use new Rust `async` syntax.
 
     - Show telemetry bands on GUI.

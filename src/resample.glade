@@ -68,6 +68,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hexpand">True</property>
+            <property name="activates_default">True</property>
             <property name="secondary_icon_stock">gtk-save-as</property>
           </object>
           <packing>
@@ -91,6 +92,7 @@
           <object class="GtkSpinButton" id="rate_spinner">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="activates_default">True</property>
             <property name="text" translatable="yes">11025</property>
             <property name="adjustment">rate_adjustment</property>
             <property name="numeric">True</property>
@@ -206,6 +208,8 @@
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
+            <property name="can_default">True</property>
+            <property name="has_default">True</property>
             <property name="receives_default">True</property>
             <property name="image">start_button_image</property>
             <property name="image_position">right</property>

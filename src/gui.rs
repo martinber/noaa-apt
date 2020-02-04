@@ -328,6 +328,10 @@ fn build_ui(
     }
     widgets.start_button.set_sensitive(true);
 
+    // Set start button as default, so when the user presses the enter key this
+    // button will be pressed
+    widgets.start_button.grab_default();
+
     // Set timezone if on timestamp mode
     if let Some(label) = widgets.timezone_label.as_ref() {
         // Create any chrono::DateTime from chrono::Local, then ignore the

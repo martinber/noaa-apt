@@ -63,6 +63,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hexpand">True</property>
+            <property name="activates_default">True</property>
             <property name="secondary_icon_stock">gtk-save-as</property>
           </object>
           <packing>
@@ -190,11 +191,11 @@
                 </child>
                 <child>
                   <object class="GtkCheckButton" id="rotate_image_check">
-                    <property name="label" translatable="yes">Rotate output image (South -> North passes)</property>
+                    <property name="label" translatable="yes">Rotate output image (South -&gt; North passes)</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="tooltip_text" translatable="yes">Enable for ascending (South -> North) satellite passes.</property>
+                    <property name="tooltip_text" translatable="yes">Enable for ascending (South -&gt; North) satellite passes.</property>
                     <property name="image_position">right</property>
                     <property name="draw_indicator">True</property>
                   </object>
@@ -249,6 +250,8 @@
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
+            <property name="can_default">True</property>
+            <property name="has_default">True</property>
             <property name="receives_default">True</property>
             <property name="image">start_button_image</property>
             <property name="image_position">right</property>
