@@ -103,8 +103,6 @@ Notes:
 
     - Show a message on the GUI when a timestamp is set.
 
-    - Command-line options to read/write timestamps?.
-
     - Use new Rust `async` syntax.
 
     - Show telemetry bands on GUI.
@@ -154,8 +152,7 @@ Build with `--release`, Rust does some optimizations and it works faster.
 
 ### GNU/Linux
 
-- Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
-  1.27.0).
+- Install [rustup](https://rustup.rs/)
 
 - `sudo apt install libgtk-3-dev libssl-dev`.
 
@@ -190,8 +187,7 @@ GUI version and the GUI .deb package. Also I build the Raspberry Pi versions
 
 ### Mac / OSX
 
-- Install [rustup](https://rustup.rs/) (you need `rustc --version` at least
-  1.27.0). The 'unix installer' is fine for Macs.
+- Install [rustup](https://rustup.rs/). The 'unix installer' is fine for Macs.
 
 - Install dependencies via [Homebrew](https://brew.sh/). I'm not entirely sure
   if these are enough:

@@ -25,7 +25,7 @@ argparse = "0.2.2"
 chrono = "0.4.10"
 directories = "2.0.2"
 filetime = "0.2.8"
-gcd = "1.2.0"
+gcd = "2.0.1"
 hound = "3.4.0"
 itertools = "0.8.2"
 log = "0.4.8"
@@ -33,14 +33,14 @@ png = "0.15.3"
 reqwest = { version = "0.10.1", features = [ "blocking" ] }
 rustfft = "3.0.1"
 serde = { version = "1.0.104", features = ["derive"] }
-simple_logger = "1.4.0"
+simple_logger = "1.5.0"
 toml = "0.5.6"
 
 # openssl is a indirect dependency because of reqwest, I have to add openssl as
 # a direct dependency if I want to enable the "vendored" feature, but for
 # Windows it breaks the build. Looks like adding it as an optional dependency is
 # working for both cases
-openssl = { version = "0.10.26", optional = true }
+openssl = { version = "0.10.27", optional = true }
 
 gtk = { version = "0.8.0", optional = true, features = ["v3_16"] }
 gdk = { version = "0.12.0", optional = true }
