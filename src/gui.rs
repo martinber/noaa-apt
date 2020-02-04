@@ -556,6 +556,8 @@ fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
                     Ok(()) => {
                         // widgets.status_label.set_markup("Finished");
                         set_progress(1., "Finished".to_string());
+
+                        show_info(&widgets, gtk::MessageType::Info, "Finished");
                     },
                     Err(ref e) => {
                         set_progress(1., "Error".to_string());
@@ -753,6 +755,8 @@ fn read_timestamp() -> err::Result<()> {
         minute_spinner.set_value(datetime.minute() as f64);
         second_spinner.set_value(datetime.second() as f64);
 
+        show_info(&widgets, gtk::MessageType::Info, "Loaded timestamp from file");
+
         Ok(())
     })
 }
@@ -797,6 +801,8 @@ fn write_timestamp() -> err::Result<()> {
         }?;
 
         misc::write_timestamp(datetime.timestamp(), &output_filename)?;
+
+        show_info(&widgets, gtk::MessageType::Info, "Timestamp written to file");
 
         Ok(())
     })
