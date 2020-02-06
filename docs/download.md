@@ -97,9 +97,9 @@ installed what you need:
 My builds use a statically linked libssl, so you don't need libssl unless you
 compiled noaa-apt yourself.
 
-[amd64_deb]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt_1.1.1-1_amd64.deb
-[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt-1.1.1-x86_64-windows-gnu.zip
-[x86_64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt-1.1.1-x86_64-linux-gnu.zip
-[x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt-1.1.1-x86_64-linux-gnu-nogui.zip
-[armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt-1.1.1-armv7-linux-gnueabihf.zip
-[armv7_linux_gnueabihf_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.1/noaa-apt-1.1.1-armv7-linux-gnueabihf-nogui.zip
+[amd64_deb]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt_1.1.2-1_amd64.deb
+[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt-1.1.2-x86_64-windows-gnu.zip
+[x86_64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt-1.1.2-x86_64-linux-gnu.zip
+[x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt-1.1.2-x86_64-linux-gnu-nogui.zip
+[armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt-1.1.2-armv7-linux-gnueabihf.zip
+[armv7_linux_gnueabihf_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.1.2/noaa-apt-1.1.2-armv7-linux-gnueabihf-nogui.zip

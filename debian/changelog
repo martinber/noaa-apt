@@ -1,3 +1,14 @@
+noaa-apt (1.1.2-1) testing; urgency=medium
+
+  * Added option to rotate images, useful for South -> North passes.
+  * Pressing the Enter key on the GUI starts decoding/resampling.
+  * Show GUI messages when decode/resample/timestamp finishes.
+  * Updated dependencies.
+  * Misc fixes.
+  * Added contributors to credits.
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Fri, 04 Feb 2020 10:57:26 -0300
+
 noaa-apt (1.1.1-1) testing; urgency=medium
 
   * Bigger default work_rate to fix banding on some images
