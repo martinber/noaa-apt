@@ -20,6 +20,8 @@
 //! back.
 
 use std::cell::RefCell;
+use std::env;
+use std::path::Path;
 use std::path::PathBuf;
 
 use chrono::prelude::*;
@@ -97,6 +99,7 @@ struct WidgetList {
     info_label:            gtk::Label,
     info_revealer:         gtk::Revealer,
     output_entry:          gtk::Entry,
+    output_tips:           gtk::Label,
     rate_spinner:          Option<gtk::SpinButton>,
     input_file_chooser:    gtk::FileChooserButton,
     sync_check:            Option<gtk::CheckButton>,
@@ -272,6 +275,7 @@ fn build_ui(
         progress_bar,
         start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
         output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
+        output_tips:         builder.get_object("output_tips"        ).expect("Couldn't get output_tips"        ),
         input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
         wav_steps_check,
         resample_step_check,
@@ -371,6 +375,53 @@ fn build_ui(
 
             file_chooser.destroy();
         });
+    });
+
+    // Configure output_tips to update when output_entry changes
+
+    widgets.output_entry.connect_changed(|_| {
+        borrow_widgets(|widgets| {
+
+            // get output_filename. Early abort if error or empty.
+
+            let output_filename = match widgets.output_entry.get_text() {
+                Some(v) => v,
+                None => {
+                    widgets.output_tips.set_text("");
+                    return
+                },
+            };
+
+            if output_filename.as_str() == "" {
+                widgets.output_tips.set_text("");
+                return
+            }
+
+            // build the tips String and show it
+
+            let mut tips = String::new();
+
+            // rel or abs
+            if output_filename.starts_with("/") == false {
+                match env::current_dir() {
+                    Ok(cwd) => tips.push_str(&format!("Info: output file is relative to \"{}\".\n", cwd.display())),
+                    Err(e) => tips.push_str(&format!("Error: invalid current working directory: \"{}\".\n", e)),
+                };
+            }
+
+            // filename extension (png expected)
+            if output_filename.ends_with(".png") == false {
+                tips.push_str("Warning: you are advised to use a .png file extension.\n");
+            }
+
+            // file exists?
+            if Path::new(&output_filename).exists() {
+                tips.push_str("Warning: the file already exists, it will be overwritten.");
+            }
+
+            // show tips
+            widgets.output_tips.set_text(&tips);
+        })
     });
 
     // Connect start button
