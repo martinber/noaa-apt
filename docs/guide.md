@@ -202,6 +202,20 @@ make much difference.
 Download noaa-apt and load the WAV file.
 [Check the usage page for details](./usage.html).
 
+### Going further
+
+Once you receive your first images, you can try:
+
+- Decode your recordings using WXtoIMG instead. This program allows you to
+  overlay a computer generated map and to colorize your image.
+
+- Set up an automated receiving station with
+  [Auto137](https://gitlab.altillimity.com/altillimity/auto137) or similar
+  alternatives.
+
+- Try receiving images from [Meteor M2](https://www.rtl-sdr.com/tag/meteor/)
+  satellites which have a higher image quality.
+
 ## Notes
 
 - [Example of a WAV file]({{ site.baseurl }}/examples/argentina.wav), hear it,
