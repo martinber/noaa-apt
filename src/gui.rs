@@ -417,7 +417,7 @@ fn build_ui(
             if output_filename.ends_with(output_filename_extension) == false {
                 tips.push_str(&format!("Warning: you are advised to use a \"{}\" file extension.\n", output_filename_extension));
             }
-        
+
             // file exists?
             if Path::new(&output_filename).exists() {
                 tips.push_str("Warning: the file already exists, it will be overwritten.");
