@@ -77,6 +77,24 @@
           </packing>
         </child>
         <child>
+          <object class="GtkLabel" id="output_tips">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">start</property>
+            <property name="wrap">True</property>
+            <property name="wrap_mode">char</property>
+            <property name="selectable">True</property>
+            <property name="max_width_chars">50</property>
+            <attributes>
+              <attribute name="style" value="italic"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkLabel">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -85,7 +103,7 @@
           </object>
           <packing>
             <property name="left_attach">0</property>
-            <property name="top_attach">2</property>
+            <property name="top_attach">3</property>
           </packing>
         </child>
         <child>
@@ -101,7 +119,7 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
-            <property name="top_attach">2</property>
+            <property name="top_attach">3</property>
           </packing>
         </child>
       </object>
