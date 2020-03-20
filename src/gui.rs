@@ -196,6 +196,7 @@ fn build_ui(
     let second_spinner;
     let timezone_label;
     let calendar;
+    let output_filename_extension;
     match mode {
         Mode::Decode => {
             rate_spinner = None;
@@ -217,6 +218,7 @@ fn build_ui(
             second_spinner = None;
             timezone_label = None;
             calendar = None;
+            output_filename_extension = ".png";
         },
         Mode::Resample => {
             rate_spinner = Some(builder.get_object("rate_spinner")
@@ -236,6 +238,7 @@ fn build_ui(
             second_spinner = None;
             timezone_label = None;
             calendar = None;
+            output_filename_extension = ".wav";
         },
         Mode::Timestamp => {
             rate_spinner = None;
@@ -257,6 +260,7 @@ fn build_ui(
                 .expect("Couldn't get timezone_label"));
             calendar = Some(builder.get_object("calendar")
                 .expect("Couldn't get calendar"));
+            output_filename_extension = ".wav";
         }
     };
 
@@ -379,7 +383,7 @@ fn build_ui(
 
     // Configure output_tips to update when output_entry changes
 
-    widgets.output_entry.connect_changed(|_| {
+    widgets.output_entry.connect_changed(move |_| {
         borrow_widgets(|widgets| {
 
             // get output_filename. Early abort if error or empty.
@@ -409,11 +413,11 @@ fn build_ui(
                 };
             }
 
-            // filename extension (png expected)
-            if output_filename.ends_with(".png") == false {
-                tips.push_str("Warning: you are advised to use a .png file extension.\n");
+            // filename extension (png or wav expected, depends on mode)
+            if output_filename.ends_with(output_filename_extension) == false {
+                tips.push_str(&format!("Warning: you are advised to use a \"{}\" file extension.\n", output_filename_extension));
             }
-
+        
             // file exists?
             if Path::new(&output_filename).exists() {
                 tips.push_str("Warning: the file already exists, it will be overwritten.");
