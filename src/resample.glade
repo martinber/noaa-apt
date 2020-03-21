@@ -227,7 +227,6 @@
             <property name="sensitive">False</property>
             <property name="can_focus">True</property>
             <property name="can_default">True</property>
-            <property name="has_default">True</property>
             <property name="receives_default">True</property>
             <property name="image">start_button_image</property>
             <property name="image_position">right</property>
