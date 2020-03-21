@@ -85,6 +85,7 @@
             <property name="label" translatable="yes">Write timestamp</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="can_default">True</property>
             <property name="receives_default">True</property>
           </object>
           <packing>
@@ -97,6 +98,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hexpand">True</property>
+            <property name="activates_default">True</property>
             <property name="secondary_icon_stock">gtk-save-as</property>
           </object>
           <packing>
@@ -121,6 +123,12 @@
             <property name="left_attach">1</property>
             <property name="top_attach">2</property>
           </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
         </child>
       </object>
       <packing>
