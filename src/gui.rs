@@ -99,7 +99,10 @@ struct WidgetList {
     info_label:            gtk::Label,
     info_revealer:         gtk::Revealer,
     output_entry:          gtk::Entry,
-    output_tips:           gtk::Label,
+    folder_tip_box:        Option<gtk::Box>,
+    folder_tip_label:      Option<gtk::Label>,
+    extension_tip_label:   Option<gtk::Label>,
+    overwrite_tip_label:   Option<gtk::Label>,
     rate_spinner:          Option<gtk::SpinButton>,
     input_file_chooser:    gtk::FileChooserButton,
     sync_check:            Option<gtk::CheckButton>,
@@ -183,6 +186,10 @@ fn build_ui(
         Mode::Timestamp => Builder::new_from_string(include_str!("timestamp.glade")),
     };
 
+    let folder_tip_box;
+    let folder_tip_label;
+    let extension_tip_label;
+    let overwrite_tip_label;
     let rate_spinner;
     let sync_check;
     let contrast_combo;
@@ -199,6 +206,14 @@ fn build_ui(
     let output_filename_extension;
     match mode {
         Mode::Decode => {
+            folder_tip_box = Some(builder.get_object("folder_tip_box")
+                .expect("Couldn't get folder_tip_box"));
+            folder_tip_label = Some(builder.get_object("folder_tip_label")
+                .expect("Couldn't get folder_tip_label"));
+            extension_tip_label = Some(builder.get_object("extension_tip_label")
+                .expect("Couldn't get extension_tip_label"));
+            overwrite_tip_label = Some(builder.get_object("overwrite_tip_label")
+                .expect("Couldn't get overwrite_tip_label"));
             rate_spinner = None;
             sync_check = Some(builder.get_object("sync_check")
                 .expect("Couldn't get sync_check"));
@@ -221,6 +236,14 @@ fn build_ui(
             output_filename_extension = ".png";
         },
         Mode::Resample => {
+            folder_tip_box = Some(builder.get_object("folder_tip_box")
+                .expect("Couldn't get folder_tip_box"));
+            folder_tip_label = Some(builder.get_object("folder_tip_label")
+                .expect("Couldn't get folder_tip_label"));
+            extension_tip_label = Some(builder.get_object("extension_tip_label")
+                .expect("Couldn't get extension_tip_label"));
+            overwrite_tip_label = Some(builder.get_object("overwrite_tip_label")
+                .expect("Couldn't get overwrite_tip_label"));
             rate_spinner = Some(builder.get_object("rate_spinner")
                 .expect("Couldn't get sync_check"));
             sync_check = None;
@@ -241,6 +264,10 @@ fn build_ui(
             output_filename_extension = ".wav";
         },
         Mode::Timestamp => {
+            folder_tip_box = None;
+            folder_tip_label = None;
+            extension_tip_label = None;
+            overwrite_tip_label = None;
             rate_spinner = None;
             sync_check = None;
             contrast_combo = None;
@@ -279,7 +306,10 @@ fn build_ui(
         progress_bar,
         start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
         output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
-        output_tips:         builder.get_object("output_tips"        ).expect("Couldn't get output_tips"        ),
+        folder_tip_box,
+        folder_tip_label,
+        extension_tip_label,
+        overwrite_tip_label,
         input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
         wav_steps_check,
         resample_step_check,
@@ -381,50 +411,71 @@ fn build_ui(
         });
     });
 
-    // Configure output_tips to update when output_entry changes
+    // Configure tips to update when output_entry changes
 
     widgets.output_entry.connect_changed(move |_| {
         borrow_widgets(|widgets| {
 
-            // get output_filename. Early abort if error or empty.
+            match mode {
+                Mode::Timestamp => return,
+                Mode::Decode | Mode::Resample => {
+                    let folder_tip_box = widgets.folder_tip_box.as_ref()
+                        .expect("Couldn't get folder_tip_box");
+                    let folder_tip_label = widgets.folder_tip_label.as_ref()
+                        .expect("Couldn't get folder_tip_label");
+                    let extension_tip_label = widgets.extension_tip_label.as_ref()
+                        .expect("Couldn't get extension_tip_label");
+                    let overwrite_tip_label = widgets.overwrite_tip_label.as_ref()
+                        .expect("Couldn't get overwrite_tip_label");
 
-            let output_filename = match widgets.output_entry.get_text() {
-                Some(v) => v,
-                None => {
-                    widgets.output_tips.set_text("");
-                    return
+                    folder_tip_box.hide();
+                    extension_tip_label.hide();
+                    overwrite_tip_label.hide();
+
+                    // Exit if no output_filename
+
+                    let output_filename = match widgets.output_entry.get_text() {
+                        None => return,
+                        Some(s) => s,
+                    };
+                    if output_filename.as_str() == "" {
+                        return;
+                    }
+
+                    // If saving in CWD
+
+                    if !output_filename.starts_with("/") {
+                        match env::current_dir() {
+                            Ok(cwd) => {
+                                folder_tip_label.set_text(&format!("{}", cwd.display()));
+                                folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
+                                folder_tip_box.show();
+                            },
+                            Err(_) => {
+                                show_info(&widgets, gtk::MessageType::Error,
+                                    "Invalid current working directory, use \
+                                    an absolute output path");
+                            }
+                        };
+                    }
+
+                    // Warn missing filename extension
+
+                    if !output_filename.ends_with(output_filename_extension) {
+                        extension_tip_label.set_markup(&format!(
+                            "<b>Warning:</b> Missing <i>{}</i> extension in filename",
+                            output_filename_extension
+                        ));
+                        extension_tip_label.show();
+                    }
+
+                    // Warn already existing file
+
+                    if Path::new(&output_filename).exists() {
+                        overwrite_tip_label.show();
+                    }
                 },
-            };
-
-            if output_filename.as_str() == "" {
-                widgets.output_tips.set_text("");
-                return
             }
-
-            // build the tips String and show it
-
-            let mut tips = String::new();
-
-            // rel or abs
-            if output_filename.starts_with("/") == false {
-                match env::current_dir() {
-                    Ok(cwd) => tips.push_str(&format!("Info: output file is relative to \"{}\".\n", cwd.display())),
-                    Err(e) => tips.push_str(&format!("Error: invalid current working directory: \"{}\".\n", e)),
-                };
-            }
-
-            // filename extension (png or wav expected, depends on mode)
-            if output_filename.ends_with(output_filename_extension) == false {
-                tips.push_str(&format!("Warning: you are advised to use a \"{}\" file extension.\n", output_filename_extension));
-            }
-
-            // file exists?
-            if Path::new(&output_filename).exists() {
-                tips.push_str("Warning: the file already exists, it will be overwritten.");
-            }
-
-            // show tips
-            widgets.output_tips.set_text(&tips);
         })
     });
 

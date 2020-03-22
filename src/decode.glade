@@ -71,29 +71,91 @@
             <property name="top_attach">1</property>
           </packing>
         </child>
+      </object>
+      <packing>
+        <property name="expand">False</property>
+        <property name="fill">True</property>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
         <child>
-          <object class="GtkLabel" id="output_tips">
-            <property name="visible">True</property>
+          <object class="GtkBox" id="folder_tip_box">
             <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
             <property name="halign">start</property>
-            <property name="wrap">True</property>
-            <property name="wrap_mode">char</property>
-            <property name="selectable">True</property>
-            <property name="max_width_chars">50</property>
-            <attributes>
-              <attribute name="style" value="italic"/>
-            </attributes>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">start</property>
+                <property name="label" translatable="yes">Saving in folder: </property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="folder_tip_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="ellipsize">middle</property>
+                <attributes>
+                  <attribute name="style" value="italic"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">2</property>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="extension_tip_label">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="halign">start</property>
+            <property name="label" translatable="yes">&lt;b&gt;Warning:&lt;/b&gt; Missing extension in filename</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="overwrite_tip_label">
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="halign">start</property>
+            <property name="label" translatable="yes">&lt;b&gt;Warning:&lt;/b&gt; File already exists, it will be overwritten</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
-        <property name="position">0</property>
+        <property name="position">1</property>
       </packing>
     </child>
     <child>
