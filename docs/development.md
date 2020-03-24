@@ -225,6 +225,13 @@ Unit tests are located on the bottom of every module.
 cargo test
 ```
 
+There is an additional test that needs a [N2YO.com](https://www.n2yo.com)` API
+key.
+
+```
+N2YO_KEY=ASJKDH... cargo test -- --ignored
+```
+
 Also, for GNU/Linux I have a bash script that runs the program on WAV files
 located on `/test/`. Results are on `/test/results/`, check with Audacity.
 

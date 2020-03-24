@@ -3,7 +3,7 @@
 /// Most functions taken from
 /// [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
 ///
-/// Consider this module MIT licensed.
+/// Consider this file MIT licensed.
 ///
 /// MIT License
 ///
@@ -252,25 +252,109 @@ mod tests {
 
     }
 
-    /*
     /// Download latest TLEs and confirm current position of satellites.
     ///
-    /// Test disabled by default as this is not reproducible I guess.
+    /// Test disabled by default as this is not reproducible I guess. Only
+    /// compares the position of NOAA 15.
     ///
     /// N2YO.com provides a REST API where you can get the current position of
     /// satellites: https://www.n2yo.com/api/
     #[test] #[ignore]
     fn test_against_n2yo() {
 
-        // NORAD IDs
+        use std::env;
+
+        /// Return current satellite position from N2YO.com.
+        ///
+        /// Returns latitude, longitude and Unix timestamp.
+        fn get_n2yo_pos(satid: u32) -> (f32, f32, i64) {
+
+            let api_key: String = env::var("N2YO_KEY")
+                .expect("Provide an N2YO.com API key with N2YO_KEY=ASDHA... cargo test...");
+
+            let url = format!(
+                "https://www.n2yo.com/rest/v1/satellite/positions/{}/0/0/0/1/&apiKey={}",
+                satid,
+                api_key.as_str()
+            );
+
+            let json = reqwest::blocking::get(url.as_str())
+                .expect("Error doing request to N2YO.com")
+                .text()
+                .expect("Error getting response text from N2Y0.com");
+
+            #[derive(serde::Serialize, serde::Deserialize)]
+            struct Info {
+                satname: String,
+                satid: u32,
+                transactionscount: u32,
+            }
+
+            #[derive(serde::Serialize, serde::Deserialize)]
+            struct Position {
+                satlatitude: f32,
+                satlongitude: f32,
+                sataltitude: f32,
+                azimuth: f32,
+                elevation: f32,
+                ra: f32,
+                dec: f32,
+                timestamp: i64,
+            }
+
+            #[derive(serde::Serialize, serde::Deserialize)]
+            struct Data {
+                info: Info,
+                positions: Vec<Position>,
+            }
+
+            let data: Data = serde_json::from_str(json.as_str())
+                .expect("Error parsing JSON");
+
+            (
+                data.positions[0].satlatitude,
+                data.positions[0].satlongitude,
+                data.positions[0].timestamp,
+            )
+        }
+
+        /// Download latest TLE and calculate satellite position.
+        ///
+        /// name argument is e.g. "NOAA 15".
+        fn calculate_tle_pos(name: &str, timestamp: i64) -> (f32, f32) {
+            let tle = reqwest::blocking::get("https://celestrak.com/NORAD/elements/weather.txt")
+                .expect("Error doing request to celestrak.com")
+                .text()
+                .expect("Error getting response text from celestrak.com");
+
+            let (sats, _errors) = satellite::io::parse_multiple(tle.as_str());
+            let mut sat = sats.iter().find(|&sat| sat.name == Some(name.to_string()))
+                .expect(&format!("{} not found in weather.txt TLE file", name)).clone();
+
+            let time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
+            let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
+            let gmst = satellite::propogation::gstime::gstime_datetime(time);
+            let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
+
+            let lat = sat_pos.latitude * satellite::constants::RAD_TO_DEG;
+            let lon = sat_pos.longitude * satellite::constants::RAD_TO_DEG;
+
+            (lat as f32, lon as f32)
+        }
+
         let noaa_15_id = 25338;
-        let noaa_18_id = 28654;
-        let noaa_19_id = 33591;
+        // let noaa_18_id = 28654;
+        // let noaa_19_id = 33591;
 
-        // TODO
+        let n2yo_pos = get_n2yo_pos(noaa_15_id);
+        // n2y0_pos.2 is the timestamp
+        let tle_pos = calculate_tle_pos("NOAA 15", n2yo_pos.2);
 
-        // https://celestrak.com/NORAD/elements/weather.txt
+        println!("{:?}", n2yo_pos);
+        println!("{:?}", tle_pos);
+
+        let tolerance = 0.036 * 5.; // Roughly the angular distance of 5 pixels
+        assert_abs_diff_eq!(n2yo_pos.0, tle_pos.0, epsilon = tolerance);
+        assert_abs_diff_eq!(n2yo_pos.1, tle_pos.1, epsilon = tolerance);
     }
-    */
-
 }
