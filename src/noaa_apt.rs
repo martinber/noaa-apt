@@ -409,17 +409,13 @@ pub fn decode(
 
     context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename.display()));
 
-    let file = std::fs::File::create(&settings.output_filename)?;
-    let buffer = &mut std::io::BufWriter::new(file);
-
     let height = signal.len() as u32 / PX_PER_ROW;
 
-    let mut encoder = png::Encoder::new(buffer, PX_PER_ROW, height);
-    encoder.set_color(png::ColorType::Grayscale);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header()?;
+    let img = image::ImageBuffer::<image::Luma<u8>, Vec<u8>>::from_vec(
+        PX_PER_ROW, height, signal
+    ).ok_or(err::Error::Internal("Could not create image, wrong buffer length".to_string()))?;
 
-    writer.write_image_data(&signal[..])?;
+    img.save(settings.output_filename)?;
 
     // --------------------
 

@@ -29,12 +29,13 @@ gcd = "2.0.1"
 hound = "3.4.0"
 itertools = "0.9.0"
 log = "0.4.8"
-png = "0.16.1"
+image = "0.23.2"
 reqwest = { version = "0.10.4", features = [ "blocking" ] }
 rustfft = "3.0.1"
 satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
 serde = { version = "1.0.105", features = ["derive"] }
 serde_json = "1.0.48"
+shapefile = "0.2.0"
 simple_logger = "1.6.0"
 toml = "0.5.6"
 

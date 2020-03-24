@@ -15,8 +15,8 @@ pub enum Error {
     /// About WAV decoding/opening.
     WavOpen(String),
 
-    /// About PNG encoding/writing.
-    PngWrite(String),
+    /// About Image handling.
+    Image(String),
 
     /// Deserializing errors.
     Deserialize(String),
@@ -38,7 +38,7 @@ impl std::fmt::Display for Error {
         match *self {
             Error::Io(ref err) => err.fmt(f),
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
-            Error::PngWrite(ref msg) => f.write_str(msg.as_str()),
+            Error::Image(ref msg) => f.write_str(msg.as_str()),
             Error::Deserialize(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
@@ -74,11 +74,11 @@ impl From<log::SetLoggerError> for Error {
     }
 }
 
-impl From<png::EncodingError> for Error {
-    fn from(err: png::EncodingError) -> Self {
+impl From<image::error::ImageError> for Error {
+    fn from(err: image::error::ImageError) -> Self {
         match err {
-            png::EncodingError::IoError(io_error) => Error::Io(io_error),
-            png::EncodingError::Format(_) => Error::PngWrite(err.to_string()),
+            image::error::ImageError::IoError(io_error) => Error::Io(io_error),
+            e => Error::Image(e.to_string()),
         }
     }
 }
