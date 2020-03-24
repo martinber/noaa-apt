@@ -7,6 +7,7 @@ use crate::context::{Context, Step};
 use crate::dsp::{self, Signal, Rate, Freq};
 use crate::err;
 use crate::filters;
+use crate::map;
 use crate::misc;
 use crate::telemetry;
 use crate::wav;
@@ -411,9 +412,11 @@ pub fn decode(
 
     let height = signal.len() as u32 / PX_PER_ROW;
 
-    let img = image::ImageBuffer::<image::Luma<u8>, Vec<u8>>::from_vec(
+    let mut img = image::ImageBuffer::<image::Luma<u8>, Vec<u8>>::from_vec(
         PX_PER_ROW, height, signal
     ).ok_or(err::Error::Internal("Could not create image, wrong buffer length".to_string()))?;
+
+    map::draw_map(&mut img);
 
     img.save(settings.output_filename)?;
 

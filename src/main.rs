@@ -16,12 +16,14 @@
 
 mod config;
 mod context;
+mod draw;
 mod dsp;
 mod err;
 mod filters;
 mod frequency;
 mod geo;
 #[cfg(feature = "gui")] mod gui;
+mod map;
 mod misc;
 mod noaa_apt;
 mod telemetry;
