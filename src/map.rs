@@ -19,6 +19,9 @@ pub fn draw_map(
         .expect("not found in test TLE file").clone();
 
     let time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
+    println!("ts {:?}", time);
+    let time = chrono::Utc.ymd(2018, 12, 22).and_hms(20, 39, 41); // 0 milliseconds
+    println!("ts {:?}", time);
     let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
     let gmst = satellite::propogation::gstime::gstime_datetime(time);
     let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
@@ -26,7 +29,8 @@ pub fn draw_map(
     let ref_lat = (sat_pos.latitude * satellite::constants::RAD_TO_DEG) as f32;
     let ref_lon = (sat_pos.longitude * satellite::constants::RAD_TO_DEG) as f32;
 
-    let time = chrono::Utc.timestamp(timestamp + 100, 0); // 0 milliseconds
+    // let time = chrono::Utc.timestamp(timestamp + 100, 0); // 0 milliseconds
+    let time = time + chrono::Duration::seconds(100);
     let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
     let gmst = satellite::propogation::gstime::gstime_datetime(time);
     let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
@@ -47,7 +51,7 @@ pub fn draw_map(
         use std::f32::consts::PI;
 
         let dist = geo::distance(lat, lon, ref_lat, ref_lon);
-        let az = geo::azimuth(lat, lon, ref_lat, ref_lon);
+        let az = geo::azimuth(ref_lat, ref_lon, lat, lon) + 180.;
 
         let rel_az = (az - ref_az) / 360. * 2. * PI;
         let rel_x = dist * rel_az.sin();
@@ -57,7 +61,8 @@ pub fn draw_map(
         // let y = (lon).max(1.).min(999.) as u32;
 
         let x = ((rel_x / x_res) + 539.).max(1.).min(2070.) as u32;
-        let y = ((rel_y / y_res) + 1616.).max(1.).min(1600.) as u32;
+        // let y = ((rel_y / y_res) + 1616.).max(1.).min(1600.) as u32;
+        let y = ((rel_y / y_res)).max(1.).min(1600.) as u32;
 
         if x > 400 && x < 500 && y > 800 && y < 900 {
             println!("lat {}, lon {}, dist {}, az {}, x {}, y {}", lat, lon, dist, az, x, y);
