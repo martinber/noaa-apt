@@ -34,7 +34,7 @@ use chrono::prelude::*;
 /// Compute the great-circle distance between two points
 ///
 /// The units of all input and output parameters are degrees.
-fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+pub fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
     // https://en.wikipedia.org/w/index.php?title=Great-circle_distance&oldid=749078136#Computational_formulas
 
     // Convert to radians
@@ -56,7 +56,7 @@ fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
 /// and (`lat2`,`lon2`) and the North.
 ///
 /// The units of all input and output parameters are degrees.
-fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+pub fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
     // https://en.wikipedia.org/w/index.php?title=Azimuth&oldid=750059816#Calculating_azimuth
 
     // Convert to radians
@@ -79,7 +79,7 @@ fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
 ///
 /// This function can also be used to define a spherical coordinate system with
 /// rotated poles.
-fn reckon(lat: f32, lon: f32, range: f32, azimuth: f32) -> (f32, f32) {
+pub fn reckon(lat: f32, lon: f32, range: f32, azimuth: f32) -> (f32, f32) {
 
     // Based on reckon from Alexander Barth
     // https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
@@ -115,7 +115,6 @@ fn reckon(lat: f32, lon: f32, range: f32, azimuth: f32) -> (f32, f32) {
     (lato/deg2rad, lono/deg2rad)
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -138,6 +137,9 @@ mod tests {
         assert_abs_diff_eq!(distance(  0.,   0.,   0., 180.), 180., epsilon = tolerance);
         assert_abs_diff_eq!(distance(  0.,   0.,   0.,-180.), 180., epsilon = tolerance);
         assert_abs_diff_eq!(distance( 60.,   0.,  80., 180.),  40., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(  0.,  70., -30.,  70.),  30., epsilon = tolerance);
+        // assert_abs_diff_eq!(distance( 70.,  30.,  70.,  60.),  30., epsilon = tolerance);
+        // TODO
 
         // The function is less precise for small angles
         let tolerance = 0.036; // Roughly the angular distance of a pixel
@@ -174,7 +176,6 @@ mod tests {
         for test in test_values.iter() {
             let (lat1, lon1, dist, az) = *test;
             let (lat2, lon2) = reckon(lat1, lon1, dist, az);
-            println!("{}, {}", lat2, lon2);
             assert_abs_diff_eq!(distance(lat1, lon1, lat2, lon2), dist, epsilon = tolerance)
         }
 
@@ -349,9 +350,6 @@ mod tests {
         let n2yo_pos = get_n2yo_pos(noaa_15_id);
         // n2y0_pos.2 is the timestamp
         let tle_pos = calculate_tle_pos("NOAA 15", n2yo_pos.2);
-
-        println!("{:?}", n2yo_pos);
-        println!("{:?}", tle_pos);
 
         let tolerance = 0.036 * 5.; // Roughly the angular distance of 5 pixels
         assert_abs_diff_eq!(n2yo_pos.0, tle_pos.0, epsilon = tolerance);

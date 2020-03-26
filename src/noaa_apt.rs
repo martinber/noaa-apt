@@ -416,7 +416,8 @@ pub fn decode(
         PX_PER_ROW, height, signal
     ).ok_or(err::Error::Internal("Could not create image, wrong buffer length".to_string()))?;
 
-    map::draw_map(&mut img);
+    let timestamp = misc::read_timestamp(&settings.input_filename)?;
+    map::draw_map(&mut img, timestamp);
 
     img.save(settings.output_filename)?;
 
