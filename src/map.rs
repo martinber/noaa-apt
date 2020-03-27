@@ -30,7 +30,7 @@ pub fn draw_map(
     let ref_lon = (sat_pos.longitude * satellite::constants::RAD_TO_DEG) as f32;
 
     // let time = chrono::Utc.timestamp(timestamp + 100, 0); // 0 milliseconds
-    let time = time + chrono::Duration::seconds(100);
+    let time = time + chrono::Duration::seconds(1);
     let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
     let gmst = satellite::propogation::gstime::gstime_datetime(time);
     let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
@@ -39,7 +39,7 @@ pub fn draw_map(
     let ref2_lon = (sat_pos.longitude * satellite::constants::RAD_TO_DEG) as f32;
 
     let ref_az = geo::azimuth(ref_lat, ref_lon, ref2_lat, ref2_lon);
-    let y_res = geo::distance(ref_lat, ref_lon, ref2_lat, ref2_lon) / 200.; // Lineas por segundo
+    let y_res = geo::distance(ref_lat, ref_lon, ref2_lat, ref2_lon) / 2.; // Lineas por segundo
 
     println!("time {:?}, ref_lat {}, ref_lon {}, ref_az {}, y_res {}", time, ref_lat, ref_lon, ref_az, y_res);
 
@@ -53,16 +53,19 @@ pub fn draw_map(
         let dist = geo::distance(lat, lon, ref_lat, ref_lon);
         let az = geo::azimuth(ref_lat, ref_lon, lat, lon) + 180.;
 
-        let rel_az = (az - ref_az) / 360. * 2. * PI;
-        let rel_x = dist * rel_az.sin();
-        let rel_y = - dist * rel_az.cos();
+        let tmp = geo::azimuth(ref_lat, ref_lon, lat, lon);
 
-        // let x = (lat + 539.).max(1.).min(994.) as u32;
-        // let y = (lon).max(1.).min(999.) as u32;
+        let B = (tmp - ref_az) / 360. * 2. * PI;
+        let c = dist / 360. * 2. * PI;
 
-        let x = ((rel_x / x_res) + 539.).max(1.).min(2070.) as u32;
-        // let y = ((rel_y / y_res) + 1616.).max(1.).min(1600.) as u32;
-        let y = ((rel_y / y_res)).max(1.).min(1600.) as u32;
+        let a = (B.cos() * c.tan()).atan();
+        let b = (B.sin() * c.sin()).asin();
+
+        let a = a / (2. * PI) * 360.;
+        let b = b / (2. * PI) * 360.;
+
+        let x = ((-b / x_res) + 539.).max(1.).min(2070.) as u32;
+        let y = ((a / y_res)).max(1.).min(1600.) as u32;
 
         if x > 400 && x < 500 && y > 800 && y < 900 {
             println!("lat {}, lon {}, dist {}, az {}, x {}, y {}", lat, lon, dist, az, x, y);
