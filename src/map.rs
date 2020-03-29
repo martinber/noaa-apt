@@ -21,7 +21,7 @@ pub fn draw_map(
     img: &mut ImageBuffer<Luma<u8>, Vec<u8>>, timestamp: i64, height: u32
 ) {
 
-    let (sats, _errors) = satellite::io::parse_multiple(include_str!("../weather.txt"));
+    let (sats, _errors) = satellite::io::parse_multiple(include_str!("../weather-2020-03.txt"));
     let mut sat = sats.iter().find(|&sat| sat.name == Some("NOAA 19".to_string()))
         .expect("not found in test TLE file").clone();
 
@@ -29,7 +29,7 @@ pub fn draw_map(
 
     // let start_time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
     // println!("ts {:?}", time);
-    time.push(chrono::Utc.ymd(2018, 12, 22).and_hms(20, 44, 41)); // 0 milliseconds
+    time.push(chrono::Utc.ymd(2020, 03, 26).and_hms(00, 02, 04)); // 0 milliseconds
     let time_step = chrono::Duration::milliseconds(500); // Seconds per line
 
     for i in 0..height {
@@ -48,9 +48,9 @@ pub fn draw_map(
         let lon = (sat_pos.longitude * satellite::constants::RAD_TO_DEG);
 
         if let Some(prev_state) = sat_state.last() {
-            let mut side_az = geo::azimuth(lat, lon, prev_state.lat, prev_state.lon) - 90.;
+            let mut side_az = geo::azimuth(lat, lon, prev_state.lat, prev_state.lon) - 88.;
             // TODO:
-            if side_az == 90. || side_az == -90. {
+            if side_az == 92. || side_az == -88. {
                 side_az = prev_state.side_az;
             }
             sat_state.push(SatState { lat, lon, side_az });
