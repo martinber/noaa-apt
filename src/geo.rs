@@ -27,14 +27,14 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 ///
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 use chrono::prelude::*;
 
 /// Compute the great-circle distance between two points
 ///
 /// The units of all input and output parameters are degrees.
-pub fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+pub fn distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     // https://en.wikipedia.org/w/index.php?title=Great-circle_distance&oldid=749078136#Computational_formulas
 
     // Convert to radians
@@ -56,7 +56,7 @@ pub fn distance(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
 /// and (`lat2`,`lon2`) and the North.
 ///
 /// The units of all input and output parameters are degrees.
-pub fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
+pub fn azimuth(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     // https://en.wikipedia.org/w/index.php?title=Azimuth&oldid=750059816#Calculating_azimuth
 
     // Convert to radians
@@ -79,7 +79,7 @@ pub fn azimuth(lat1: f32, lon1: f32, lat2: f32, lon2: f32) -> f32 {
 ///
 /// This function can also be used to define a spherical coordinate system with
 /// rotated poles.
-pub fn reckon(lat: f32, lon: f32, range: f32, azimuth: f32) -> (f32, f32) {
+pub fn reckon(lat: f64, lon: f64, range: f64, azimuth: f64) -> (f64, f64) {
 
     // Based on reckon from Alexander Barth
     // https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
@@ -268,7 +268,7 @@ mod tests {
         /// Return current satellite position from N2YO.com.
         ///
         /// Returns latitude, longitude and Unix timestamp.
-        fn get_n2yo_pos(satid: u32) -> (f32, f32, i64) {
+        fn get_n2yo_pos(satid: u32) -> (f64, f64, i64) {
 
             let api_key: String = env::var("N2YO_KEY")
                 .expect("Provide an N2YO.com API key with N2YO_KEY=ASDHA... cargo test...");
@@ -293,13 +293,13 @@ mod tests {
 
             #[derive(serde::Serialize, serde::Deserialize)]
             struct Position {
-                satlatitude: f32,
-                satlongitude: f32,
-                sataltitude: f32,
-                azimuth: f32,
-                elevation: f32,
-                ra: f32,
-                dec: f32,
+                satlatitude: f64,
+                satlongitude: f64,
+                sataltitude: f64,
+                azimuth: f64,
+                elevation: f64,
+                ra: f64,
+                dec: f64,
                 timestamp: i64,
             }
 
@@ -322,7 +322,7 @@ mod tests {
         /// Download latest TLE and calculate satellite position.
         ///
         /// name argument is e.g. "NOAA 15".
-        fn calculate_tle_pos(name: &str, timestamp: i64) -> (f32, f32) {
+        fn calculate_tle_pos(name: &str, timestamp: i64) -> (f64, f64) {
             let tle = reqwest::blocking::get("https://celestrak.com/NORAD/elements/weather.txt")
                 .expect("Error doing request to celestrak.com")
                 .text()
@@ -340,7 +340,7 @@ mod tests {
             let lat = sat_pos.latitude * satellite::constants::RAD_TO_DEG;
             let lon = sat_pos.longitude * satellite::constants::RAD_TO_DEG;
 
-            (lat as f32, lon as f32)
+            (lat as f64, lon as f64)
         }
 
         let noaa_15_id = 25338;

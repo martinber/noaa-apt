@@ -417,7 +417,7 @@ pub fn decode(
     ).ok_or(err::Error::Internal("Could not create image, wrong buffer length".to_string()))?;
 
     let timestamp = misc::read_timestamp(&settings.input_filename)?;
-    map::draw_map(&mut img, timestamp);
+    map::draw_map(&mut img, timestamp, height);
 
     img.save(settings.output_filename)?;
 

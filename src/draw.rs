@@ -35,7 +35,12 @@ pub fn draw_line(
     for step in 0 ..= n {
         x += xstep;
         y += ystep;
-        img.put_pixel(x as u32, y as u32, Luma([255]));
+        // TODO
+        img.put_pixel(
+            (x.max(0.) as u32).min(img.width() - 1),
+            (y.max(0.) as u32).min(img.height() - 1),
+            Luma([255])
+        );
     }
 }
 
