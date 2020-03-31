@@ -6,6 +6,7 @@ use image::{ImageBuffer, Luma};
 /// Draw line.
 pub fn draw_line(
     img: &mut ImageBuffer<Luma<u8>, Vec<u8>>,
+    pixel: Luma<u8>,
     x1: u32,
     y1: u32,
     x2: u32,
@@ -39,7 +40,7 @@ pub fn draw_line(
         img.put_pixel(
             (x.max(0.) as u32).min(img.width() - 1),
             (y.max(0.) as u32).min(img.height() - 1),
-            Luma([255])
+            pixel,
         );
     }
 }
