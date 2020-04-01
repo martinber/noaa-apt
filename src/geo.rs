@@ -33,21 +33,18 @@ use chrono::prelude::*;
 
 /// Compute the great-circle distance between two points
 ///
-/// The units of all input and output parameters are degrees.
-pub fn distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
+/// The units of all input and output parameters are radians.
+pub fn distance((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
     // https://en.wikipedia.org/w/index.php?title=Great-circle_distance&oldid=749078136#Computational_formulas
 
-    // Convert to radians
-    let delta_lon = PI/180. * (lon2 - lon1);
-    let lat1 = PI/180. * lat1;
-    let lat2 = PI/180. * lat2;
+    let delta_lon = lon2 - lon1;
 
-    let cos_central_angle = lat1.sin()*lat2.sin()
-                            + lat1.cos()*lat2.cos()*delta_lon.cos();
+    let mut cos_central_angle = lat1.sin() * lat2.sin()
+                              + lat1.cos() * lat2.cos() * delta_lon.cos();
 
-    let cos_central_angle = cos_central_angle.max(-1.).min(1.);
+    cos_central_angle = cos_central_angle.max(-1.).min(1.);
 
-    180./PI * cos_central_angle.acos()
+    cos_central_angle.acos()
 }
 
 /// Compute azimuth of line between two points.
@@ -55,18 +52,13 @@ pub fn distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
 /// The angle between the line segment defined by the points (`lat1`,`lon1`)
 /// and (`lat2`,`lon2`) and the North.
 ///
-/// The units of all input and output parameters are degrees.
-pub fn azimuth(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
+/// The units of all input and output parameters are radians.
+pub fn azimuth((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
     // https://en.wikipedia.org/w/index.php?title=Azimuth&oldid=750059816#Calculating_azimuth
 
-    // Convert to radians
-    let delta_lon = PI/180. * (lon2 - lon1);
-    let lat1 = PI/180. * lat1;
-    let lat2 = PI/180. * lat2;
+    let delta_lon = lon2 - lon1;
 
-    let azimuth = delta_lon.sin().atan2(lat1.cos()*lat2.tan() - lat1.sin()*delta_lon.cos());
-
-    180./PI * azimuth
+    delta_lon.sin().atan2(lat1.cos() * lat2.tan() - lat1.sin() * delta_lon.cos())
 }
 
 /// Compute the coordinates of the end-point of a displacement on a sphere.
@@ -75,22 +67,15 @@ pub fn azimuth(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
 /// covered distance of the displacements along a great circle and `azimuth` is
 /// the direction of the displacement relative to the North.
 ///
-/// The units of all input and output parameters are degrees.
+/// The units of all input and output parameters are radians.
 ///
 /// This function can also be used to define a spherical coordinate system with
 /// rotated poles.
-pub fn reckon(lat: f64, lon: f64, range: f64, azimuth: f64) -> (f64, f64) {
+pub fn reckon((lat, lon): (f64, f64), range: f64, azimuth: f64) -> (f64, f64) {
 
     // Based on reckon from Alexander Barth
     // https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
     // relicenced to LGPL-v3
-
-    let deg2rad = PI/180.;
-
-    let lat = lat * deg2rad;
-    let lon = lon * deg2rad;
-    let range = range * deg2rad;
-    let azimuth = azimuth * deg2rad;
 
     let mut tmp = lat.sin() * range.cos() + lat.cos() * range.sin() * azimuth.cos();
 
@@ -106,13 +91,11 @@ pub fn reckon(lat: f64, lon: f64, range: f64, azimuth: f64) -> (f64, f64) {
 
     let mut lono = lon + y;
 
-    // bring the lono in the interval [-π π[
+    // bring the lono in the interval [-pi, pi[
 
     lono = (lono + PI) % (2.*PI) - PI;
 
-    // convert to degrees
-
-    (lato/deg2rad, lono/deg2rad)
+    (lato, lono)
 }
 
 #[cfg(test)]
@@ -126,57 +109,56 @@ mod tests {
 
     #[test]
     fn test_distance() {
-        let tolerance = 0.001; // Degrees
-        assert_abs_diff_eq!(distance(  0.,   0.,   0.,  30.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0.,  30.,   0.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0., -30.,   0.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance( 30.,   0.,   0.,   0.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(-30.,   0.,   0.,   0.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,  30.,   0.,   0.),  30., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0., 180.,   0.), 180., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0.,   0., 180.), 180., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0.,   0.,-180.), 180., epsilon = tolerance);
-        assert_abs_diff_eq!(distance( 60.,   0.,  80., 180.),  40., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,  70., -30.,  70.),  30., epsilon = tolerance);
-        // assert_abs_diff_eq!(distance( 70.,  30.,  70.,  60.),  30., epsilon = tolerance);
-        // TODO
+        // Test for some easy cases, further testing is done against reckon()
+
+        let tolerance = PI/1000.;
+        assert_abs_diff_eq!(distance((    0.,    0.), (    0., PI/6.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), ( PI/6.,    0.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), (-PI/6.,    0.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance(( PI/6.,    0.), (    0.,    0.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((-PI/6.,    0.), (    0.,    0.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0., PI/6.), (    0.,    0.)), PI/6., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), (    PI,    0.)),    PI, epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), (    0.,    PI)),    PI, epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), (    0.,   -PI)),    PI, epsilon = tolerance);
+        assert_abs_diff_eq!(distance(( PI/4.,    0.), ( PI/4.,    PI)), PI/2., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0., PI/4.), (-PI/6., PI/4.)), PI/6., epsilon = tolerance);
 
         // The function is less precise for small angles
-        let tolerance = 0.036; // Roughly the angular distance of a pixel
-        assert_abs_diff_eq!(distance(  0.,   0.,   0., 0.1 ), 0.1 , epsilon = tolerance);
-        assert_abs_diff_eq!(distance( 40.,  40.,  40.,  40.),   0., epsilon = tolerance);
-        assert_abs_diff_eq!(distance(  0.,   0.,   0., 360.),   0., epsilon = tolerance);
+        let tolerance = 0.000628; // Roughly the angular distance of a pixel
+        assert_abs_diff_eq!(distance((    0.,    0.), (    0., 0.001)), 0.001 , epsilon = tolerance);
+        assert_abs_diff_eq!(distance(( PI/4., PI/4.), ( PI/4., PI/4.)),     0., epsilon = tolerance);
+        assert_abs_diff_eq!(distance((    0.,    0.), (    0., 2.*PI)),     0., epsilon = tolerance);
     }
 
     #[test]
     fn test_azimuth() {
-        let tolerance = 0.001; // Degrees
-        assert_abs_diff_eq!(azimuth(  0.,   0.,   0.,  30.),  90., epsilon = tolerance);
-        assert_abs_diff_eq!(azimuth(  0.,   0.,  30.,   0.),   0., epsilon = tolerance);
-        assert_abs_diff_eq!(azimuth(  0.,   0., -30.,   0.), 180., epsilon = tolerance);
-        assert_abs_diff_eq!(azimuth( 30.,   0.,   0.,   0.), 180., epsilon = tolerance);
-        assert_abs_diff_eq!(azimuth(-30.,   0.,   0.,   0.),   0., epsilon = tolerance);
-        assert_abs_diff_eq!(azimuth(  0.,  30.,   0.,   0.), -90., epsilon = tolerance);
+        let tolerance = PI/1000.;
+        assert_abs_diff_eq!(azimuth((    0.,    0.), (    0., PI/6.)), PI/2., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth((    0.,    0.), ( PI/6.,    0.)),    0., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth((    0.,    0.), (-PI/6.,    0.)),    PI, epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth(( PI/6.,    0.), (    0.,    0.)),    PI, epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth((-PI/6.,    0.), (    0.,    0.)),    0., epsilon = tolerance);
+        assert_abs_diff_eq!(azimuth((    0., PI/6.), (    0.,    0.)),-PI/2., epsilon = tolerance);
     }
 
     #[test]
     fn test_reckon() {
         // Test against the distance() and azimuth() functions
 
-        let tolerance = 0.001; // Degrees
+        let tolerance = PI/1000.;
 
         let test_values = [
-            (   0.,    0.,  10.,   0.),
-            ( 180., -100.,  50.,  40.),
-            (  20.,   30.,  10., 170.),
-            ( 123.,  234.,  34.,  99.),
-            (  20.,   30.,  10., 300.),
+            ((    0.,     0.), PI/6.,    0.),
+            (( PI/2.,  PI/2.), PI/6., PI/8.),
+            ((    PI,  PI/4.), PI/3., PI/4.),
+            (( PI/8.,  PI/4.),    PI, PI/4.),
         ];
 
         for test in test_values.iter() {
-            let (lat1, lon1, dist, az) = *test;
-            let (lat2, lon2) = reckon(lat1, lon1, dist, az);
-            assert_abs_diff_eq!(distance(lat1, lon1, lat2, lon2), dist, epsilon = tolerance)
+            let (latlon1, dist, az) = *test;
+            let latlon2 = reckon(latlon1, dist, az);
+            assert_abs_diff_eq!(distance(latlon1, latlon2), dist, epsilon = tolerance)
         }
 
     }
