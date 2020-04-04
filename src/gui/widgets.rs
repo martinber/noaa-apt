@@ -52,8 +52,13 @@ pub fn set_widgets(widget_list: WidgetList) {
 /// - ts: Timesamp tool.
 #[derive(Debug, Clone)]
 pub struct WidgetList {
+    pub application:               gtk::Application,
     pub window:                    gtk::ApplicationWindow,
     pub outer_box:                 gtk::Box,
+
+    pub dec_action:                gio::SimpleAction,
+    pub res_action:                gio::SimpleAction,
+    pub ts_action:                 gio::SimpleAction,
 
     pub info_bar:                  gtk::InfoBar,
     pub info_label:                gtk::Label,
@@ -122,12 +127,18 @@ impl WidgetList {
     /// Create list from Glade builder.
     pub fn from_builder(
         builder: &gtk::Builder,
-        window: &gtk::ApplicationWindow
+        window: &gtk::ApplicationWindow,
+        application: &gtk::Application,
     ) -> Self {
 
         Self {
+            application:             application.clone(),
             window:                  window.clone(),
             outer_box:               gtk::Box::new(gtk::Orientation::Vertical, 0),
+
+            dec_action:              gio::SimpleAction::new("decode", None),
+            res_action:              gio::SimpleAction::new("resample", None),
+            ts_action:               gio::SimpleAction::new("timestamp", None),
 
             info_bar:                gtk::InfoBar::new(),
             info_label:              gtk::Label::new(None),

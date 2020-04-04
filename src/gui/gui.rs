@@ -7,6 +7,10 @@
 //! is also the main thread. When pressing a start button, a temporary thread
 //! starts for decoding/resampling.
 //!
+//! I never add/remove widgets during runtime, everything is created on startup
+//! and I hide/show widgets if necessary. This makes things easier, otherwise
+//! the code fills up with `Option<>`s and `expect()`s.
+//!
 //! I'm using a `WidgetList` struct for keeping track of every Widget I'm
 //! interested in. This struct is wrapped on `RefCell` smart pointer to allow
 //! mutable access everywhere.
@@ -56,7 +60,7 @@ pub fn main(check_updates: bool, settings: config::GuiSettings) {
     application.run(&[]);
 }
 
-/// Create empty window and call build_ui().
+/// Create window
 fn create_window(
     check_updates: bool,
     settings: config::GuiSettings,
@@ -78,7 +82,7 @@ fn create_window(
     // Load widgets from glade file and create some others
 
     let builder = Builder::new_from_string(include_str!("main.glade"));
-    let widgets = WidgetList::from_builder(&builder, &window);
+    let widgets = WidgetList::from_builder(&builder, &window, &application);
 
     // Add info_bar
 
@@ -100,7 +104,7 @@ fn create_window(
     info_content_area.add(&widgets.info_label);
 
     // Finish adding elements
-    //
+
     // - window
     //     - outer_box
     //         - main_paned (everything loaded from glade file)
@@ -116,32 +120,55 @@ fn create_window(
 
     set_widgets(widgets.clone());
 
-    // Set progress_bar and buttons to ready
+    // Connect close button
 
-    /*
-    if let Some(progress_bar) = widgets.progress_bar.as_ref() {
-        progress_bar.set_text(Some("Ready"));
-    }
-    widgets.start_button.set_sensitive(true);
+    widgets.window.connect_delete_event(|_, _| {
+        borrow_widgets(|widgets| {
+            widgets.window.destroy();
+            Inhibit(false)
+        })
+    });
 
-    // Set timezone if on timestamp mode
-    if let Some(label) = widgets.timezone_label.as_ref() {
-        // Create any chrono::DateTime from chrono::Local, then ignore the
-        // result and only take the timezone
-        let time = chrono::Local::now();
-        label.set_text(format!(
-            "Local time\n(UTC{})",
-            time.format("%:z"),
-        ).as_str());
-    }
+    // Finish initial widgets configuration
+
+    build_system_menu(&widgets);
+    init_widgets(&widgets);
+
+
+    // Show and check for updates
+
+    widgets.window.show_all();
 
     if check_updates {
         check_updates_and_show();
     }
 
-    // Configure output_entry file chooser
+    info!("GUI opened");
+}
 
-    widgets.output_entry.connect_icon_press(|_, _, _| {
+/// Initialize widgets and set up them for decoding.
+fn init_widgets(widgets: &WidgetList) {
+
+    dec_ready(&widgets);
+
+    // Set timezone labels
+
+    // Create any chrono::DateTime from chrono::Local, then ignore the
+    // result and only take the timezone
+    let time = chrono::Local::now();
+    widgets.ts_timezone_label.set_text(format!(
+        "Local time\n(UTC{})",
+        time.format("%:z"),
+    ).as_str());
+    widgets.p_timezone_label.set_text(format!(
+        "Local time\n(UTC{})",
+        time.format("%:z"),
+    ).as_str());
+
+    // Configure GtkEntry filechoosers for saving:
+    // sav_output_entry and res_output_entry
+
+    widgets.sav_output_entry.connect_icon_press(|entry, _, _| {
         borrow_widgets(|widgets| {
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
@@ -158,81 +185,139 @@ fn create_window(
                 let filename = file_chooser.get_filename()
                     .expect("Couldn't get filename");
 
-                widgets.output_entry.set_text(filename.to_str().unwrap());
+                entry.set_text(filename.to_str().unwrap());
+            }
+
+            file_chooser.destroy();
+        });
+    });
+    widgets.res_output_entry.connect_icon_press(|entry, _, _| {
+        borrow_widgets(|widgets| {
+            let file_chooser = gtk::FileChooserDialog::new(
+                Some("Save file as"),
+                Some(&widgets.window),
+                gtk::FileChooserAction::Save,
+            );
+
+            file_chooser.add_buttons(&[
+                ("Ok", gtk::ResponseType::Ok),
+                ("Cancel", gtk::ResponseType::Cancel),
+            ]);
+
+            if file_chooser.run() == gtk::ResponseType::Ok {
+                let filename = file_chooser.get_filename()
+                    .expect("Couldn't get filename");
+
+                entry.set_text(filename.to_str().unwrap());
             }
 
             file_chooser.destroy();
         });
     });
 
-    // Configure tips to update when output_entry changes
+    // Configure tips to update when GtkEntry changes
 
-    widgets.output_entry.connect_changed(move |_| {
-        borrow_widgets(|widgets| {
+    fn configure_tips(
+        entry: gtk::Entry,
+        folder_tip_box: gtk::Box,
+        folder_tip_label: gtk::Label,
+        extension_tip_label: gtk::Label,
+        overwrite_tip_label: gtk::Label,
+        output_filename_extension: &'static str,
+    ) {
+        entry.connect_changed(move |this| {
+            borrow_widgets(|widgets| {
 
-            match mode {
-                Mode::Timestamp => return,
-                Mode::Decode | Mode::Resample => {
-                    let folder_tip_box = widgets.folder_tip_box.as_ref()
-                        .expect("Couldn't get folder_tip_box");
-                    let folder_tip_label = widgets.folder_tip_label.as_ref()
-                        .expect("Couldn't get folder_tip_label");
-                    let extension_tip_label = widgets.extension_tip_label.as_ref()
-                        .expect("Couldn't get extension_tip_label");
-                    let overwrite_tip_label = widgets.overwrite_tip_label.as_ref()
-                        .expect("Couldn't get overwrite_tip_label");
+                folder_tip_box.hide();
+                extension_tip_label.hide();
+                overwrite_tip_label.hide();
 
-                    folder_tip_box.hide();
-                    extension_tip_label.hide();
-                    overwrite_tip_label.hide();
+                // Exit if no output_filename
 
-                    // Exit if no output_filename
+                let output_filename = match this.get_text() {
+                    None => return,
+                    Some(s) => s,
+                };
+                if output_filename.as_str() == "" {
+                    return;
+                }
 
-                    let output_filename = match widgets.output_entry.get_text() {
-                        None => return,
-                        Some(s) => s,
+                // If saving in CWD
+
+                if !output_filename.starts_with("/") {
+                    match env::current_dir() {
+                        Ok(cwd) => {
+                            folder_tip_label.set_text(&format!("{}", cwd.display()));
+                            folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
+                            folder_tip_box.show();
+                        },
+                        Err(_) => {
+                            show_info(&widgets, gtk::MessageType::Error,
+                                "Invalid current working directory, use \
+                                an absolute output path");
+                        }
                     };
-                    if output_filename.as_str() == "" {
-                        return;
-                    }
+                }
 
-                    // If saving in CWD
+                // Warn missing filename extension
 
-                    if !output_filename.starts_with("/") {
-                        match env::current_dir() {
-                            Ok(cwd) => {
-                                folder_tip_label.set_text(&format!("{}", cwd.display()));
-                                folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
-                                folder_tip_box.show();
-                            },
-                            Err(_) => {
-                                show_info(&widgets, gtk::MessageType::Error,
-                                    "Invalid current working directory, use \
-                                    an absolute output path");
-                            }
-                        };
-                    }
+                if !output_filename.ends_with(output_filename_extension) {
+                    extension_tip_label.set_markup(&format!(
+                        "<b>Warning:</b> Missing <i>{}</i> extension in filename",
+                        output_filename_extension
+                    ));
+                    extension_tip_label.show();
+                }
 
-                    // Warn missing filename extension
+                // Warn already existing file
 
-                    if !output_filename.ends_with(output_filename_extension) {
-                        extension_tip_label.set_markup(&format!(
-                            "<b>Warning:</b> Missing <i>{}</i> extension in filename",
-                            output_filename_extension
-                        ));
-                        extension_tip_label.show();
-                    }
+                if Path::new(&output_filename).exists() {
+                    overwrite_tip_label.show();
+                }
+            })
+        });
+    }
 
-                    // Warn already existing file
+    configure_tips(
+        widgets.sav_output_entry.clone(),
+        widgets.sav_folder_tip_box.clone(),
+        widgets.sav_folder_tip_label.clone(),
+        widgets.sav_extension_tip_label.clone(),
+        widgets.sav_overwrite_tip_label.clone(),
+        ".png",
+    );
+    configure_tips(
+        widgets.res_output_entry.clone(),
+        widgets.res_folder_tip_box.clone(),
+        widgets.res_folder_tip_label.clone(),
+        widgets.res_extension_tip_label.clone(),
+        widgets.res_overwrite_tip_label.clone(),
+        ".wav",
+    );
+}
 
-                    if Path::new(&output_filename).exists() {
-                        overwrite_tip_label.show();
-                    }
-                },
-            }
-        })
-    });
+/// Show widgets as ready for decoding/processing/saving
+///
+/// Called on startup and every time the user selects the decode action on the
+/// menu bar.
+fn dec_ready(widgets: &WidgetList) {
 
+    // Set enabled actions on the menu bar
+
+    widgets.dec_action.set_enabled(false);
+    widgets.res_action.set_enabled(true);
+    widgets.ts_action.set_enabled(true);
+
+    widgets.main_start_button.set_sensitive(true);
+    widgets.dec_decode_button.set_sensitive(true);
+    widgets.main_progress_bar.set_text(Some("Ready"));
+    // Poner texto y tooltip a main_start_button
+    // Conectar
+    // Reiniciar progressbar
+    // Mover stack
+    // Reiniciar imagen
+
+    /*
     // Connect start button
 
     if let Mode::Timestamp = mode {
@@ -269,32 +354,39 @@ fn create_window(
             });
         });
     }
+
     */
-    // Finish and show
 
-    widgets.window.connect_delete_event(|_, _| {
-        borrow_widgets(|widgets| {
-            widgets.window.destroy();
-            Inhibit(false)
-        })
-    });
-
-    // build_system_menu(check_updates, settings, mode, application, &window);
-
-    widgets.window.show_all();
-
-    info!("GUI opened");
 }
 
-/*
+/// Show widgets as ready for resampling.
+///
+/// Called every time the user selects the resample action on the menu bar.
+fn res_ready(widgets: &WidgetList) {
+
+    // Set enabled actions on the menu bar
+
+    widgets.dec_action.set_enabled(true);
+    widgets.res_action.set_enabled(false);
+    widgets.ts_action.set_enabled(true);
+
+}
+
+/// Show widgets as ready for resampling.
+///
+/// Called every time the user selects the timestamp action on the menu bar.
+fn ts_ready(widgets: &WidgetList) {
+
+    // Set enabled actions on the menu bar
+
+    widgets.dec_action.set_enabled(true);
+    widgets.res_action.set_enabled(true);
+    widgets.ts_action.set_enabled(false);
+
+}
+
 /// Build menu bar
-fn build_system_menu(
-    check_updates: bool,
-    settings: config::GuiSettings,
-    mode: Mode,
-    application: &gtk::Application,
-    window: &gtk::ApplicationWindow
-) {
+fn build_system_menu(widgets: &WidgetList) {
 
     // Create menu bar
 
@@ -312,57 +404,39 @@ fn build_system_menu(
     help_menu.append(Some("_About"), Some("app.about"));
     menu_bar.append_submenu(Some("_Help"), &help_menu);
 
-    application.set_menubar(Some(&menu_bar));
+    widgets.application.set_menubar(Some(&menu_bar));
 
     // Add actions to buttons
 
-    let decode = gio::SimpleAction::new("decode", None);
-    let w = window.clone();
-    let a = application.clone();
-    let s = settings.clone();
-    decode.connect_activate(move |_, _| {
-        build_ui(check_updates, s.clone(), Mode::Decode, &a, &w);
+    widgets.dec_action.connect_activate(move |_, _| {
+        borrow_widgets(|widgets| dec_ready(&widgets));
+    });
+    widgets.res_action.connect_activate(move |_, _| {
+        borrow_widgets(|widgets| res_ready(&widgets));
+    });
+    widgets.ts_action.connect_activate(move |_, _| {
+        borrow_widgets(|widgets| ts_ready(&widgets));
     });
 
-    let resample = gio::SimpleAction::new("resample", None);
-    let w = window.clone();
-    let a = application.clone();
-    let s = settings.clone();
-    resample.connect_activate(move |_, _| {
-        build_ui(check_updates, s.clone(), Mode::Resample, &a, &w);
-    });
-
-    let timestamp = gio::SimpleAction::new("timestamp", None);
-    let w = window.clone();
-    let a = application.clone();
-    timestamp.connect_activate(move |_, _| {
-        build_ui(check_updates, settings.clone(), Mode::Timestamp, &a, &w);
-    });
-
-    application.add_action(&decode);
-    application.add_action(&resample);
-    application.add_action(&timestamp);
-    match mode {
-        Mode::Decode => application.remove_action("decode"),
-        Mode::Resample => application.remove_action("resample"),
-        Mode::Timestamp => application.remove_action("timestamp"),
-    }
+    widgets.application.add_action(&widgets.dec_action);
+    widgets.application.add_action(&widgets.res_action);
+    widgets.application.add_action(&widgets.ts_action);
 
     let usage = gio::SimpleAction::new("usage", None);
-    let w = window.clone();
+    let w = widgets.window.clone();
     usage.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/usage.html")
             .expect("Failed to open usage webpage");
     });
-    application.add_action(&usage);
+    widgets.application.add_action(&usage);
 
     let guide = gio::SimpleAction::new("guide", None);
-    let w = window.clone();
+    let w = widgets.window.clone();
     guide.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/guide.html")
             .expect("Failed to open usage webpage");
     });
-    application.add_action(&guide);
+    widgets.application.add_action(&guide);
 
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(|_, _| {
@@ -397,8 +471,9 @@ fn build_system_menu(
         dialog.run();
         dialog.destroy();
     });
-    application.add_action(&about);
+    widgets.application.add_action(&about);
 }
+/*
 
 /// Start decoding or resampling.
 ///
@@ -674,16 +749,13 @@ fn write_timestamp() -> err::Result<()> {
         Ok(())
     })
 }
+*/
 
 /// Set progress of ProgressBar
 fn set_progress(fraction: f32, description: String) {
     borrow_widgets(|widgets| {
-        let progress_bar = widgets
-            .progress_bar
-            .as_ref()
-            .expect("Couldn't get progress_bar");
-        progress_bar.set_fraction(fraction as f64);
-        progress_bar.set_text(Some(description.as_str()));
+        widgets.main_progress_bar.set_fraction(fraction as f64);
+        widgets.main_progress_bar.set_text(Some(description.as_str()));
     });
 }
 
@@ -786,4 +858,3 @@ where W: glib::object::IsA<gtk::Window>
         ).or_else(|_| Err(err::Error::Internal("Could not open browser".to_string())))
     }
 }
-*/

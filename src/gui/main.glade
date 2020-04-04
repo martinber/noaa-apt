@@ -148,68 +148,63 @@
                                         <property name="label_xalign">0</property>
                                         <property name="shadow_type">in</property>
                                         <child>
-                                          <object class="GtkAlignment">
+                                          <object class="GtkBox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="left_padding">12</property>
+                                            <property name="margin_left">10</property>
+                                            <property name="margin_right">10</property>
+                                            <property name="margin_top">10</property>
+                                            <property name="margin_bottom">10</property>
+                                            <property name="orientation">vertical</property>
+                                            <property name="spacing">10</property>
                                             <child>
-                                              <object class="GtkBox">
+                                              <object class="GtkCheckButton" id="dec_sync_check">
+                                                <property name="label" translatable="yes">Sync frames</property>
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="margin_top">10</property>
-                                                <property name="margin_bottom">10</property>
-                                                <property name="orientation">vertical</property>
-                                                <property name="spacing">10</property>
-                                                <child>
-                                                  <object class="GtkCheckButton" id="dec_sync_check">
-                                                    <property name="label" translatable="yes">Sync frames</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Should be on by default. Disable when the sync frames are noisy and the syncing attempts do more harm than good.</property>
-                                                    <property name="image_position">right</property>
-                                                    <property name="active">True</property>
-                                                    <property name="draw_indicator">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkCheckButton" id="dec_wav_steps_check">
-                                                    <property name="label" translatable="yes">Save WAV steps</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Export a WAV for every step of the decoding process for debugging, the files will be located on the current folder, named {number}_{description}.wav</property>
-                                                    <property name="image_position">right</property>
-                                                    <property name="draw_indicator">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkCheckButton" id="dec_resample_step_check">
-                                                    <property name="label" translatable="yes">Save resample "expanded_filtered" step</property>
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Export the expanded and filtered signal on the resampling step. Very expensive operation, can take several GiB of both RAM and disk. WAV steps saving should be set.</property>
-                                                    <property name="image_position">right</property>
-                                                    <property name="draw_indicator">True</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">2</property>
-                                                  </packing>
-                                                </child>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="tooltip_text" translatable="yes">Should be on by default. Disable when the sync frames are noisy and the syncing attempts do more harm than good.</property>
+                                                <property name="image_position">right</property>
+                                                <property name="active">True</property>
+                                                <property name="draw_indicator">True</property>
                                               </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkCheckButton" id="dec_wav_steps_check">
+                                                <property name="label" translatable="yes">Save WAV steps</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="tooltip_text" translatable="yes">Export a WAV for every step of the decoding process for debugging, the files will be located on the current folder, named {number}_{description}.wav</property>
+                                                <property name="image_position">right</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkCheckButton" id="dec_resample_step_check">
+                                                <property name="label" translatable="yes">Save resample "expanded_filtered" step</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="tooltip_text" translatable="yes">Export the expanded and filtered signal on the resampling step. Very expensive operation, can take several GiB of both RAM and disk. WAV steps saving should be set.</property>
+                                                <property name="image_position">right</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">2</property>
+                                              </packing>
                                             </child>
                                           </object>
                                         </child>
@@ -247,6 +242,7 @@
                       <object class="GtkButton" id="dec_decode_button">
                         <property name="label" translatable="yes">Decode</property>
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Decode only. After this, go to the processing tab to continue.</property>
@@ -312,55 +308,26 @@
                                         <property name="label_xalign">0</property>
                                         <property name="shadow_type">in</property>
                                         <child>
-                                          <object class="GtkAlignment">
+                                          <object class="GtkBox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="left_padding">12</property>
+                                            <property name="margin_left">10</property>
+                                            <property name="margin_right">10</property>
+                                            <property name="margin_top">10</property>
+                                            <property name="margin_bottom">10</property>
+                                            <property name="orientation">vertical</property>
+                                            <property name="spacing">10</property>
                                             <child>
                                               <object class="GtkBox">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="margin_left">10</property>
-                                                <property name="margin_right">10</property>
-                                                <property name="margin_top">10</property>
-                                                <property name="margin_bottom">10</property>
-                                                <property name="orientation">vertical</property>
+                                                <property name="tooltip_text" translatable="yes">Changes the brightness and contrast using the selected method.</property>
                                                 <property name="spacing">10</property>
                                                 <child>
-                                                  <object class="GtkBox">
+                                                  <object class="GtkLabel">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Changes the brightness and contrast using the selected method.</property>
-                                                    <property name="spacing">10</property>
-                                                    <child>
-                                                      <object class="GtkLabel">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="label" translatable="yes">Contrast adjustment:</property>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">0</property>
-                                                      </packing>
-                                                    </child>
-                                                    <child>
-                                                      <object class="GtkComboBoxText" id="p_contrast_combo">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="active">0</property>
-                                                        <items>
-                                                          <item id="98_percent" translatable="yes">Keep 98 percent</item>
-                                                          <item id="telemetry" translatable="yes">From telemetry</item>
-                                                          <item id="minmax" translatable="yes">Disable</item>
-                                                        </items>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">1</property>
-                                                      </packing>
-                                                    </child>
+                                                    <property name="label" translatable="yes">Contrast adjustment:</property>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -369,40 +336,15 @@
                                                   </packing>
                                                 </child>
                                                 <child>
-                                                  <object class="GtkBox">
+                                                  <object class="GtkComboBoxText" id="p_contrast_combo">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Images are upside down if the satellite passed from South to North. Rotate manually or automatically.</property>
-                                                    <property name="spacing">10</property>
-                                                    <child>
-                                                      <object class="GtkLabel">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="label" translatable="yes">Rotate image:</property>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">0</property>
-                                                      </packing>
-                                                    </child>
-                                                    <child>
-                                                      <object class="GtkComboBoxText" id="p_rotate_combo">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="active">0</property>
-                                                        <items>
-                                                          <item id="auto" translatable="yes">Automatic (from orbit)</item>
-                                                          <item id="no" translatable="yes">No</item>
-                                                          <item id="yes" translatable="yes">Yes</item>
-                                                        </items>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">1</property>
-                                                      </packing>
-                                                    </child>
+                                                    <property name="active">0</property>
+                                                    <items>
+                                                      <item id="98_percent" translatable="yes">Keep 98 percent</item>
+                                                      <item id="telemetry" translatable="yes">From telemetry</item>
+                                                      <item id="minmax" translatable="yes">Disable</item>
+                                                    </items>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -411,6 +353,53 @@
                                                   </packing>
                                                 </child>
                                               </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkBox">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="tooltip_text" translatable="yes">Images are upside down if the satellite passed from South to North. Rotate manually or automatically.</property>
+                                                <property name="spacing">10</property>
+                                                <child>
+                                                  <object class="GtkLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">Rotate image:</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkComboBoxText" id="p_rotate_combo">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="active">0</property>
+                                                    <items>
+                                                      <item id="auto" translatable="yes">Automatic (from orbit)</item>
+                                                      <item id="no" translatable="yes">No</item>
+                                                      <item id="yes" translatable="yes">Yes</item>
+                                                    </items>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
                                             </child>
                                           </object>
                                         </child>
@@ -445,29 +434,116 @@
                                         <property name="label_xalign">0</property>
                                         <property name="shadow_type">in</property>
                                         <child>
-                                          <object class="GtkAlignment">
+                                          <object class="GtkBox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="left_padding">12</property>
+                                            <property name="margin_left">10</property>
+                                            <property name="margin_right">10</property>
+                                            <property name="margin_top">10</property>
+                                            <property name="margin_bottom">10</property>
+                                            <property name="orientation">vertical</property>
+                                            <property name="spacing">10</property>
                                             <child>
                                               <object class="GtkBox">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="margin_top">10</property>
-                                                <property name="margin_bottom">10</property>
+                                                <property name="tooltip_text" translatable="yes">Select the correct satellite to get correct orbit calculations.</property>
+                                                <property name="spacing">10</property>
+                                                <child>
+                                                  <object class="GtkLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">Satellite:</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkComboBoxText" id="p_satellite_combo">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="active">0</property>
+                                                    <items>
+                                                      <item id="noaa_15" translatable="yes">NOAA 15</item>
+                                                      <item id="noaa_18" translatable="yes">NOAA 18</item>
+                                                      <item id="minmax" translatable="yes">NOAA 19</item>
+                                                    </items>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkBox">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="spacing">5</property>
+                                                <child>
+                                                  <object class="GtkCheckButton" id="p_custom_tle_check">
+                                                    <property name="label" translatable="yes">Custom TLE:</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">False</property>
+                                                    <property name="tooltip_text" translatable="yes">TLE files are used to calculate satellite orbits. This program automatically downloads the latest TLE available. If decoding images from months ago, override this and use a custom TLE with a closer date.</property>
+                                                    <property name="draw_indicator">True</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkFileChooserButton" id="p_custom_tle_chooser">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="title" translatable="yes"/>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">2</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkBox">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="tooltip_text" translatable="yes">Select recording start date and time. It is important to be precise only if drawing a map overlay.</property>
                                                 <property name="orientation">vertical</property>
                                                 <property name="spacing">10</property>
                                                 <child>
                                                   <object class="GtkBox">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Select the correct satellite to get correct orbit calculations.</property>
-                                                    <property name="spacing">10</property>
+                                                    <property name="halign">center</property>
+                                                    <property name="spacing">5</property>
                                                     <child>
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="label" translatable="yes">Satellite:</property>
+                                                        <property name="label" translatable="yes">Recording
+start:</property>
+                                                        <property name="justify">center</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">False</property>
@@ -476,20 +552,92 @@
                                                       </packing>
                                                     </child>
                                                     <child>
-                                                      <object class="GtkComboBoxText" id="p_satellite_combo">
+                                                      <object class="GtkSpinButton" id="p_hs_spinner">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="active">0</property>
-                                                        <items>
-                                                          <item id="noaa_15" translatable="yes">NOAA 15</item>
-                                                          <item id="noaa_18" translatable="yes">NOAA 18</item>
-                                                          <item id="minmax" translatable="yes">NOAA 19</item>
-                                                        </items>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="text" translatable="yes">0</property>
+                                                        <property name="orientation">vertical</property>
+                                                        <property name="adjustment">p_hs_adjustment</property>
+                                                        <property name="snap_to_ticks">True</property>
+                                                        <property name="numeric">True</property>
+                                                        <property name="wrap">True</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">False</property>
                                                         <property name="fill">True</property>
                                                         <property name="position">1</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkLabel">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="label" translatable="yes">:</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">2</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkSpinButton" id="p_min_spinner">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="text" translatable="yes">0</property>
+                                                        <property name="orientation">vertical</property>
+                                                        <property name="adjustment">p_min_adjustment</property>
+                                                        <property name="snap_to_ticks">True</property>
+                                                        <property name="numeric">True</property>
+                                                        <property name="wrap">True</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">3</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkLabel">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="label" translatable="yes">:</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">4</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkSpinButton" id="p_sec_spinner">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="text" translatable="yes">0</property>
+                                                        <property name="orientation">vertical</property>
+                                                        <property name="adjustment">p_sec_adjustment</property>
+                                                        <property name="snap_to_ticks">True</property>
+                                                        <property name="numeric">True</property>
+                                                        <property name="wrap">True</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">5</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkLabel" id="p_timezone_label">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="label" translatable="yes">Local time
+(Unknown)</property>
+                                                        <property name="justify">center</property>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">False</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">6</property>
                                                       </packing>
                                                     </child>
                                                   </object>
@@ -500,196 +648,26 @@
                                                   </packing>
                                                 </child>
                                                 <child>
-                                                  <object class="GtkCheckButton" id="p_custom_tle_check">
+                                                  <object class="GtkCalendar" id="p_calendar">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
-                                                    <property name="receives_default">False</property>
-                                                    <property name="tooltip_text" translatable="yes">TLE files are used to calculate satellite orbits. This program automatically downloads the latest TLE available. If decoding images from months ago, override this and use a custom TLE with a closer date.</property>
-                                                    <property name="draw_indicator">True</property>
-                                                    <child>
-                                                      <object class="GtkBox">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="spacing">10</property>
-                                                        <child>
-                                                          <object class="GtkLabel">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">Custom TLE:</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">0</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkFileChooserButton" id="p_custom_tle_chooser">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="title" translatable="yes"/>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">True</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">1</property>
-                                                          </packing>
-                                                        </child>
-                                                      </object>
-                                                    </child>
+                                                    <property name="halign">center</property>
+                                                    <property name="year">2019</property>
+                                                    <property name="month">4</property>
+                                                    <property name="day">17</property>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
                                                     <property name="fill">True</property>
-                                                    <property name="position">2</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkBox">
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
-                                                    <property name="tooltip_text" translatable="yes">Select recording start date and time. It is important to be precise only if drawing a map overlay.</property>
-                                                    <property name="orientation">vertical</property>
-                                                    <property name="spacing">10</property>
-                                                    <child>
-                                                      <object class="GtkBox">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="halign">center</property>
-                                                        <property name="spacing">5</property>
-                                                        <child>
-                                                          <object class="GtkLabel">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">Recording
-start:</property>
-                                                            <property name="justify">center</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">0</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkSpinButton" id="p_hs_spinner">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="text" translatable="yes">0</property>
-                                                            <property name="orientation">vertical</property>
-                                                            <property name="adjustment">p_hs_adjustment</property>
-                                                            <property name="snap_to_ticks">True</property>
-                                                            <property name="numeric">True</property>
-                                                            <property name="wrap">True</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">1</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkLabel">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">:</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">2</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkSpinButton" id="p_min_spinner">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="text" translatable="yes">0</property>
-                                                            <property name="orientation">vertical</property>
-                                                            <property name="adjustment">p_min_adjustment</property>
-                                                            <property name="snap_to_ticks">True</property>
-                                                            <property name="numeric">True</property>
-                                                            <property name="wrap">True</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">3</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkLabel">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">:</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">4</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkSpinButton" id="p_sec_spinner">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="text" translatable="yes">0</property>
-                                                            <property name="orientation">vertical</property>
-                                                            <property name="adjustment">p_sec_adjustment</property>
-                                                            <property name="snap_to_ticks">True</property>
-                                                            <property name="numeric">True</property>
-                                                            <property name="wrap">True</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">5</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkLabel" id="p_timezone_label">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="label" translatable="yes">Local time
-(Unknown)</property>
-                                                            <property name="justify">center</property>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">6</property>
-                                                          </packing>
-                                                        </child>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">0</property>
-                                                      </packing>
-                                                    </child>
-                                                    <child>
-                                                      <object class="GtkCalendar" id="p_calendar">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">True</property>
-                                                        <property name="halign">center</property>
-                                                        <property name="year">2019</property>
-                                                        <property name="month">4</property>
-                                                        <property name="day">17</property>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">1</property>
-                                                      </packing>
-                                                    </child>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">3</property>
+                                                    <property name="position">1</property>
                                                   </packing>
                                                 </child>
                                               </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">3</property>
+                                              </packing>
                                             </child>
                                           </object>
                                         </child>
@@ -924,6 +902,7 @@ start:</property>
                       <object class="GtkButton" id="p_process_button">
                         <property name="label" translatable="yes">Process</property>
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Process image decoded on the previous step.</property>
@@ -1116,6 +1095,7 @@ start:</property>
                       <object class="GtkButton" id="sav_save_button">
                         <property name="label" translatable="yes">Save</property>
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Save image processed on the previous step.</property>
@@ -1150,8 +1130,8 @@ start:</property>
                 </child>
               </object>
               <packing>
-                <property name="name">page0</property>
-                <property name="title" translatable="yes">page0</property>
+                <property name="name">dec_page</property>
+                <property name="title" translatable="yes">Decoding</property>
               </packing>
             </child>
             <child>
@@ -1346,6 +1326,8 @@ start:</property>
                           <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="margin_left">10</property>
+                            <property name="margin_right">10</property>
                             <property name="margin_top">10</property>
                             <property name="margin_bottom">10</property>
                             <property name="orientation">vertical</property>
@@ -1405,8 +1387,8 @@ start:</property>
                 </child>
               </object>
               <packing>
-                <property name="name">page1</property>
-                <property name="title" translatable="yes">page1</property>
+                <property name="name">res_page</property>
+                <property name="title" translatable="yes">Resampling</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -1419,57 +1401,34 @@ start:</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">10</property>
                 <child>
-                  <object class="GtkGrid">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="row_spacing">10</property>
-                    <property name="column_spacing">10</property>
+                    <property name="spacing">10</property>
                     <child>
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">end</property>
-                        <property name="label" translatable="yes">Read from</property>
+                        <property name="label" translatable="yes">Write to:</property>
                       </object>
                       <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkFileChooserButton" id="ts_read_chooser">
+                      <object class="GtkFileChooserButton" id="ts_write_chooser">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="hexpand">True</property>
                         <property name="title" translatable="yes"/>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="label" translatable="yes">Write to</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="ts_read_button">
-                        <property name="label" translatable="yes">Read timestamp</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">0</property>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -1481,19 +1440,9 @@ start:</property>
                         <property name="receives_default">True</property>
                       </object>
                       <packing>
-                        <property name="left_attach">2</property>
-                        <property name="top_attach">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkFileChooserButton" id="ts_write_chooser">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="title" translatable="yes"/>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">1</property>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>
@@ -1513,7 +1462,7 @@ start:</property>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -1643,13 +1592,64 @@ start:</property>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">2</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="spacing">10</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="label" translatable="yes">Read from:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFileChooserButton" id="ts_read_chooser">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="title" translatable="yes"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="ts_read_button">
+                        <property name="label" translatable="yes">Read timestamp</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
               </object>
               <packing>
-                <property name="name">page2</property>
-                <property name="title" translatable="yes">page2</property>
+                <property name="name">ts_page</property>
+                <property name="title" translatable="yes">Timestamp</property>
                 <property name="position">2</property>
               </packing>
             </child>
@@ -1673,6 +1673,8 @@ start:</property>
               <object class="GtkProgressBar" id="main_progress_bar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="text" translatable="yes">Loading</property>
+                <property name="show_text">True</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -1684,6 +1686,7 @@ start:</property>
               <object class="GtkButton" id="main_start_button">
                 <property name="label" translatable="yes">Decode, Process and Save</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="tooltip_text" translatable="yes">Do everything at once, make sure to configure every tab first.</property>
@@ -1722,7 +1725,6 @@ start:</property>
               <object class="GtkImage" id="img_image">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="pixbuf">res/icon.png</property>
               </object>
             </child>
           </object>
