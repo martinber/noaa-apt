@@ -4,14 +4,12 @@
 //! decoding/resampling.
 //!
 //! GTK+ is not thread safe so everything GUI related is on the GTK+ thread that
-//! is also the main thread. When pressing the Start button, a temporary thread
+//! is also the main thread. When pressing a start button, a temporary thread
 //! starts for decoding/resampling.
 //!
 //! I'm using a `WidgetList` struct for keeping track of every Widget I'm
-//! interested in. This struct is wrapped on the `Rc` smart pointer to allow
-//! multiple ownership of the struct. Previously I wrapped inside `Rc` and
-//! `RefCell` too to allow mutable access to everyone, but AFAIK having mutable
-//! access to a Widget is not neccesary.
+//! interested in. This struct is wrapped on `RefCell` smart pointer to allow
+//! mutable access everywhere.
 //!
 //! When doing a callback from another thread I use `ThreadGuard`, lets you
 //! `Send` the Widgets to another thread but you cant use them there (panics in
@@ -19,7 +17,6 @@
 //! from another thread. In the end, we send the widgets to another thread and
 //! back.
 
-use std::cell::RefCell;
 use std::env;
 use std::path::Path;
 use std::path::PathBuf;
@@ -36,87 +33,11 @@ use crate::dsp::Rate;
 use crate::err;
 use crate::misc;
 use crate::noaa_apt::{self, Contrast};
+use super::widgets::{WidgetList, borrow_widgets, set_widgets};
 
 
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// If the user wants to decode, resample or change timestamps.
-#[derive(Debug, Clone, Copy)]
-enum Mode {
-    Decode,
-    Resample,
-    Timestamp,
-}
-
-// Stores the WidgetList.
-//
-// Use the functions below when accesing it. Only available from the GUI thread.
-// Wrapped on Option because it's None before building the GUI.
-// Wrapped on RefCell because I need mutable references when modifying the GUI.
-thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
-
-
-/// Work with reference to WidgetList.
-///
-/// Panics if called from a thread different than the GUI one. Also panics if
-/// the GUI is not built yet.
-fn borrow_widgets<F, R>(f: F) -> R
-where F: FnOnce(&WidgetList) -> R
-{
-    GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            (f)(widgets)
-        } else {
-            panic!("Can't get WidgetList. Tried to borrow from another thread \
-                    or tried to borrow before building the GUI")
-        }
-    })
-}
-
-/// Set the WidgetList.
-///
-/// Called when building the GUI.
-fn set_widgets(widget_list: WidgetList) {
-    GLOBAL.with(|global| {
-        *global.borrow_mut() = Some(widget_list);
-    });
-}
-
-
-/// Contains references to widgets, so I can pass them together around.
-///
-/// Widgets that may not exist are wrapped on Option.
-#[derive(Debug, Clone)]
-struct WidgetList {
-    mode:                  Mode,
-    window:                gtk::ApplicationWindow,
-    outer_box:             gtk::Box,
-    main_box:              gtk::Box,
-    progress_bar:          Option<gtk::ProgressBar>,
-    start_button:          gtk::Button,
-    info_bar:              gtk::InfoBar,
-    info_label:            gtk::Label,
-    info_revealer:         gtk::Revealer,
-    output_entry:          gtk::Entry,
-    folder_tip_box:        Option<gtk::Box>,
-    folder_tip_label:      Option<gtk::Label>,
-    extension_tip_label:   Option<gtk::Label>,
-    overwrite_tip_label:   Option<gtk::Label>,
-    rate_spinner:          Option<gtk::SpinButton>,
-    input_file_chooser:    gtk::FileChooserButton,
-    sync_check:            Option<gtk::CheckButton>,
-    wav_steps_check:       Option<gtk::CheckButton>,
-    resample_step_check:   Option<gtk::CheckButton>,
-    contrast_combo:        Option<gtk::ComboBoxText>,
-    rotate_image_check:    Option<gtk::CheckButton>,
-    read_button:           Option<gtk::Button>,
-    hour_spinner:          Option<gtk::SpinButton>,
-    minute_spinner:        Option<gtk::SpinButton>,
-    second_spinner:        Option<gtk::SpinButton>,
-    timezone_label:        Option<gtk::Label>,
-    calendar:              Option<gtk::Calendar>,
-}
 
 /// Start GUI.
 ///
@@ -144,8 +65,6 @@ fn create_window(
 
     let window = gtk::ApplicationWindow::new(application);
 
-    let mode = Mode::Decode;
-
     window.set_title("noaa-apt");
     window.set_default_size(450, -1);
 
@@ -156,177 +75,17 @@ fn create_window(
     // https://gtk-rs.org/docs/gtk/trait.GtkWindowExt.html#tymethod.set_wmclass
     window.set_wmclass("noaa-apt", "noaa-apt");
 
-    build_ui(check_updates, settings, mode, &application, &window);
-}
+    // Load widgets from glade file and create some others
 
-/// Build GUI.
-///
-/// Loads GUI from glade file depending if decoding, resampling or changing
-/// timestamps.
-fn build_ui(
-    check_updates: bool,
-    settings: config::GuiSettings,
-    mode: Mode,
-    application: &gtk::Application,
-    window: &gtk::ApplicationWindow
-) {
-
-    // Clean GUI if there was something previously
-
-    if let Some(previous_outer_box) = window.get_child() {
-        window.remove(&previous_outer_box);
-    }
-
-    // Load widgets from glade file depending if we are decoding or resampling
-    // Every element loaded is inside main_box
-
-    let builder = match mode {
-        Mode::Decode => Builder::new_from_string(include_str!("decode.glade")),
-        Mode::Resample => Builder::new_from_string(include_str!("resample.glade")),
-        Mode::Timestamp => Builder::new_from_string(include_str!("timestamp.glade")),
-    };
-
-    let folder_tip_box;
-    let folder_tip_label;
-    let extension_tip_label;
-    let overwrite_tip_label;
-    let rate_spinner;
-    let sync_check;
-    let contrast_combo;
-    let rotate_image_check;
-    let progress_bar;
-    let wav_steps_check;
-    let resample_step_check;
-    let read_button;
-    let hour_spinner;
-    let minute_spinner;
-    let second_spinner;
-    let timezone_label;
-    let calendar;
-    let output_filename_extension;
-    match mode {
-        Mode::Decode => {
-            folder_tip_box = Some(builder.get_object("folder_tip_box")
-                .expect("Couldn't get folder_tip_box"));
-            folder_tip_label = Some(builder.get_object("folder_tip_label")
-                .expect("Couldn't get folder_tip_label"));
-            extension_tip_label = Some(builder.get_object("extension_tip_label")
-                .expect("Couldn't get extension_tip_label"));
-            overwrite_tip_label = Some(builder.get_object("overwrite_tip_label")
-                .expect("Couldn't get overwrite_tip_label"));
-            rate_spinner = None;
-            sync_check = Some(builder.get_object("sync_check")
-                .expect("Couldn't get sync_check"));
-            contrast_combo = Some(builder.get_object("contrast_combo")
-                .expect("Couldn't get contrast_combo"));
-            rotate_image_check = Some(builder.get_object("rotate_image_check")
-                .expect("Couldn't get rotate_image_check"));
-            progress_bar = Some(builder.get_object("progress_bar")
-                .expect("Couldn't get progress_bar"));
-            wav_steps_check = Some(builder.get_object("wav_steps_check")
-                .expect("Couldn't get wav_steps_check"));
-            resample_step_check = Some(builder.get_object("resample_step_check")
-                .expect("Couldn't get resample_step_check"));
-            read_button = None;
-            hour_spinner = None;
-            minute_spinner = None;
-            second_spinner = None;
-            timezone_label = None;
-            calendar = None;
-            output_filename_extension = ".png";
-        },
-        Mode::Resample => {
-            folder_tip_box = Some(builder.get_object("folder_tip_box")
-                .expect("Couldn't get folder_tip_box"));
-            folder_tip_label = Some(builder.get_object("folder_tip_label")
-                .expect("Couldn't get folder_tip_label"));
-            extension_tip_label = Some(builder.get_object("extension_tip_label")
-                .expect("Couldn't get extension_tip_label"));
-            overwrite_tip_label = Some(builder.get_object("overwrite_tip_label")
-                .expect("Couldn't get overwrite_tip_label"));
-            rate_spinner = Some(builder.get_object("rate_spinner")
-                .expect("Couldn't get sync_check"));
-            sync_check = None;
-            contrast_combo = None;
-            rotate_image_check = None;
-            progress_bar = Some(builder.get_object("progress_bar")
-                .expect("Couldn't get progress_bar"));
-            wav_steps_check = Some(builder.get_object("wav_steps_check")
-                .expect("Couldn't get wav_steps_check"));
-            resample_step_check = Some(builder.get_object("resample_step_check")
-                .expect("Couldn't get resample_step_check"));
-            read_button = None;
-            hour_spinner = None;
-            minute_spinner = None;
-            second_spinner = None;
-            timezone_label = None;
-            calendar = None;
-            output_filename_extension = ".wav";
-        },
-        Mode::Timestamp => {
-            folder_tip_box = None;
-            folder_tip_label = None;
-            extension_tip_label = None;
-            overwrite_tip_label = None;
-            rate_spinner = None;
-            sync_check = None;
-            contrast_combo = None;
-            progress_bar = None;
-            wav_steps_check = None;
-            resample_step_check = None;
-            rotate_image_check = None;
-            read_button = Some(builder.get_object("read_button")
-                .expect("Couldn't get read_button"));
-            hour_spinner = Some(builder.get_object("hour_spinner")
-                .expect("Couldn't get hour_spinner"));
-            minute_spinner = Some(builder.get_object("minute_spinner")
-                .expect("Couldn't get minute_spinner"));
-            second_spinner = Some(builder.get_object("second_spinner")
-                .expect("Couldn't get second_spinner"));
-            timezone_label = Some(builder.get_object("timezone_label")
-                .expect("Couldn't get timezone_label"));
-            calendar = Some(builder.get_object("calendar")
-                .expect("Couldn't get calendar"));
-            output_filename_extension = ".wav";
-        }
-    };
-
-    let widgets = WidgetList {
-        mode,
-        window:              window.clone(),
-        outer_box:           gtk::Box::new(gtk::Orientation::Vertical, 0),
-        info_bar:            gtk::InfoBar::new(),
-        info_label:          gtk::Label::new(None),
-        info_revealer:       gtk::Revealer::new(),
-        rate_spinner,
-        sync_check,
-        contrast_combo,
-        rotate_image_check,
-        main_box:            builder.get_object("main_box"           ).expect("Couldn't get main_box"           ),
-        progress_bar,
-        start_button:        builder.get_object("start_button"       ).expect("Couldn't get start_button"       ),
-        output_entry:        builder.get_object("output_entry"       ).expect("Couldn't get output_entry"       ),
-        folder_tip_box,
-        folder_tip_label,
-        extension_tip_label,
-        overwrite_tip_label,
-        input_file_chooser:  builder.get_object("input_file_chooser" ).expect("Couldn't get input_file_chooser" ),
-        wav_steps_check,
-        resample_step_check,
-        read_button,
-        hour_spinner,
-        minute_spinner,
-        second_spinner,
-        timezone_label,
-        calendar,
-    };
+    let builder = Builder::new_from_string(include_str!("main.glade"));
+    let widgets = WidgetList::from_builder(&builder, &window);
 
     // Add info_bar
 
     widgets.info_revealer.add(&widgets.info_bar);
     widgets.info_bar.set_show_close_button(true);
     widgets.info_bar.connect_response(|_, response| {
-        if gtk::ResponseType::Close == response {
+        if response == gtk::ResponseType::Close {
             borrow_widgets(|widgets| {
                 widgets.info_revealer.set_reveal_child(false);
             });
@@ -344,31 +103,26 @@ fn build_ui(
     //
     // - window
     //     - outer_box
-    //         - main_box (everything loaded from glade file)
+    //         - main_paned (everything loaded from glade file)
     //             - (everything you see on screen)
     //             - ...
     //         - info_revealer
     //             - info_bar
 
-    widgets.outer_box.pack_start(&widgets.main_box, true, true, 0);
+    widgets.outer_box.pack_start(&widgets.main_paned, true, true, 0);
     widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
 
     widgets.window.add(&widgets.outer_box);
 
     set_widgets(widgets.clone());
 
-    info!("GUI opened: {:?}", mode);
-
     // Set progress_bar and buttons to ready
 
+    /*
     if let Some(progress_bar) = widgets.progress_bar.as_ref() {
         progress_bar.set_text(Some("Ready"));
     }
     widgets.start_button.set_sensitive(true);
-
-    // Set start button as default, so when the user presses the enter key this
-    // button will be pressed
-    widgets.start_button.grab_default();
 
     // Set timezone if on timestamp mode
     if let Some(label) = widgets.timezone_label.as_ref() {
@@ -515,7 +269,7 @@ fn build_ui(
             });
         });
     }
-
+    */
     // Finish and show
 
     widgets.window.connect_delete_event(|_, _| {
@@ -525,11 +279,14 @@ fn build_ui(
         })
     });
 
-    build_system_menu(check_updates, settings, mode, application, &window);
+    // build_system_menu(check_updates, settings, mode, application, &window);
 
     widgets.window.show_all();
+
+    info!("GUI opened");
 }
 
+/*
 /// Build menu bar
 fn build_system_menu(
     check_updates: bool,
@@ -1029,3 +786,4 @@ where W: glib::object::IsA<gtk::Window>
         ).or_else(|_| Err(err::Error::Internal("Could not open browser".to_string())))
     }
 }
+*/
