@@ -1,4 +1,4 @@
 mod gui;
-mod widgets;
+mod state;
 
 pub use gui::main;

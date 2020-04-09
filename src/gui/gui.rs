@@ -11,9 +11,9 @@
 //! and I hide/show widgets if necessary. This makes things easier, otherwise
 //! the code fills up with `Option<>`s and `expect()`s.
 //!
-//! I'm using a `WidgetList` struct for keeping track of every Widget I'm
-//! interested in. This struct is wrapped on `RefCell` smart pointer to allow
-//! mutable access everywhere.
+//! I'm using a `GuiState` struct for keeping track of the current processed
+//! image and also every Widget I'm interested in. This struct is wrapped on
+//! the `RefCell` smart pointer to allow mutable access everywhere.
 //!
 //! When doing a callback from another thread I use `ThreadGuard`, lets you
 //! `Send` the Widgets to another thread but you cant use them there (panics in
@@ -37,7 +37,7 @@ use crate::dsp::Rate;
 use crate::err;
 use crate::misc;
 use crate::noaa_apt::{self, Contrast};
-use super::widgets::{WidgetList, borrow_widgets, set_widgets};
+use super::state::{GuiState, borrow_state, set_state};
 
 
 /// Defined by Cargo.toml
@@ -46,7 +46,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Start GUI.
 ///
 /// Build the window.
-pub fn main(check_updates: bool, settings: config::GuiSettings) {
+pub fn main(check_updates: bool, settings: config::Settings) {
     let application = gtk::Application::new(
         Some("ar.com.mbernardi.noaa-apt"),
         gio::ApplicationFlags::empty(),
@@ -63,7 +63,7 @@ pub fn main(check_updates: bool, settings: config::GuiSettings) {
 /// Create window
 fn create_window(
     check_updates: bool,
-    settings: config::GuiSettings,
+    settings: config::Settings,
     application: &gtk::Application,
 ) {
 
@@ -82,26 +82,26 @@ fn create_window(
     // Load widgets from glade file and create some others
 
     let builder = Builder::new_from_string(include_str!("main.glade"));
-    let widgets = WidgetList::from_builder(&builder, &window, &application);
+    let state = GuiState::from_builder(&builder, &window, &application);
 
     // Add info_bar
 
-    widgets.info_revealer.add(&widgets.info_bar);
-    widgets.info_bar.set_show_close_button(true);
-    widgets.info_bar.connect_response(|_, response| {
+    state.info_revealer.add(&state.info_bar);
+    state.info_bar.set_show_close_button(true);
+    state.info_bar.connect_response(|_, response| {
         if response == gtk::ResponseType::Close {
-            borrow_widgets(|widgets| {
-                widgets.info_revealer.set_reveal_child(false);
+            borrow_state(|state| {
+                state.info_revealer.set_reveal_child(false);
             });
         }
     });
-    let info_content_area = widgets
+    let info_content_area = state
         .info_bar
         .get_content_area()
         .expect("Couldn't get info_content_area (is None)")
         .downcast::<gtk::Box>()
         .expect("Couldn't get info_content_area (not a gtk::Box)");
-    info_content_area.add(&widgets.info_label);
+    info_content_area.add(&state.info_label);
 
     // Finish adding elements
 
@@ -113,31 +113,31 @@ fn create_window(
     //         - info_revealer
     //             - info_bar
 
-    widgets.outer_box.pack_start(&widgets.main_paned, true, true, 0);
-    widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
+    state.outer_box.pack_start(&state.main_paned, true, true, 0);
+    state.outer_box.pack_end(&state.info_revealer, false, false, 0);
 
-    widgets.window.add(&widgets.outer_box);
+    state.window.add(&state.outer_box);
 
-    set_widgets(widgets.clone());
+    set_state(state.clone());
 
     // Connect close button
 
-    widgets.window.connect_delete_event(|_, _| {
-        borrow_widgets(|widgets| {
-            widgets.window.destroy();
+    state.window.connect_delete_event(|_, _| {
+        borrow_state(|state| {
+            state.window.destroy();
             Inhibit(false)
         })
     });
 
     // Finish initial widgets configuration
 
-    build_system_menu(&widgets);
-    init_widgets(&widgets);
+    build_system_menu(&state);
+    init_widgets(&state);
 
 
     // Show and check for updates
 
-    widgets.window.show_all();
+    state.window.show_all();
 
     if check_updates {
         check_updates_and_show();
@@ -147,20 +147,20 @@ fn create_window(
 }
 
 /// Initialize widgets and set up them for decoding.
-fn init_widgets(widgets: &WidgetList) {
+fn init_widgets(state: &GuiState) {
 
-    dec_ready(&widgets);
+    dec_ready(&state);
 
     // Set timezone labels
 
     // Create any chrono::DateTime from chrono::Local, then ignore the
     // result and only take the timezone
     let time = chrono::Local::now();
-    widgets.ts_timezone_label.set_text(format!(
+    state.ts_timezone_label.set_text(format!(
         "Local time\n(UTC{})",
         time.format("%:z"),
     ).as_str());
-    widgets.p_timezone_label.set_text(format!(
+    state.p_timezone_label.set_text(format!(
         "Local time\n(UTC{})",
         time.format("%:z"),
     ).as_str());
@@ -168,11 +168,11 @@ fn init_widgets(widgets: &WidgetList) {
     // Configure GtkEntry filechoosers for saving:
     // sav_output_entry and res_output_entry
 
-    widgets.sav_output_entry.connect_icon_press(|entry, _, _| {
-        borrow_widgets(|widgets| {
+    state.sav_output_entry.connect_icon_press(|entry, _, _| {
+        borrow_state(|state| {
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
-                Some(&widgets.window),
+                Some(&state.window),
                 gtk::FileChooserAction::Save,
             );
 
@@ -191,11 +191,11 @@ fn init_widgets(widgets: &WidgetList) {
             file_chooser.destroy();
         });
     });
-    widgets.res_output_entry.connect_icon_press(|entry, _, _| {
-        borrow_widgets(|widgets| {
+    state.res_output_entry.connect_icon_press(|entry, _, _| {
+        borrow_state(|state| {
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
-                Some(&widgets.window),
+                Some(&state.window),
                 gtk::FileChooserAction::Save,
             );
 
@@ -226,7 +226,7 @@ fn init_widgets(widgets: &WidgetList) {
         output_filename_extension: &'static str,
     ) {
         entry.connect_changed(move |this| {
-            borrow_widgets(|widgets| {
+            borrow_state(|state| {
 
                 folder_tip_box.hide();
                 extension_tip_label.hide();
@@ -252,7 +252,7 @@ fn init_widgets(widgets: &WidgetList) {
                             folder_tip_box.show();
                         },
                         Err(_) => {
-                            show_info(&widgets, gtk::MessageType::Error,
+                            show_info(&state, gtk::MessageType::Error,
                                 "Invalid current working directory, use \
                                 an absolute output path");
                         }
@@ -279,19 +279,19 @@ fn init_widgets(widgets: &WidgetList) {
     }
 
     configure_tips(
-        widgets.sav_output_entry.clone(),
-        widgets.sav_folder_tip_box.clone(),
-        widgets.sav_folder_tip_label.clone(),
-        widgets.sav_extension_tip_label.clone(),
-        widgets.sav_overwrite_tip_label.clone(),
+        state.sav_output_entry.clone(),
+        state.sav_folder_tip_box.clone(),
+        state.sav_folder_tip_label.clone(),
+        state.sav_extension_tip_label.clone(),
+        state.sav_overwrite_tip_label.clone(),
         ".png",
     );
     configure_tips(
-        widgets.res_output_entry.clone(),
-        widgets.res_folder_tip_box.clone(),
-        widgets.res_folder_tip_label.clone(),
-        widgets.res_extension_tip_label.clone(),
-        widgets.res_overwrite_tip_label.clone(),
+        state.res_output_entry.clone(),
+        state.res_folder_tip_box.clone(),
+        state.res_folder_tip_label.clone(),
+        state.res_extension_tip_label.clone(),
+        state.res_overwrite_tip_label.clone(),
         ".wav",
     );
 }
@@ -300,25 +300,73 @@ fn init_widgets(widgets: &WidgetList) {
 ///
 /// Called on startup and every time the user selects the decode action on the
 /// menu bar.
-fn dec_ready(widgets: &WidgetList) {
+fn dec_ready(state: &GuiState) {
 
     // Set enabled actions on the menu bar
 
-    widgets.dec_action.set_enabled(false);
-    widgets.res_action.set_enabled(true);
-    widgets.ts_action.set_enabled(true);
+    state.dec_action.set_enabled(false);
+    state.res_action.set_enabled(true);
+    state.ts_action.set_enabled(true);
 
-    widgets.main_start_button.set_sensitive(true);
-    widgets.dec_decode_button.set_sensitive(true);
-    widgets.main_progress_bar.set_text(Some("Ready"));
+    state.main_stack.set_visible_child(&state.dec_stack_child);
+
+    state.main_start_button.set_sensitive(true);
+    state.dec_decode_button.set_sensitive(true);
+    state.main_progress_bar.set_text(Some("Ready"));
     // Poner texto y tooltip a main_start_button
     // Conectar
     // Reiniciar progressbar
     // Mover stack
     // Reiniciar imagen
 
-    /*
     // Connect start button
+
+
+    /*
+    let settings_clone = settings.clone();
+    state.main_start_button.connect_clicked(move |_| {
+        borrow_state(|state| {
+            state.info_revealer.set_reveal_child(false);
+
+            run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
+                show_info(&state, gtk::MessageType::Error, error.to_string().as_str());
+                error!("{}", error);
+                state.start_button.set_sensitive(true);
+            });
+        });
+    });
+    */
+
+}
+
+/// Show widgets as ready for resampling.
+///
+/// Called every time the user selects the resample action on the menu bar.
+fn res_ready(state: &GuiState) {
+
+    // Set enabled actions on the menu bar
+
+    state.dec_action.set_enabled(true);
+    state.res_action.set_enabled(false);
+    state.ts_action.set_enabled(true);
+
+    state.main_stack.set_visible_child(&state.res_stack_child);
+}
+
+/// Show widgets as ready for resampling.
+///
+/// Called every time the user selects the timestamp action on the menu bar.
+fn ts_ready(state: &GuiState) {
+
+    // Set enabled actions on the menu bar
+
+    state.dec_action.set_enabled(true);
+    state.res_action.set_enabled(true);
+    state.ts_action.set_enabled(false);
+
+    state.main_stack.set_visible_child(&state.ts_stack_child);
+
+    /*
 
     if let Mode::Timestamp = mode {
 
@@ -338,55 +386,12 @@ fn dec_ready(widgets: &WidgetList) {
                 error!("{}", error);
             }
         });
-
-    } else {
-
-        let settings_clone = settings.clone();
-        widgets.start_button.connect_clicked(move |_| {
-            borrow_widgets(|widgets| {
-                widgets.info_revealer.set_reveal_child(false);
-
-                run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
-                    show_info(&widgets, gtk::MessageType::Error, error.to_string().as_str());
-                    error!("{}", error);
-                    widgets.start_button.set_sensitive(true);
-                });
-            });
-        });
-    }
-
     */
 
 }
 
-/// Show widgets as ready for resampling.
-///
-/// Called every time the user selects the resample action on the menu bar.
-fn res_ready(widgets: &WidgetList) {
-
-    // Set enabled actions on the menu bar
-
-    widgets.dec_action.set_enabled(true);
-    widgets.res_action.set_enabled(false);
-    widgets.ts_action.set_enabled(true);
-
-}
-
-/// Show widgets as ready for resampling.
-///
-/// Called every time the user selects the timestamp action on the menu bar.
-fn ts_ready(widgets: &WidgetList) {
-
-    // Set enabled actions on the menu bar
-
-    widgets.dec_action.set_enabled(true);
-    widgets.res_action.set_enabled(true);
-    widgets.ts_action.set_enabled(false);
-
-}
-
 /// Build menu bar
-fn build_system_menu(widgets: &WidgetList) {
+fn build_system_menu(state: &GuiState) {
 
     // Create menu bar
 
@@ -404,39 +409,39 @@ fn build_system_menu(widgets: &WidgetList) {
     help_menu.append(Some("_About"), Some("app.about"));
     menu_bar.append_submenu(Some("_Help"), &help_menu);
 
-    widgets.application.set_menubar(Some(&menu_bar));
+    state.application.set_menubar(Some(&menu_bar));
 
     // Add actions to buttons
 
-    widgets.dec_action.connect_activate(move |_, _| {
-        borrow_widgets(|widgets| dec_ready(&widgets));
+    state.dec_action.connect_activate(move |_, _| {
+        borrow_state(|state| dec_ready(&state));
     });
-    widgets.res_action.connect_activate(move |_, _| {
-        borrow_widgets(|widgets| res_ready(&widgets));
+    state.res_action.connect_activate(move |_, _| {
+        borrow_state(|state| res_ready(&state));
     });
-    widgets.ts_action.connect_activate(move |_, _| {
-        borrow_widgets(|widgets| ts_ready(&widgets));
+    state.ts_action.connect_activate(move |_, _| {
+        borrow_state(|state| ts_ready(&state));
     });
 
-    widgets.application.add_action(&widgets.dec_action);
-    widgets.application.add_action(&widgets.res_action);
-    widgets.application.add_action(&widgets.ts_action);
+    state.application.add_action(&state.dec_action);
+    state.application.add_action(&state.res_action);
+    state.application.add_action(&state.ts_action);
 
     let usage = gio::SimpleAction::new("usage", None);
-    let w = widgets.window.clone();
+    let w = state.window.clone();
     usage.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/usage.html")
             .expect("Failed to open usage webpage");
     });
-    widgets.application.add_action(&usage);
+    state.application.add_action(&usage);
 
     let guide = gio::SimpleAction::new("guide", None);
-    let w = widgets.window.clone();
+    let w = state.window.clone();
     guide.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/guide.html")
             .expect("Failed to open usage webpage");
     });
-    widgets.application.add_action(&guide);
+    state.application.add_action(&guide);
 
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(|_, _| {
@@ -471,7 +476,7 @@ fn build_system_menu(widgets: &WidgetList) {
         dialog.run();
         dialog.destroy();
     });
-    widgets.application.add_action(&about);
+    state.application.add_action(&about);
 }
 /*
 
@@ -486,7 +491,7 @@ fn build_system_menu(widgets: &WidgetList) {
 /// When the decode/resample ends the callback will set the start_button as
 /// sensitive again. If there is an error decoding/resampling will also show the
 /// error on the info_bar
-fn run_noaa_apt(settings: config::GuiSettings, mode: Mode) -> err::Result<()> {
+fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
 
     // Create callbacks
 
@@ -753,44 +758,44 @@ fn write_timestamp() -> err::Result<()> {
 
 /// Set progress of ProgressBar
 fn set_progress(fraction: f32, description: String) {
-    borrow_widgets(|widgets| {
-        widgets.main_progress_bar.set_fraction(fraction as f64);
-        widgets.main_progress_bar.set_text(Some(description.as_str()));
+    borrow_state(|state| {
+        state.main_progress_bar.set_fraction(fraction as f64);
+        state.main_progress_bar.set_text(Some(description.as_str()));
     });
 }
 
 /// Show InfoBar with custom message.
-fn show_info(widgets: &WidgetList, message_type: gtk::MessageType, text: &str) {
+fn show_info(state: &GuiState, message_type: gtk::MessageType, text: &str) {
     match message_type {
         gtk::MessageType::Info =>
-            widgets.info_label.set_markup(
+            state.info_label.set_markup(
                 text
             ),
         gtk::MessageType::Warning =>
-            widgets.info_label.set_markup(
+            state.info_label.set_markup(
                 format!("<b>Warning: {}</b>", text).as_str()
             ),
         gtk::MessageType::Error =>
-            widgets.info_label.set_markup(
+            state.info_label.set_markup(
                 format!("<b>Error: {}</b>", text).as_str()
             ),
         _ =>
             unreachable!(),
     }
 
-    widgets.info_bar.set_message_type(message_type);
-    widgets.info_revealer.set_reveal_child(true);
+    state.info_bar.set_message_type(message_type);
+    state.info_revealer.set_reveal_child(true);
 }
 
 /// Check for updates on another thread and show the result on the info_bar.
 fn check_updates_and_show() {
     let callback = move |result| {
         glib::idle_add(move || {
-            borrow_widgets(|widgets| {
+            borrow_state(|state| {
                 match result {
                     Some((true, ref latest)) => {
                         show_info(
-                            &widgets,
+                            &state,
                             gtk::MessageType::Info,
                             format!("Version \"{}\" available for download!", latest).as_str(),
                         );
@@ -798,7 +803,7 @@ fn check_updates_and_show() {
                     Some((false, _)) => {}, // Do nothing, already on latest version
                     None => {
                         show_info(
-                            &widgets,
+                            &state,
                             gtk::MessageType::Info,
                             "Error checking for updates, do you have an internet connection?",
                         );

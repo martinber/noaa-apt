@@ -1,45 +1,47 @@
-//! Code related to managing the widget references.
+//! Code related to managing the state of the GUI.
+//!
+//! This includes a widget list and the current image being processed.
 
 use std::cell::RefCell;
 
 use gtk::prelude::*;
 
 
-// Stores the WidgetList.
+// Stores the GuiState.
 //
 // Use the functions below when accesing it. Only available from the GUI thread.
 // Wrapped on Option because it's None before building the GUI.
 // Wrapped on RefCell because I need mutable references when modifying the GUI.
-thread_local!(static GLOBAL: RefCell<Option<WidgetList>> = RefCell::new(None));
+thread_local!(static GLOBAL: RefCell<Option<GuiState>> = RefCell::new(None));
 
 
-/// Work with reference to WidgetList.
+/// Work with reference to GuiState.
 ///
 /// Panics if called from a thread different than the GUI one. Also panics if
 /// the GUI is not built yet.
-pub fn borrow_widgets<F, R>(f: F) -> R
-where F: FnOnce(&WidgetList) -> R
+pub fn borrow_state<F, R>(f: F) -> R
+where F: FnOnce(&GuiState) -> R
 {
     GLOBAL.with(|global| {
-        if let Some(ref widgets) = *global.borrow() {
-            (f)(widgets)
+        if let Some(ref state) = *global.borrow() {
+            (f)(state)
         } else {
-            panic!("Can't get WidgetList. Tried to borrow from another thread \
+            panic!("Can't get GuiState. Tried to borrow from another thread \
                     or tried to borrow before building the GUI")
         }
     })
 }
 
-/// Set the WidgetList.
+/// Set the GuiState.
 ///
 /// Called when building the GUI.
-pub fn set_widgets(widget_list: WidgetList) {
+pub fn set_state(state: GuiState) {
     GLOBAL.with(|global| {
-        *global.borrow_mut() = Some(widget_list);
+        *global.borrow_mut() = Some(state);
     });
 }
 
-/// Contains references to widgets, so I can pass them together around.
+/// Contains state and references to widgets, so I can pass them together around.
 ///
 /// Some used prefixes:
 /// - img: Related to the image panel.
@@ -51,7 +53,7 @@ pub fn set_widgets(widget_list: WidgetList) {
 /// - res: Resample tool.
 /// - ts: Timesamp tool.
 #[derive(Debug, Clone)]
-pub struct WidgetList {
+pub struct GuiState {
     pub application:               gtk::Application,
     pub window:                    gtk::ApplicationWindow,
     pub outer_box:                 gtk::Box,
@@ -72,6 +74,9 @@ pub struct WidgetList {
     pub main_progress_bar:         gtk::ProgressBar,
     pub main_start_button:         gtk::Button,
     pub main_stack:                gtk::Stack,
+    pub dec_stack_child:           gtk::Notebook,
+    pub res_stack_child:           gtk::Box,
+    pub ts_stack_child:            gtk::Box,
 
     pub dec_input_chooser:         gtk::FileChooserButton,
     pub dec_sync_check:            gtk::CheckButton,
@@ -123,8 +128,10 @@ pub struct WidgetList {
     pub ts_calendar:               gtk::Calendar,
 }
 
-impl WidgetList {
-    /// Create list from Glade builder.
+impl GuiState {
+    /// Create state from widgets on Glade builder.
+    ///
+    /// TODO: Document
     pub fn from_builder(
         builder: &gtk::Builder,
         window: &gtk::ApplicationWindow,
@@ -152,6 +159,9 @@ impl WidgetList {
             main_progress_bar:       builder.get_object("main_progress_bar"      ).expect("Couldn't get main_progress_bar"      ),
             main_start_button:       builder.get_object("main_start_button"      ).expect("Couldn't get main_start_button"      ),
             main_stack:              builder.get_object("main_stack"             ).expect("Couldn't get main_stack"             ),
+            dec_stack_child:         builder.get_object("dec_stack_child"        ).expect("Couldn't get dec_stack_child"        ),
+            res_stack_child:         builder.get_object("res_stack_child"        ).expect("Couldn't get res_stack_child"        ),
+            ts_stack_child:          builder.get_object("ts_stack_child"         ).expect("Couldn't get ts_stack_child"         ),
 
             dec_input_chooser:       builder.get_object("dec_input_chooser"      ).expect("Couldn't get dec_input_chooser"      ),
             dec_sync_check:          builder.get_object("dec_sync_check"         ).expect("Couldn't get dec_sync_check"         ),

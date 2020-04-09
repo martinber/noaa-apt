@@ -14,33 +14,36 @@ use crate::noaa_apt::Contrast;
 #[derive(Clone, Debug)]
 pub enum Mode {
     /// Open GUI.
-    Gui(GuiSettings),
+    Gui {
+        settings: Settings
+    },
 
     /// Show version and quit.
     Version,
 
     /// Decode image from commandline.
-    Decode(DecodeSettings),
+    Decode {
+        settings: Settings,
+        input_filename: PathBuf,
+        output_filename: PathBuf,
+        sync: bool,
+        contrast_adjustment: Contrast,
+    },
 
     /// Resample image from commandline.
-    Resample(ResampleSettings),
+    Resample {
+        settings: Settings,
+        input_filename: PathBuf,
+        output_filename: PathBuf,
+        output_rate: u32,
+    },
 }
 
-/// Settings for decoding
+/// Settings for decoding/resampling
+///
+/// This structs contains settings loaded from the command line or toml file.
 #[derive(Clone, Debug)]
-pub struct DecodeSettings {
-    /// Input filename.
-    pub input_filename: PathBuf,
-
-    /// Output filename.
-    pub output_filename: PathBuf,
-
-    /// Whether to sync frames.
-    pub sync: bool,
-
-    /// Contrast adjustment method.
-    pub contrast_adjustment: Contrast,
-
+pub struct Settings {
     /// If we are exporting steps to WAV.
     pub export_wav: bool,
 
@@ -48,10 +51,6 @@ pub struct DecodeSettings {
     /// `fast_resampling()` this step is VERY slow and RAM heavy (gigabytes!),
     /// so that function checks if this variable is set before doing extra work.
     pub export_resample_filtered: bool,
-
-    /// If we are rotating the image.
-    /// Useful for ascending passes (satellite goes South -> North).
-    pub rotate_image: bool,
 
     /// Sample rate in Hz to use for intermediate processing.
     pub work_rate: u32,
@@ -67,61 +66,13 @@ pub struct DecodeSettings {
 
     /// Attenuation in positive dB for the demodulation filter.
     pub demodulation_atten: f32,
-}
 
-/// Settings for resampling
-#[derive(Clone, Debug)]
-pub struct ResampleSettings {
-    /// Input filename.
-    pub input_filename: PathBuf,
-
-    /// Output filename.
-    pub output_filename: PathBuf,
-
-    /// If we are exporting steps to WAV.
-    pub export_wav: bool,
-
-    /// If we are exporting the filtered signal on resample. When using
-    /// `fast_resampling()` this step is VERY slow and RAM heavy (gigabytes!),
-    /// so that function checks if this variable is set before doing extra work.
-    pub export_resample_filtered: bool,
-
-    /// Sample rate in Hz to output.
-    pub output_rate: u32,
-
-    /// Attenuation in positive dB for the resampling filter.
+    /// Attenuation in positive dB for the resampling filter (used only when
+    /// resampling WAV files).
     pub wav_resample_atten: f32,
 
     /// Transition band width in fractions of pi radians per second for the
-    /// resampling filter.
-    pub wav_resample_delta_freq: f32,
-}
-
-/// Settings for GUI decoding/resampling
-#[derive(Clone, Debug)]
-pub struct GuiSettings {
-    /// Sample rate to use for intermediate processing when decoding.
-    pub work_rate: u32,
-
-    /// Attenuation in positive dB for the resampling filter used when decoding.
-    pub resample_atten: f32,
-
-    /// Transition band width in Hz for the resampling filter used when decoding.
-    pub resample_delta_freq: f32,
-
-    /// Cutout frequency in Hz of the resampling filter used when decoding.
-    pub resample_cutout: f32,
-
-    /// Attenuation in positive dB for the demodulation filter used when
-    /// decoding.
-    pub demodulation_atten: f32,
-
-    /// Attenuation in positive dB for the resampling filter used when
-    /// resampling WAV files.
-    pub wav_resample_atten: f32,
-
-    /// Transition band width in fractions of pi radians per second for the
-    /// resampling filter used when resampling WAV files.
+    /// resampling filter (used only when resampling WAV files).
     pub wav_resample_delta_freq: f32,
 }
 
@@ -315,6 +266,20 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         return (check_updates, verbosity, Mode::Version);
     }
 
+    // Build Settings struct
+
+    let settings = Settings {
+        export_wav: wav_steps,
+        export_resample_filtered,
+        work_rate: profile.work_rate as u32,
+        resample_atten: profile.resample_atten as f32,
+        resample_delta_freq: profile.resample_delta_freq as f32,
+        resample_cutout: profile.resample_cutout as f32,
+        demodulation_atten: profile.demodulation_atten as f32,
+        wav_resample_atten: profile.wav_resample_atten as f32,
+        wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
+    };
+
     // If set, then the program will be used as a command-line one, otherwise we
     // open the GUI
     if let Some(input_filename) = input_filename {
@@ -322,17 +287,13 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         // If set, we are resampling, otherwise we are decoding
         if let Some(rate) = resample_output {
 
-            let settings = ResampleSettings {
+            return (check_updates, verbosity, Mode::Resample {
+                settings,
                 input_filename,
-                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.wav")),
-                export_wav: wav_steps,
-                export_resample_filtered,
+                output_filename: output_filename.unwrap_or_else(
+                    || PathBuf::from("./output.wav")),
                 output_rate: rate,
-                wav_resample_atten: profile.wav_resample_atten as f32,
-                wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
-            };
-
-            return (check_updates, verbosity, Mode::Resample(settings));
+            });
 
         // resample_output option not set, decode WAV file
         } else {
@@ -347,38 +308,20 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 },
             };
 
-            let settings = DecodeSettings {
+            return (check_updates, verbosity, Mode::Decode {
+                settings,
                 input_filename,
-                output_filename: output_filename.unwrap_or_else(|| PathBuf::from("./output.png")),
-                export_wav: wav_steps,
-                export_resample_filtered,
+                output_filename: output_filename.unwrap_or_else(
+                    || PathBuf::from("./output.wav")),
                 sync,
                 contrast_adjustment,
-                rotate_image,
-                work_rate: profile.work_rate as u32,
-                resample_atten: profile.resample_atten as f32,
-                resample_delta_freq: profile.resample_delta_freq as f32,
-                resample_cutout: profile.resample_cutout as f32,
-                demodulation_atten: profile.demodulation_atten as f32,
-            };
-
-            return (check_updates, verbosity, Mode::Decode(settings));
+            });
         }
 
     // Input filename not set, launch GUI
     } else {
 
-        let settings = GuiSettings {
-            work_rate: profile.work_rate as u32,
-            resample_atten: profile.resample_atten as f32,
-            resample_delta_freq: profile.resample_delta_freq as f32,
-            resample_cutout: profile.resample_cutout as f32,
-            demodulation_atten: profile.demodulation_atten as f32,
-            wav_resample_atten: profile.wav_resample_atten as f32,
-            wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
-        };
-
-        return (check_updates, verbosity, Mode::Gui(settings));
+        return (check_updates, verbosity, Mode::Gui { settings } );
 
     }
 

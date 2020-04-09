@@ -6,7 +6,7 @@ use log::debug;
 
 use crate::dsp::{Signal, Rate};
 use crate::err;
-use crate::noaa_apt::PX_PER_ROW;
+use crate::decode::PX_PER_ROW;
 use crate::wav;
 
 

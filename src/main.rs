@@ -16,6 +16,7 @@
 
 mod config;
 mod context;
+mod decode;
 mod draw;
 mod dsp;
 mod err;
@@ -26,10 +27,12 @@ mod geo;
 mod map;
 mod misc;
 mod noaa_apt;
+mod processing;
+mod resample;
 mod telemetry;
 mod wav;
 
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 
 use dsp::Rate;
 use context::Context;
@@ -38,9 +41,8 @@ use context::Context;
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Application entry point
-fn main() -> err::Result<()> {
-
+/// Main function that returns err::Result
+fn inner_main() -> err::Result<()> {
     let (check_updates, verbosity, mode) = config::get_config();
 
     simple_logger::init_with_level(verbosity)?;
@@ -56,10 +58,8 @@ fn main() -> err::Result<()> {
                 Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
                 None => println!("Could not retrieve latest version available"),
             }
-            std::process::exit(0);
-
         },
-        config::Mode::Gui(settings) => {
+        config::Mode::Gui { settings } => {
 
             #[cfg(feature = "gui")]
             {
@@ -67,19 +67,30 @@ fn main() -> err::Result<()> {
             }
             #[cfg(not(feature = "gui"))]
             {
-                error!("Program compiled without gui support, please download \
-                    the gui version of this program or use --help to see available \
-                    options.");
+                return Err(err::Error::FeatureNotAvailable("Program compiled \
+                    without gui support, please download the gui version of \
+                    this program or use --help to see available options."
+                ));
             }
 
         },
-        config::Mode::Decode(settings) => {
+        config::Mode::Decode {
+            settings,
+            input_filename,
+            output_filename,
+            sync,
+            contrast_adjustment,
+        } => {
 
-            if check_updates {
-                println!("noaa-apt image decoder version {}", VERSION);
+            println!("noaa-apt image decoder version {}", VERSION);
+
+            if !sync {
+                if let noaa_apt::Contrast::Telemetry = contrast_adjustment {
+                    warn!("Reading telemetry without syncing, expect horrible results!");
+                }
             }
 
-            let context = Context::decode(
+            let mut context = Context::decode(
                 |_progress, description| info!("{}", description),
                 Rate::hz(settings.work_rate),
                 Rate::hz(noaa_apt::FINAL_RATE),
@@ -87,31 +98,70 @@ fn main() -> err::Result<()> {
                 settings.export_resample_filtered,
             );
 
-            match noaa_apt::decode(context, settings) {
-                Ok(_) => (),
-                Err(e) => error!("{}", e),
-            };
+            let (signal, rate) = noaa_apt::load(&input_filename)?;
+
+            let raw_data = noaa_apt::decode(
+                &mut context,
+                settings,
+                &signal,
+                rate,
+                sync
+            )?;
+
+            let rotate = noaa_apt::Rotate::No;
+            let orbit = None;
+            let img = noaa_apt::process(
+                &mut context,
+                &raw_data,
+                contrast_adjustment,
+                rotate,
+                orbit
+            )?;
+
+            img.save(&output_filename)?;
 
         },
-        config::Mode::Resample(settings) => {
+        config::Mode::Resample {
+            settings,
+            input_filename,
+            output_filename,
+            output_rate,
+        } => {
 
-            if check_updates {
-                println!("noaa-apt image decoder version {}", VERSION);
-            }
+            println!("noaa-apt image decoder version {}", VERSION);
 
-            let context = Context::resample(
+            let mut context = Context::resample(
                 |_progress, description| info!("{}", description),
                 settings.export_wav,
                 settings.export_resample_filtered,
             );
 
-            match noaa_apt::resample_wav(context, settings) {
-                Ok(_) => (),
-                Err(e) => error!("{}", e),
-            };
+            noaa_apt::resample(
+                &mut context,
+                settings,
+                &input_filename,
+                &output_filename,
+                output_rate,
+            )?;
 
         },
     };
 
     Ok(())
+}
+
+/// Application entry point.
+///
+/// Logs errors and exits.
+fn main() -> () {
+
+    std::process::exit(match inner_main() {
+        Ok(_) => 0,
+
+        Err(err) => {
+            error!("{}", err);
+
+            1
+        },
+    })
 }
