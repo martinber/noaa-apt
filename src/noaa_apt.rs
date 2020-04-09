@@ -33,24 +33,37 @@ pub enum Contrast {
     MinMax,
 }
 
+/// Available rotation settings.
+#[derive(Clone, Debug)]
 pub enum Rotate {
     Orbit,
     No,
     Yes
 }
 
-/// Settings that need orbit calculations
+/// Settings that need orbit calculations.
+#[derive(Debug)]
 pub struct OrbitSettings {
-    custom_tle: Option<String>,
-    start_time: chrono::DateTime<chrono::Utc>,
-    draw_map: Option<MapSettings>,
+    pub sat_name: SatName,
+    pub custom_tle: Option<String>,
+    pub start_time: chrono::DateTime<chrono::Utc>,
+    pub draw_map: Option<MapSettings>,
 }
 
-/// Settings related to map overlays
+/// Settings related to map overlays.
+#[derive(Debug)]
 pub struct MapSettings {
-    yaw: f64,
-    hscale: f64,
-    vscale: f64,
+    pub yaw: f64,
+    pub hscale: f64,
+    pub vscale: f64,
+}
+
+/// Available satellites enum.
+#[derive(Clone, Debug)]
+pub enum SatName {
+    Noaa15,
+    Noaa18,
+    Noaa19,
 }
 
 /// Load WAV from file.
@@ -118,7 +131,7 @@ pub fn process(
     match rotate {
         Rotate::Yes => {
             // context.status(0.93, "Rotating output image".to_string());
-            img = processing::rotate(&img);
+            img = processing::rotate(&img)?;
         },
         Rotate::Orbit => {
             if let None = orbit {

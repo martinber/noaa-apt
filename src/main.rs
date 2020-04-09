@@ -80,6 +80,8 @@ fn inner_main() -> err::Result<()> {
             output_filename,
             sync,
             contrast_adjustment,
+            rotate,
+            orbit_settings,
         } => {
 
             println!("noaa-apt image decoder version {}", VERSION);
@@ -108,14 +110,12 @@ fn inner_main() -> err::Result<()> {
                 sync
             )?;
 
-            let rotate = noaa_apt::Rotate::No;
-            let orbit = None;
             let img = noaa_apt::process(
                 &mut context,
                 &raw_data,
                 contrast_adjustment,
                 rotate,
-                orbit
+                orbit_settings,
             )?;
 
             img.save(&output_filename)?;

@@ -220,6 +220,15 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
     Ok(())
 }
 
+/// Infer recording time from filename and timestamp.
+pub fn infer_start_time(filename: &Path) ->
+    err::Result<chrono::DateTime<chrono::Utc>>
+{
+    // TODO
+    use chrono::offset::TimeZone;
+    return Ok(chrono::Utc.timestamp(0, 0));
+}
+
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
