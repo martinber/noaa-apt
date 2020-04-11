@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use chrono::offset::TimeZone;
 use gio::prelude::*;
 use gtk::prelude::*;
 use log::error;
@@ -9,7 +10,7 @@ use log::error;
 use crate::context::Context;
 use crate::dsp::{Signal, Rate};
 use crate::err;
-use crate::noaa_apt::{self, Image, Contrast, Rotate};
+use crate::noaa_apt::{self, Image, Contrast, Rotate, SatName, OrbitSettings, MapSettings};
 use super::misc;
 use super::state::{
     GuiState, borrow_state, borrow_state_mut, set_state,
@@ -40,6 +41,7 @@ pub fn decode() {
                             // let pixbuf = gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png"))
                                 // .expect("Couldn't load ./res/icon.png");
                             // widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+                            // TODO: Read timestamp from file
                         });
                     },
                     Err(e) => {
@@ -191,13 +193,134 @@ pub fn process() {
             // }
         // };
 //
-        // let sync = widgets.dec_sync_check.get_active();
-//
         let wav_steps = widgets.dec_wav_steps_check.get_active();
 
         let resample_step = widgets.dec_resample_step_check.get_active();
 
-//
+        let contrast_adjustment: Contrast = match widgets.p_contrast_combo
+            .get_active_text()
+            .as_ref()
+            .map(|s| s.as_str())
+            {
+                Some("Keep 98 percent") => Contrast::Percent(0.98),
+                Some("From telemetry") => Contrast::Telemetry,
+                Some("Disable") => Contrast::MinMax,
+                Some(id) => {
+                    callback(Err(err::Error::Internal(
+                        format!("Unknown contrast adjustment \"{}\"", id)
+                    )));
+                    return;
+                },
+                None => {
+                    callback(Err(err::Error::Internal(
+                        "Select contrast adjustment".to_string()
+                    )));
+                    return;
+                },
+            };
+
+        let rotate: Rotate = match widgets.p_rotate_combo
+            .get_active_text()
+            .as_ref()
+            .map(|s| s.as_str())
+            {
+                Some("Auto (from orbit)") => Rotate::Orbit,
+                Some("No") => Rotate::No,
+                Some("Yes") => Rotate::Yes,
+                Some(id) => {
+                    callback(Err(err::Error::Internal(
+                        format!("Unknown rotation \"{}\"", id)
+                    )));
+                    return;
+                },
+                None => {
+                    callback(Err(err::Error::Internal(
+                        "Select rotation option".to_string()
+                    )));
+                    return;
+                },
+            };
+
+        let sat_name: SatName = match widgets.p_satellite_combo
+            .get_active_text()
+            .as_ref()
+            .map(|s| s.as_str())
+            {
+                Some("NOAA 15") => SatName::Noaa15,
+                Some("NOAA 18") => SatName::Noaa18,
+                Some("NOAA 19") => SatName::Noaa19,
+                Some(id) => {
+                    callback(Err(err::Error::Internal(
+                        format!("Unknown satellite \"{}\"", id)
+                    )));
+                    return;
+                },
+                None => {
+                    callback(Err(err::Error::Internal(
+                        "Select satellite option".to_string()
+                    )));
+                    return;
+                },
+            };
+
+        // TODO: Custom TLE
+        let custom_tle = None;
+
+        // Get date and time
+
+        let hour = widgets.p_hs_spinner.get_value_as_int();
+        let minute = widgets.p_min_spinner.get_value_as_int();
+        let second = widgets.p_sec_spinner.get_value_as_int();
+        let (year, month, day) = widgets.p_calendar.get_date();
+
+        let start_time = match chrono::Local
+            .ymd_opt(year as i32, month + 1, day)
+            .and_hms_opt(hour as u32, minute as u32, second as u32)
+        {
+            chrono::offset::LocalResult::None => {
+                callback(Err(err::Error::Internal(
+                    "Invalid date or time".to_string()
+                )));
+                return;
+            },
+            chrono::offset::LocalResult::Single(dt) =>
+                dt.with_timezone(&chrono::Utc), // Convert to UTC
+            chrono::offset::LocalResult::Ambiguous(_, _) => {
+                callback(Err(err::Error::Internal(
+                    "Ambiguous date or time".to_string()
+                )));
+                return;
+            }
+        };
+
+        // Map settings
+
+        let draw_map = match widgets.p_overlay_check.get_active() {
+            false =>
+                None,
+            true => {
+                use std::f64::consts::PI;
+                Some(MapSettings {
+                    // Convert degrees to radians
+                    yaw: widgets.p_yaw_spinner.get_value() * PI / 180.,
+                    // Convert percent to fraction
+                    hscale: widgets.p_hscale_spinner.get_value() / 100.,
+                    vscale: widgets.p_vscale_spinner.get_value() / 100.,
+                })
+            },
+        };
+
+        // Compose OrbitSettings
+
+        let orbit = OrbitSettings {
+            sat_name,
+            custom_tle,
+            start_time,
+            draw_map,
+        };
+
+        // Get settings and signal from state
+
         let settings = borrow_state(|state| state.settings.clone());
 
         let signal = borrow_state(|state| state.decoded_signal.clone())
@@ -215,9 +338,9 @@ pub fn process() {
             callback(noaa_apt::process(
                 &mut context,
                 &signal,
-                Contrast::MinMax,
-                Rotate::Yes,
-                None,
+                contrast_adjustment,
+                rotate,
+                Some(orbit),
             ));
         });
     });

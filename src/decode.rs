@@ -23,9 +23,6 @@ pub const PX_PER_CHANNEL: u32 = PX_PER_ROW / 2;
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
 
-pub type Pixel = image::Rgb<u8>;
-pub type Image = image::RgbImage;
-
 
 /// Decode APT image.
 ///

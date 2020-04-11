@@ -1,12 +1,12 @@
 /// Functions for drawing lines, polygons.
 ///
 
-use image::{ImageBuffer, Luma};
+use crate::noaa_apt::{Image, Pixel};
 
 /// Draw line.
 pub fn draw_line(
-    img: &mut ImageBuffer<Luma<u8>, Vec<u8>>,
-    pixel: Luma<u8>,
+    img: &mut Image,
+    pixel: Pixel,
     x1: u32,
     y1: u32,
     x2: u32,

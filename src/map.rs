@@ -4,11 +4,11 @@
 use std::f64::consts::PI;
 
 use chrono::prelude::*;
-use image::{ImageBuffer, Luma};
 use shapefile::Shape;
 
 use crate::draw;
 use crate::geo;
+use crate::noaa_apt::{SatName, Image, Pixel, MapSettings};
 
 #[derive(Debug)]
 struct SatState {
@@ -17,17 +17,11 @@ struct SatState {
 }
 
 pub fn draw_map(
-    img: &mut ImageBuffer<Luma<u8>, Vec<u8>>, timestamp: i64, height: u32
+    img: &mut Image,
+    start_time: chrono::DateTime<chrono::Utc>,
+    settings: MapSettings,
 ) {
-    let yaw = match env::var("YAW") {
-        Ok(v) => {
-            match v.parse::<f64>() {
-                Ok(n) => n,
-                Err(_) => 0.,
-            }
-        },
-        Err(_) => 0.,
-    };
+    let height = img.height();
 
     let (sats, _errors) = satellite::io::parse_multiple(include_str!("../weather-2018-12.txt"));
     let mut sat = sats.iter().find(|&sat| sat.name == Some("NOAA 19".to_string()))
@@ -35,19 +29,8 @@ pub fn draw_map(
 
     // Generar vector de estados ///////////////////////////////////////////////
 
-    let start_time = match env::var("DATE") {
-        Ok(s) => {
-            match chrono::Utc.datetime_from_str(&s, "%Y-%m-%d %T") {
-                Ok(n) => n,
-                Err(_) => panic!("No se pudo parsear fecha")
-            }
-        },
-        Err(_) => panic!("No hay fecha")
-    };
-
     let mut time: Vec<chrono::DateTime<_>> = Vec::with_capacity(height as usize);
 
-    // let start_time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
     time.push(start_time); // 0 milliseconds
     let time_step = chrono::Duration::milliseconds(500); // Seconds per line
 
@@ -71,38 +54,15 @@ pub fn draw_map(
     for i in 1..sat_state.len()-1 {
         let s1 = &sat_state[i-1];
         let s2 = &sat_state[i+1];
-        sat_state[i].side_az = geo::azimuth(s1.latlon, s2.latlon) + PI/2. + yaw;
+        sat_state[i].side_az = geo::azimuth(s1.latlon, s2.latlon) + PI/2. + settings.yaw;
     }
 
     // Calcular resolucion /////////////////////////////////////////////////////
 
     let s1 = &sat_state[0];
     let s2 = sat_state.last().unwrap();
-    let y_res = geo::distance(s1.latlon, s2.latlon) / height as f64;
-
-    let x_res = 0.0005001960653876187;
-
-    use std::env;
-
-    let y_res = match env::var("Y_RES") {
-        Ok(v) => {
-            match v.parse::<f64>() {
-                Ok(n) => n,
-                Err(_) => y_res,
-            }
-        },
-        Err(_) => y_res,
-    };
-
-    let x_res = match env::var("X_RES") {
-        Ok(v) => {
-            match v.parse::<f64>() {
-                Ok(n) => n,
-                Err(_) => x_res,
-            }
-        },
-        Err(_) => x_res,
-    };
+    let y_res = geo::distance(s1.latlon, s2.latlon) / height as f64 * settings.vscale;
+    let x_res = 0.0005001960653876187 * settings.hscale;
 
     // latlon_to_rel_px ////////////////////////////////////////////////////////
 
@@ -123,7 +83,7 @@ pub fn draw_map(
         let b = (B.sin() * c.sin()).max(-PI/2.).min(PI/2.).asin();
 
         let x = -b / x_res;
-        let y = a / y_res + yaw * x;
+        let y = a / y_res + settings.yaw * x;
 
         (x, y)
     };
@@ -140,6 +100,7 @@ pub fn draw_map(
 
     // Generar imagen equirectangular //////////////////////////////////////////
 
+    /*
     let mut geoimg: Vec<[(f64, f64); 2080]> = vec![[(0., 0.); 2080]; height as usize];
 
     let mut max_lat = sat_state[0].latlon.0;
@@ -178,6 +139,7 @@ pub fn draw_map(
             );
         }
     }
+    */
 
     // Dibujar linea central ///////////////////////////////////////////////////
 
@@ -186,7 +148,7 @@ pub fn draw_map(
         // y: lat, x: lon,
         let (x, y) = px_rel_to_abs(latlon_to_rel_px(s.latlon));
         let (x2, y2) = px_rel_to_abs(latlon_to_rel_px(prev_s.latlon));
-        draw::draw_line(img, image::Luma([0]), x, y, x2, y2);
+        draw::draw_line(img, image::Rgb([255, 0, 0]), x, y, x2, y2);
         prev_s = s;
     }
 
@@ -219,13 +181,13 @@ pub fn draw_map(
 
                 let (xa, ya) = px_rel_to_abs((x - x_offset, y));
                 let (xa2, ya2) = px_rel_to_abs((x2 - x2_offset, y2));
-                draw::draw_line(img, image::Luma([255]), xa, ya, xa2, ya2);
-                draw::draw_line(&mut img2, image::Luma([255]), lon_to_x(pt.x), lat_to_y(pt.y), lon_to_x(prev_pt.x), lat_to_y(prev_pt.y));
+                draw::draw_line(img, image::Rgb([0, 255, 0]), xa, ya, xa2, ya2);
+                // draw::draw_line(&mut img2, image::Luma([255]), lon_to_x(pt.x), lat_to_y(pt.y), lon_to_x(prev_pt.x), lat_to_y(prev_pt.y));
                 prev_pt = pt;
             }
         }
     }
-    img2.save("./a.png").unwrap();
+    // img2.save("./a.png").unwrap();
 }
 
 #[cfg(test)]

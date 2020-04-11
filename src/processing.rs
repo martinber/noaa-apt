@@ -2,7 +2,8 @@
 
 use image::{GenericImageView, GenericImage};
 
-use crate::decode::{Image, Pixel, PX_PER_CHANNEL};
+use crate::noaa_apt::{Image, Pixel};
+use crate::decode::PX_PER_CHANNEL;
 use crate::err;
 
 /// Rotate image without changing the location of the channels.

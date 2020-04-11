@@ -2,7 +2,7 @@
 //!
 //! Used by both the command-line and GUI versions of the program.
 
-pub use crate::decode::{decode, Pixel, Image, FINAL_RATE, PX_PER_ROW};
+pub use crate::decode::{decode, FINAL_RATE, PX_PER_ROW};
 pub use crate::resample::resample;
 
 use std::path::Path;
@@ -13,10 +13,14 @@ use crate::context::Context;
 use crate::dsp::{Signal, Rate, Freq};
 use crate::err;
 use crate::dsp;
+use crate::map;
 use crate::misc;
 use crate::processing;
 use crate::telemetry;
 use crate::wav;
+
+pub type Pixel = image::Rgb<u8>;
+pub type Image = image::RgbImage;
 
 /// Available settings for contrast adjustment.
 #[derive(Clone, Debug)]
@@ -42,7 +46,7 @@ pub enum Rotate {
 }
 
 /// Settings that need orbit calculations.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct OrbitSettings {
     pub sat_name: SatName,
     pub custom_tle: Option<String>,
@@ -51,7 +55,7 @@ pub struct OrbitSettings {
 }
 
 /// Settings related to map overlays.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MapSettings {
     pub yaw: f64,
     pub hscale: f64,
@@ -128,6 +132,19 @@ pub fn process(
             // Some(final_rate)
     // ))?;
 
+
+
+    if let Some(orbit_settings) = orbit.clone() {
+        if let Some(map_settings) = orbit_settings.draw_map {
+            map::draw_map(&mut img, orbit_settings.start_time, map_settings);
+        }
+    }
+
+
+    // context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename.display()));
+
+    // --------------------
+
     match rotate {
         Rotate::Yes => {
             // context.status(0.93, "Rotating output image".to_string());
@@ -143,28 +160,18 @@ pub fn process(
         Rotate::No => {},
     }
 
+    // --------------------
+
+    // context.status(1., "Finished".to_string());
+    // debug!("Finished");
+//
+    // context.status(0.0, "Reading WAV file".to_string());
+
+    // --------------------
+
     Ok(img)
 }
 
-/*
-    let timestamp = misc::read_timestamp(&settings.input_filename)?;
-    map::draw_map(&mut img, timestamp, height);
-
-    img.save(settings.output_filename)?;
-
-    context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename.display()));
-
-
-    // --------------------
-
-    context.status(1., "Finished".to_string());
-    debug!("Finished");
-
-    context.status(0.0, "Reading WAV file".to_string());
-
-    // --------------------
-
-*/
 
 /// Maps float signal values to `u8`.
 ///
