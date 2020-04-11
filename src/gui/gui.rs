@@ -33,11 +33,14 @@ use log::{debug, error, info};
 
 use crate::config;
 use crate::context::Context;
-use crate::dsp::Rate;
+use crate::dsp::{Signal, Rate};
 use crate::err;
 use crate::misc;
 use crate::noaa_apt::{self, Contrast};
-use super::state::{GuiState, borrow_state, set_state};
+use super::state::{
+    GuiState, borrow_state, borrow_state_mut, set_state,
+    Widgets, borrow_widgets, set_widgets
+};
 
 
 /// Defined by Cargo.toml
@@ -82,26 +85,25 @@ fn create_window(
     // Load widgets from glade file and create some others
 
     let builder = Builder::new_from_string(include_str!("main.glade"));
-    let state = GuiState::from_builder(&builder, &window, &application);
+    let widgets = Widgets::from_builder(&builder, &window, &application);
 
     // Add info_bar
 
-    state.info_revealer.add(&state.info_bar);
-    state.info_bar.set_show_close_button(true);
-    state.info_bar.connect_response(|_, response| {
+    widgets.info_revealer.add(&widgets.info_bar);
+    widgets.info_bar.set_show_close_button(true);
+    widgets.info_bar.connect_response(|_, response| {
         if response == gtk::ResponseType::Close {
-            borrow_state(|state| {
-                state.info_revealer.set_reveal_child(false);
+            borrow_widgets(|widgets| {
+                widgets.info_revealer.set_reveal_child(false);
             });
         }
     });
-    let info_content_area = state
-        .info_bar
+    let info_content_area = widgets.info_bar
         .get_content_area()
         .expect("Couldn't get info_content_area (is None)")
         .downcast::<gtk::Box>()
         .expect("Couldn't get info_content_area (not a gtk::Box)");
-    info_content_area.add(&state.info_label);
+    info_content_area.add(&widgets.info_label);
 
     // Finish adding elements
 
@@ -113,31 +115,34 @@ fn create_window(
     //         - info_revealer
     //             - info_bar
 
-    state.outer_box.pack_start(&state.main_paned, true, true, 0);
-    state.outer_box.pack_end(&state.info_revealer, false, false, 0);
+    widgets.outer_box.pack_start(&widgets.main_paned, true, true, 0);
+    widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
 
-    state.window.add(&state.outer_box);
+    widgets.window.add(&widgets.outer_box);
 
-    set_state(state.clone());
+    set_widgets(widgets.clone());
+
+    // Init GuiState
+
+    set_state(GuiState { settings, decoded_signal: None, processed_image: None });
 
     // Connect close button
 
-    state.window.connect_delete_event(|_, _| {
-        borrow_state(|state| {
-            state.window.destroy();
+    widgets.window.connect_delete_event(|_, _| {
+        borrow_widgets(|widgets| {
+            widgets.window.destroy();
             Inhibit(false)
         })
     });
 
     // Finish initial widgets configuration
 
-    build_system_menu(&state);
-    init_widgets(&state);
-
+    build_system_menu(&widgets);
+    init_widgets(&widgets);
 
     // Show and check for updates
 
-    state.window.show_all();
+    widgets.window.show_all();
 
     if check_updates {
         check_updates_and_show();
@@ -147,20 +152,20 @@ fn create_window(
 }
 
 /// Initialize widgets and set up them for decoding.
-fn init_widgets(state: &GuiState) {
+fn init_widgets(widgets: &Widgets) {
 
-    dec_ready(&state);
+    dec_ready();
 
     // Set timezone labels
 
     // Create any chrono::DateTime from chrono::Local, then ignore the
     // result and only take the timezone
     let time = chrono::Local::now();
-    state.ts_timezone_label.set_text(format!(
+    widgets.ts_timezone_label.set_text(format!(
         "Local time\n(UTC{})",
         time.format("%:z"),
     ).as_str());
-    state.p_timezone_label.set_text(format!(
+    widgets.p_timezone_label.set_text(format!(
         "Local time\n(UTC{})",
         time.format("%:z"),
     ).as_str());
@@ -168,11 +173,11 @@ fn init_widgets(state: &GuiState) {
     // Configure GtkEntry filechoosers for saving:
     // sav_output_entry and res_output_entry
 
-    state.sav_output_entry.connect_icon_press(|entry, _, _| {
-        borrow_state(|state| {
+    widgets.sav_output_entry.connect_icon_press(|entry, _, _| {
+        borrow_widgets(|widgets| {
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
-                Some(&state.window),
+                Some(&widgets.window),
                 gtk::FileChooserAction::Save,
             );
 
@@ -191,11 +196,11 @@ fn init_widgets(state: &GuiState) {
             file_chooser.destroy();
         });
     });
-    state.res_output_entry.connect_icon_press(|entry, _, _| {
-        borrow_state(|state| {
+    widgets.res_output_entry.connect_icon_press(|entry, _, _| {
+        borrow_widgets(|widgets| {
             let file_chooser = gtk::FileChooserDialog::new(
                 Some("Save file as"),
-                Some(&state.window),
+                Some(&widgets.window),
                 gtk::FileChooserAction::Save,
             );
 
@@ -226,7 +231,7 @@ fn init_widgets(state: &GuiState) {
         output_filename_extension: &'static str,
     ) {
         entry.connect_changed(move |this| {
-            borrow_state(|state| {
+            borrow_widgets(|widgets| {
 
                 folder_tip_box.hide();
                 extension_tip_label.hide();
@@ -252,7 +257,7 @@ fn init_widgets(state: &GuiState) {
                             folder_tip_box.show();
                         },
                         Err(_) => {
-                            show_info(&state, gtk::MessageType::Error,
+                            show_info(gtk::MessageType::Error,
                                 "Invalid current working directory, use \
                                 an absolute output path");
                         }
@@ -279,19 +284,19 @@ fn init_widgets(state: &GuiState) {
     }
 
     configure_tips(
-        state.sav_output_entry.clone(),
-        state.sav_folder_tip_box.clone(),
-        state.sav_folder_tip_label.clone(),
-        state.sav_extension_tip_label.clone(),
-        state.sav_overwrite_tip_label.clone(),
+        widgets.sav_output_entry.clone(),
+        widgets.sav_folder_tip_box.clone(),
+        widgets.sav_folder_tip_label.clone(),
+        widgets.sav_extension_tip_label.clone(),
+        widgets.sav_overwrite_tip_label.clone(),
         ".png",
     );
     configure_tips(
-        state.res_output_entry.clone(),
-        state.res_folder_tip_box.clone(),
-        state.res_folder_tip_label.clone(),
-        state.res_extension_tip_label.clone(),
-        state.res_overwrite_tip_label.clone(),
+        widgets.res_output_entry.clone(),
+        widgets.res_folder_tip_box.clone(),
+        widgets.res_folder_tip_label.clone(),
+        widgets.res_extension_tip_label.clone(),
+        widgets.res_overwrite_tip_label.clone(),
         ".wav",
     );
 }
@@ -300,98 +305,104 @@ fn init_widgets(state: &GuiState) {
 ///
 /// Called on startup and every time the user selects the decode action on the
 /// menu bar.
-fn dec_ready(state: &GuiState) {
+fn dec_ready() {
+    // borrow_state_mut(|state| {
+        // // Reset working signal and image
+//
+        // state.decoded_signal = None;
+        // state.processed_image = None;
+    // });
 
-    // Set enabled actions on the menu bar
+    borrow_widgets(|widgets| {
 
-    state.dec_action.set_enabled(false);
-    state.res_action.set_enabled(true);
-    state.ts_action.set_enabled(true);
+        // Set enabled actions on the menu bar
 
-    state.main_stack.set_visible_child(&state.dec_stack_child);
+        widgets.dec_action.set_enabled(false);
+        widgets.res_action.set_enabled(true);
+        widgets.ts_action.set_enabled(true);
 
-    state.main_start_button.set_sensitive(true);
-    state.dec_decode_button.set_sensitive(true);
-    state.main_progress_bar.set_text(Some("Ready"));
-    // Poner texto y tooltip a main_start_button
-    // Conectar
-    // Reiniciar progressbar
-    // Mover stack
-    // Reiniciar imagen
+        // Configure widgets
 
-    // Connect start button
+        widgets.main_stack.set_visible_child(&widgets.dec_stack_child);
 
+        widgets.main_start_button.set_sensitive(true);
+        widgets.main_start_button.set_tooltip_text(
+            Some("Do everything at once, make sure to configure every tab first."));
+        widgets.dec_decode_button.set_sensitive(true);
+        set_progress(0., "Ready");
 
-    /*
-    let settings_clone = settings.clone();
-    state.main_start_button.connect_clicked(move |_| {
-        borrow_state(|state| {
-            state.info_revealer.set_reveal_child(false);
+        // Poner texto y tooltip a main_start_button
+        // Conectar
+        // Reiniciar progressbar
+        // Mover stack
+        // TODO Reiniciar imagen
 
-            run_noaa_apt(settings_clone.clone(), mode).unwrap_or_else(|error| {
-                show_info(&state, gtk::MessageType::Error, error.to_string().as_str());
-                error!("{}", error);
-                state.start_button.set_sensitive(true);
-            });
-        });
+        // Connect start button
+
+        widgets.dec_decode_button.connect_clicked(|_| decode());
     });
-    */
-
 }
 
 /// Show widgets as ready for resampling.
 ///
 /// Called every time the user selects the resample action on the menu bar.
-fn res_ready(state: &GuiState) {
+fn res_ready() {
 
-    // Set enabled actions on the menu bar
+    borrow_widgets(|widgets| {
 
-    state.dec_action.set_enabled(true);
-    state.res_action.set_enabled(false);
-    state.ts_action.set_enabled(true);
+        // Set enabled actions on the menu bar
 
-    state.main_stack.set_visible_child(&state.res_stack_child);
+        widgets.dec_action.set_enabled(true);
+        widgets.res_action.set_enabled(false);
+        widgets.ts_action.set_enabled(true);
+
+        widgets.main_stack.set_visible_child(&widgets.res_stack_child);
+
+    });
 }
 
 /// Show widgets as ready for resampling.
 ///
 /// Called every time the user selects the timestamp action on the menu bar.
-fn ts_ready(state: &GuiState) {
+fn ts_ready() {
 
-    // Set enabled actions on the menu bar
+    borrow_widgets(|widgets| {
 
-    state.dec_action.set_enabled(true);
-    state.res_action.set_enabled(true);
-    state.ts_action.set_enabled(false);
+        // Set enabled actions on the menu bar
 
-    state.main_stack.set_visible_child(&state.ts_stack_child);
+        widgets.dec_action.set_enabled(true);
+        widgets.res_action.set_enabled(true);
+        widgets.ts_action.set_enabled(false);
 
-    /*
+        widgets.main_stack.set_visible_child(&widgets.ts_stack_child);
 
-    if let Mode::Timestamp = mode {
+        /*
 
-        let widgets_clone = widgets.clone();
-        widgets.start_button.connect_clicked(move |_| {
-            if let Err(error) = write_timestamp() {
-                show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
-                error!("{}", error);
-            }
-        });
-        let widgets_clone = widgets.clone();
-        widgets.read_button.expect("Couldn't get read_button")
-            .connect_clicked(move |_|
-        {
-            if let Err(error) = read_timestamp() {
-                show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
-                error!("{}", error);
-            }
-        });
-    */
+        if let Mode::Timestamp = mode {
 
+            let widgets_clone = widgets.clone();
+            widgets.start_button.connect_clicked(move |_| {
+                if let Err(error) = write_timestamp() {
+                    show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
+                    error!("{}", error);
+                }
+            });
+            let widgets_clone = widgets.clone();
+            widgets.read_button.expect("Couldn't get read_button")
+                .connect_clicked(move |_|
+            {
+                if let Err(error) = read_timestamp() {
+                    show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
+                    error!("{}", error);
+                }
+            });
+        */
+
+    });
 }
 
 /// Build menu bar
-fn build_system_menu(state: &GuiState) {
+fn build_system_menu(widgets: &Widgets) {
 
     // Create menu bar
 
@@ -409,39 +420,33 @@ fn build_system_menu(state: &GuiState) {
     help_menu.append(Some("_About"), Some("app.about"));
     menu_bar.append_submenu(Some("_Help"), &help_menu);
 
-    state.application.set_menubar(Some(&menu_bar));
+    widgets.application.set_menubar(Some(&menu_bar));
 
     // Add actions to buttons
 
-    state.dec_action.connect_activate(move |_, _| {
-        borrow_state(|state| dec_ready(&state));
-    });
-    state.res_action.connect_activate(move |_, _| {
-        borrow_state(|state| res_ready(&state));
-    });
-    state.ts_action.connect_activate(move |_, _| {
-        borrow_state(|state| ts_ready(&state));
-    });
+    widgets.dec_action.connect_activate(move |_, _| dec_ready());
+    widgets.res_action.connect_activate(move |_, _| res_ready());
+    widgets.ts_action.connect_activate(move |_, _| ts_ready());
 
-    state.application.add_action(&state.dec_action);
-    state.application.add_action(&state.res_action);
-    state.application.add_action(&state.ts_action);
+    widgets.application.add_action(&widgets.dec_action);
+    widgets.application.add_action(&widgets.res_action);
+    widgets.application.add_action(&widgets.ts_action);
 
     let usage = gio::SimpleAction::new("usage", None);
-    let w = state.window.clone();
+    let w = widgets.window.clone();
     usage.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/usage.html")
             .expect("Failed to open usage webpage");
     });
-    state.application.add_action(&usage);
+    widgets.application.add_action(&usage);
 
     let guide = gio::SimpleAction::new("guide", None);
-    let w = state.window.clone();
+    let w = widgets.window.clone();
     guide.connect_activate(move |_, _| {
         open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/guide.html")
             .expect("Failed to open usage webpage");
     });
-    state.application.add_action(&guide);
+    widgets.application.add_action(&guide);
 
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(|_, _| {
@@ -476,9 +481,74 @@ fn build_system_menu(state: &GuiState) {
         dialog.run();
         dialog.destroy();
     });
-    state.application.add_action(&about);
+    widgets.application.add_action(&about);
 }
+
 /*
+
+/// Get values from widgets and decode
+fn decode<F>(callback: F) where F: FnOnce(err::Result<Signal>) {
+
+    borrow_state(|state| {
+
+        // Read widgets
+
+        let input_filename: PathBuf = match state.dec_input_chooser.get_filename() {
+            Some(path) => path,
+            None => {
+                callback(Err(err::Error::Internal(
+                    "Select input file".to_string())));
+                return;
+            }
+        };
+
+        let sync = state.dec_sync_check.get_active();
+
+        let wav_steps = state.dec_wav_steps_check.get_active();
+
+        let resample_step = state.dec_resample_step_check.get_active();
+
+        // Decode
+
+        let progress_callback = |progress: f32, description: String| {
+            glib::idle_add(move || {
+                set_progress(progress, &description.clone());
+                Continue(false)
+            });
+        };
+
+        let (signal, rate) = match noaa_apt::load(&input_filename) {
+            Ok(result) => result,
+            Err(e) => {
+                callback(Err(e));
+                return;
+            }
+        };
+
+        let settings = state.settings.clone();
+
+        std::thread::spawn(move || {
+
+            let mut context = Context::decode(
+                progress_callback,
+                Rate::hz(state.settings.work_rate),
+                Rate::hz(noaa_apt::FINAL_RATE),
+                wav_steps,
+                resample_step,
+            );
+            noaa_apt::decode(
+                &mut context,
+                &settings,
+                &signal,
+                rate,
+                sync
+            );
+        });
+
+    });
+
+}
+*/
 
 /// Start decoding or resampling.
 ///
@@ -491,26 +561,32 @@ fn build_system_menu(state: &GuiState) {
 /// When the decode/resample ends the callback will set the start_button as
 /// sensitive again. If there is an error decoding/resampling will also show the
 /// error on the info_bar
-fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
+fn decode() {
 
     // Create callbacks
 
-    let callback = move |result: err::Result<()>| {
+    let callback = |result: err::Result<Signal>| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {
-                widgets.start_button.set_sensitive(true);
-                match result {
-                    Ok(()) => {
-                        // widgets.status_label.set_markup("Finished");
-                        set_progress(1., "Finished".to_string());
-
-                        show_info(&widgets, gtk::MessageType::Info, "Finished");
+                widgets.dec_decode_button.set_sensitive(true);
+                widgets.main_start_button.set_sensitive(true);
+                match &result {
+                    Ok(signal) => {
+                        set_progress(1., "Decoded");
+                        widgets.p_process_button.set_sensitive(true);
+                        borrow_state_mut(|state| {
+                            state.decoded_signal = Some(signal.clone());
+                            state.processed_image = None;
+                        });
                     },
-                    Err(ref e) => {
-                        set_progress(1., "Error".to_string());
-                        show_info(&widgets, gtk::MessageType::Error, &e.to_string());
-
+                    Err(e) => {
+                        set_progress(1., "Error");
+                        show_info(gtk::MessageType::Error, &e.to_string());
                         error!("{}", e);
+                        borrow_state_mut(|state| {
+                            state.decoded_signal = None;
+                            state.processed_image = None;
+                        });
                     },
                 }
             });
@@ -519,165 +595,67 @@ fn run_noaa_apt(settings: config::Settings, mode: Mode) -> err::Result<()> {
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
-            set_progress(progress, description.clone());
+            set_progress(progress, &description);
             Continue(false)
         });
     };
 
     borrow_widgets(|widgets| {
 
-        widgets.start_button.set_sensitive(false);
+        widgets.info_revealer.set_reveal_child(false);
+        widgets.dec_decode_button.set_sensitive(false);
+        widgets.sav_save_button.set_sensitive(false);
+        widgets.p_process_button.set_sensitive(false);
+        widgets.main_start_button.set_sensitive(false);
 
-        let input_filename: PathBuf = widgets
-            .input_file_chooser
-            .get_filename() // Option<std::path::PathBuf>
-            .ok_or_else(|| err::Error::Internal("Select input file".to_string()))?;
+        // Read widgets
 
-        let output_filename: PathBuf = widgets
-            .output_entry
-            .get_text()
-            .map(|text| PathBuf::from(text.as_str()))
-            .ok_or_else(|| err::Error::Internal("Could not get decode_output_entry text".to_string()))?;
+        let input_filename: PathBuf = match widgets.dec_input_chooser.get_filename() {
+            Some(path) => path,
+            None => {
+                callback(Err(err::Error::Internal(
+                    "Select input file".to_string())));
+                return;
+            }
+        };
 
-        if output_filename.as_os_str().is_empty() {
-            return Err(err::Error::Internal("Select output filename".to_string()));
-        }
+        let sync = widgets.dec_sync_check.get_active();
 
-        match mode {
-            Mode::Decode => {
-                let sync = widgets
-                    .sync_check
-                    .as_ref()
-                    .expect("Couldn't get sync_check")
-                    .get_active();
+        let wav_steps = widgets.dec_wav_steps_check.get_active();
 
-                let wav_steps = widgets
-                    .wav_steps_check
-                    .as_ref()
-                    .expect("Couldn't get wav_steps_check")
-                    .get_active();
+        let resample_step = widgets.dec_resample_step_check.get_active();
 
-                let resample_step = widgets
-                    .resample_step_check
-                    .as_ref()
-                    .expect("Couldn't get resample_step_check")
-                    .get_active();
+        let settings = borrow_state(|state| state.settings.clone());
 
-                // See https://stackoverflow.com/questions/48034119/rust-matching-a-optionstring
-                let contrast_adjustment: Contrast = match widgets
-                    .contrast_combo
-                    .as_ref()
-                    .expect("Couldn't get contrast_combo")
-                    .get_active_text()
-                    .as_ref()
-                    .map(|s| s.as_str())
-                {
-                    Some("Keep 98 percent") => Ok(Contrast::Percent(0.98)),
-                    Some("From telemetry") => Ok(Contrast::Telemetry),
-                    Some("Disable") => Ok(Contrast::MinMax),
-                    Some(id) => Err(err::Error::Internal(
-                        format!("Unknown contrast adjustment \"{}\"", id)
-                    )),
-                    None => Err(err::Error::Internal(
-                        "Select contrast adjustment".to_string()
-                    )),
-                }?;
+        std::thread::spawn(move || {
 
-                let rotate_image = widgets
-                    .rotate_image_check
-                    .as_ref()
-                    .expect("Couldn't get rotate_image_check")
-                    .get_active();
+            let (signal, rate) = match noaa_apt::load(&input_filename) {
+                Ok(result) => result,
+                Err(e) => {
+                    callback(Err(e));
+                    return;
+                }
+            };
 
-                debug!("Decode {} to {}", input_filename.display(), output_filename.display());
-
-                std::thread::spawn(move || {
-                    let context = Context::decode(
-                        progress_callback,
-                        Rate::hz(settings.work_rate),
-                        Rate::hz(noaa_apt::FINAL_RATE),
-                        wav_steps,
-                        resample_step,
-                    );
-
-                    let settings = config::DecodeSettings {
-                        input_filename,
-                        output_filename,
-                        sync,
-                        contrast_adjustment,
-                        rotate_image,
-                        export_wav: wav_steps,
-                        export_resample_filtered: resample_step,
-                        work_rate: settings.work_rate,
-                        resample_atten: settings.resample_atten,
-                        resample_delta_freq: settings.resample_delta_freq,
-                        resample_cutout: settings.resample_cutout,
-                        demodulation_atten: settings.demodulation_atten,
-                    };
-
-                    callback(noaa_apt::decode(
-                        context,
-                        settings,
-                    ));
-                });
-
-                Ok(())
-            },
-            Mode::Resample => {
-                let rate = widgets
-                    .clone() // Why I need this clone()?
-                    .rate_spinner
-                    .expect("Couldn't get rate_spinner")
-                    .get_value_as_int() as u32;
-
-                let wav_steps = widgets
-                    .clone() // Why I need this clone()?
-                    .wav_steps_check
-                    .expect("Couldn't get wav_steps_check")
-                    .get_active();
-
-                let resample_step = widgets
-                    .clone() // Why I need this clone()?
-                    .resample_step_check
-                    .expect("Couldn't get resample_step_check")
-                    .get_active();
-
-                debug!("Resample {} as {} to {}", input_filename.display(), rate, output_filename.display());
-
-                widgets.start_button.set_sensitive(false);
-                std::thread::spawn(move || {
-                    let context = Context::resample(
-                        progress_callback,
-                        wav_steps,
-                        resample_step,
-                    );
-
-                    let settings = config::ResampleSettings {
-                        input_filename,
-                        output_filename,
-                        output_rate: rate,
-                        export_wav: wav_steps,
-                        export_resample_filtered: resample_step,
-                        wav_resample_atten: settings.wav_resample_atten,
-                        wav_resample_delta_freq: settings.wav_resample_delta_freq,
-                    };
-
-                    callback(noaa_apt::resample_wav(
-                        context,
-                        settings,
-                    ));
-                });
-
-                Ok(())
-            },
-            Mode::Timestamp => {
-                Err(err::Error::Internal(
-                    "Unexpected mode 'Timestamp'".to_string()
-                ))
-            },
-        }
-    })
+            let mut context = Context::decode(
+                progress_callback,
+                Rate::hz(settings.work_rate),
+                Rate::hz(noaa_apt::FINAL_RATE),
+                wav_steps,
+                resample_step,
+            );
+            callback(noaa_apt::decode(
+                &mut context,
+                &settings,
+                &signal,
+                rate,
+                sync
+            ));
+        });
+    });
 }
+
+/*
 
 fn read_timestamp() -> err::Result<()> {
     borrow_widgets(|widgets| {
@@ -757,45 +735,46 @@ fn write_timestamp() -> err::Result<()> {
 */
 
 /// Set progress of ProgressBar
-fn set_progress(fraction: f32, description: String) {
-    borrow_state(|state| {
-        state.main_progress_bar.set_fraction(fraction as f64);
-        state.main_progress_bar.set_text(Some(description.as_str()));
+fn set_progress(fraction: f32, description: &str) {
+    borrow_widgets(|widgets| {
+        widgets.main_progress_bar.set_fraction(fraction as f64);
+        widgets.main_progress_bar.set_text(Some(description));
     });
 }
 
 /// Show InfoBar with custom message.
-fn show_info(state: &GuiState, message_type: gtk::MessageType, text: &str) {
-    match message_type {
-        gtk::MessageType::Info =>
-            state.info_label.set_markup(
-                text
-            ),
-        gtk::MessageType::Warning =>
-            state.info_label.set_markup(
-                format!("<b>Warning: {}</b>", text).as_str()
-            ),
-        gtk::MessageType::Error =>
-            state.info_label.set_markup(
-                format!("<b>Error: {}</b>", text).as_str()
-            ),
-        _ =>
-            unreachable!(),
-    }
+fn show_info(message_type: gtk::MessageType, text: &str) {
+    borrow_widgets(|widgets| {
+        match message_type {
+            gtk::MessageType::Info =>
+                widgets.info_label.set_markup(
+                    text
+                ),
+            gtk::MessageType::Warning =>
+                widgets.info_label.set_markup(
+                    format!("<b>Warning: {}</b>", text).as_str()
+                ),
+            gtk::MessageType::Error =>
+                widgets.info_label.set_markup(
+                    format!("<b>Error: {}</b>", text).as_str()
+                ),
+            _ =>
+                unreachable!(),
+        }
 
-    state.info_bar.set_message_type(message_type);
-    state.info_revealer.set_reveal_child(true);
+        widgets.info_bar.set_message_type(message_type);
+        widgets.info_revealer.set_reveal_child(true);
+    });
 }
 
 /// Check for updates on another thread and show the result on the info_bar.
 fn check_updates_and_show() {
     let callback = move |result| {
         glib::idle_add(move || {
-            borrow_state(|state| {
+            borrow_widgets(|widgets| {
                 match result {
                     Some((true, ref latest)) => {
                         show_info(
-                            &state,
                             gtk::MessageType::Info,
                             format!("Version \"{}\" available for download!", latest).as_str(),
                         );
@@ -803,7 +782,6 @@ fn check_updates_and_show() {
                     Some((false, _)) => {}, // Do nothing, already on latest version
                     None => {
                         show_info(
-                            &state,
                             gtk::MessageType::Info,
                             "Error checking for updates, do you have an internet connection?",
                         );

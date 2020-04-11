@@ -6,23 +6,51 @@ use std::cell::RefCell;
 
 use gtk::prelude::*;
 
+use crate::config::Settings;
+use crate::dsp::Signal;
+use crate::noaa_apt::Image;
+
+
+// Stores the Widgets.
+//
+// Use the functions below when accesing it. Only available from the GUI thread.
+// Wrapped on Option because it's None before building the GUI.
+// Wrapped on RefCell because I need mutable references when building the GUI.
+thread_local!(static GLOBAL_WIDGETS: RefCell<Option<Widgets>> = RefCell::new(None));
 
 // Stores the GuiState.
 //
 // Use the functions below when accesing it. Only available from the GUI thread.
 // Wrapped on Option because it's None before building the GUI.
-// Wrapped on RefCell because I need mutable references when modifying the GUI.
-thread_local!(static GLOBAL: RefCell<Option<GuiState>> = RefCell::new(None));
+// Wrapped on RefCell because I need mutable references when saving state.
+thread_local!(static GLOBAL_STATE: RefCell<Option<GuiState>> = RefCell::new(None));
 
+
+/// Work with mutable reference to GuiState.
+///
+/// Panics if called from a thread different than the GUI one. And also if the
+/// state was already borrowed.
+pub fn borrow_state_mut<F, R>(f: F) -> R
+where F: FnOnce(&mut GuiState) -> R
+{
+    GLOBAL_STATE.with(|global| {
+        if let Some(ref mut state) = *global.borrow_mut() {
+            (f)(state)
+        } else {
+            panic!("Can't get GuiState. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI")
+        }
+    })
+}
 
 /// Work with reference to GuiState.
 ///
-/// Panics if called from a thread different than the GUI one. Also panics if
-/// the GUI is not built yet.
+/// Panics if called from a thread different than the GUI one. And also if the
+/// state was already borrowed mutably.
 pub fn borrow_state<F, R>(f: F) -> R
 where F: FnOnce(&GuiState) -> R
 {
-    GLOBAL.with(|global| {
+    GLOBAL_STATE.with(|global| {
         if let Some(ref state) = *global.borrow() {
             (f)(state)
         } else {
@@ -32,16 +60,51 @@ where F: FnOnce(&GuiState) -> R
     })
 }
 
-/// Set the GuiState.
+/// Set the Widgets.
 ///
 /// Called when building the GUI.
 pub fn set_state(state: GuiState) {
-    GLOBAL.with(|global| {
+    GLOBAL_STATE.with(|global| {
         *global.borrow_mut() = Some(state);
     });
 }
 
-/// Contains state and references to widgets, so I can pass them together around.
+/// Work with reference to Widgets.
+///
+/// Panics if called from a thread different than the GUI one. Also panics if
+/// the GUI is not built yet.
+pub fn borrow_widgets<F, R>(f: F) -> R
+where F: FnOnce(&Widgets) -> R
+{
+    GLOBAL_WIDGETS.with(|global| {
+        if let Some(ref widgets) = *global.borrow() {
+            (f)(widgets)
+        } else {
+            panic!("Can't get Widgets. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI")
+        }
+    })
+}
+
+/// Set the Widgets.
+///
+/// Called when building the GUI.
+pub fn set_widgets(widgets: Widgets) {
+    GLOBAL_WIDGETS.with(|global| {
+        *global.borrow_mut() = Some(widgets);
+    });
+}
+
+/// Contains state, to keep track of the decoded image for instance.
+///
+#[derive(Debug, Clone)]
+pub struct GuiState {
+    pub settings:                  Settings,
+    pub decoded_signal:            Option<Signal>,
+    pub processed_image:           Option<Image>,
+}
+
+/// Contains references to widgets, so I can pass them together around.
 ///
 /// Some used prefixes:
 /// - img: Related to the image panel.
@@ -53,7 +116,7 @@ pub fn set_state(state: GuiState) {
 /// - res: Resample tool.
 /// - ts: Timesamp tool.
 #[derive(Debug, Clone)]
-pub struct GuiState {
+pub struct Widgets {
     pub application:               gtk::Application,
     pub window:                    gtk::ApplicationWindow,
     pub outer_box:                 gtk::Box,
@@ -128,7 +191,7 @@ pub struct GuiState {
     pub ts_calendar:               gtk::Calendar,
 }
 
-impl GuiState {
+impl Widgets {
     /// Create state from widgets on Glade builder.
     ///
     /// TODO: Document

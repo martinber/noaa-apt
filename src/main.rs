@@ -104,7 +104,7 @@ fn inner_main() -> err::Result<()> {
 
             let raw_data = noaa_apt::decode(
                 &mut context,
-                settings,
+                &settings,
                 &signal,
                 rate,
                 sync

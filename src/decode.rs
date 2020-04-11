@@ -32,7 +32,7 @@ pub type Image = image::RgbImage;
 /// Returns raw image data, line by line.
 pub fn decode(
     context: &mut Context,
-    settings: config::Settings,
+    settings: &config::Settings,
     signal: &Signal,
     input_rate: Rate,
     sync: bool,
