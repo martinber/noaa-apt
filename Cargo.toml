@@ -15,7 +15,7 @@ overflow-checks = true
 
 [features]
 default = ["gui"]
-gui = ["gtk", "gdk", "gio", "glib"]
+gui = ["gtk", "gdk", "gdk-pixbuf", "gio", "glib"]
 static_ssl = ["openssl/vendored"] # Not valid for Microsoft Windows
 windows_console = [] # Show console on Microsoft Windows
 
@@ -47,6 +47,7 @@ openssl = { version = "0.10.28", optional = true }
 
 gtk = { version = "0.8.1", optional = true, features = ["v3_16"] }
 gdk = { version = "0.12.1", optional = true }
+gdk-pixbuf = { version = "0.8.0", optional = true, features = ["v2_32"] }
 gio = { version = "0.8.1", optional = true }
 glib = { version = "0.9.3", optional = true }
 

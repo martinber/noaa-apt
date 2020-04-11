@@ -86,9 +86,11 @@ After downloading and installing, visit [the Usage page](./usage.html).
 ## Dependencies
 
 On Windows there aren't any dependencies, on Linux you probably already have
-installed what you need:
+installed what you need (unless you have very old packages):
 
 - GTK+ >= 3.16 (Only for the GUI version)
+
+- gdk-pixbuf >= 2.32 (Only for the GUI version)
 
 - glibc >= 2.19
 
