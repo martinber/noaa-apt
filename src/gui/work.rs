@@ -1,5 +1,7 @@
 //! Functions to decode, process, resample, etc.
 
+use std::fs::File;
+use std::io::Read;
 use std::path::PathBuf;
 
 use chrono::offset::TimeZone;
@@ -263,8 +265,36 @@ pub fn process() {
                 },
             };
 
-        // TODO: Custom TLE
-        let custom_tle = None;
+        // Custom TLE
+
+        let custom_tle = match widgets.p_custom_tle_check.get_active() {
+            false => {
+                None
+            },
+            true => {
+                match widgets.p_custom_tle_chooser.get_filename() {
+                    Some(path) => {
+                        let mut file = match File::open(path) {
+                            Ok(f) => f,
+                            Err(e) => {
+                                callback(Err(err::Error::Internal(
+                                    format!("Could not open custom TLE file: {}", e))));
+                                return;
+                            },
+                        };
+                        let mut tle = String::new();
+                        file.read_to_string(&mut tle);
+
+                        Some(tle)
+                    },
+                    None => {
+                        callback(Err(err::Error::Internal(
+                            "Select custom TLE input file".to_string())));
+                        return;
+                    }
+                }
+            }
+        };
 
         // Get date and time
 

@@ -21,6 +21,9 @@ pub enum Error {
     /// Deserializing errors.
     Deserialize(String),
 
+    /// Related to HTML requests.
+    Request(String),
+
     /// `noaa-apt` internal errors.
     Internal(String),
 
@@ -40,6 +43,7 @@ impl std::fmt::Display for Error {
             Error::WavOpen(ref msg) => f.write_str(msg.as_str()),
             Error::Image(ref msg) => f.write_str(msg.as_str()),
             Error::Deserialize(ref msg) => f.write_str(msg.as_str()),
+            Error::Request(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref features) =>
@@ -86,5 +90,11 @@ impl From<image::error::ImageError> for Error {
 impl From<toml::de::Error> for Error {
     fn from(err: toml::de::Error) -> Self {
         Error::Deserialize(err.to_string())
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error::Request(err.to_string())
     }
 }

@@ -1,9 +1,11 @@
 //! Small things that don't fit anywhere else.
 
 use std::fs;
+use std::io::{Read, Write};
 use std::path::Path;
 
-use log::warn;
+use chrono::offset::TimeZone;
+use log::{error, info, warn};
 
 use crate::dsp::{self, Signal};
 use crate::err;
@@ -191,8 +193,8 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
 /// (Jan 1, 1970, 0:00:00hs UTC). I ignore the nanoseconds precision.
 pub fn read_timestamp(filename: &Path) -> err::Result<i64> {
     let metadata = fs::metadata(filename)
-        .map_err(|_| err::Error::Internal(
-            "Could not read metadata from input file".to_string()
+        .map_err(|e| err::Error::Internal(
+            format!("Could not read metadata from input file: {}", e)
         ))?;
 
     // Read modification timestamp from file. The filetime library returns
@@ -227,6 +229,88 @@ pub fn infer_start_time(filename: &Path) ->
     // TODO
     use chrono::offset::TimeZone;
     return Ok(chrono::Utc.timestamp(0, 0));
+}
+
+/// Try downloading TLE from URL.
+fn download_tle(addr: &str) -> err::Result<String> {
+    Ok(reqwest::blocking::get(addr)?.text()?.to_string())
+}
+
+/// Try reading TLE from file.
+fn read_from_file(filename: &Path) -> err::Result<String> {
+    let mut file = fs::File::open(filename)?;
+    let mut tle = String::new();
+    file.read_to_string(&mut tle)?;
+
+    Ok(tle)
+}
+
+/// Download, save and return TLE from URL.
+///
+/// Returns an error if unable to download TLE. Logs error message if unable to
+/// save to file.
+fn download_save_return_tle(addr: &str, filename: &Path) -> err::Result<String> {
+    let tle = download_tle(addr)?;
+
+    let mut file = match fs::File::create(filename) {
+        Ok(f) => f,
+        Err(e) => {
+            error!("Could not cache TLE at {}: {}", filename.display(), e);
+            return Ok(tle);
+        },
+    };
+    if let Err(e) = file.write_all(tle.as_bytes()) {
+        error!("Could not cache TLE at {}: {}", filename.display(), e);
+        return Ok(tle);
+    }
+
+    Ok(tle)
+}
+
+/// Use cached TLE or download update from celestrak.com
+///
+/// Returns an error if no cached TLE and if unable to download TLE.
+pub fn get_current_tle() -> err::Result<String> {
+    let addr = "https://www.celestrak.com/NORAD/elements/weather.txt";
+
+    // Load cached TLE
+
+    if let Some(proj_dirs) = directories::ProjectDirs::from("ar.com.mbernardi", "", "noaa-apt") {
+
+        let filename = proj_dirs.config_dir().join("weather.txt");
+
+        match read_timestamp(&filename) {
+            Ok(ts) => {
+                let file_date = chrono::Utc.timestamp(ts, 0); // 0 milliseconds
+                let now = chrono::Utc::now();
+                if now - file_date < chrono::Duration::days(7) {
+                    info!("Found recent cached TLE. Date: {}", file_date);
+                    match read_from_file(&filename) {
+                        Ok(tle) => return Ok(tle),
+                        Err(e) => {
+                            error!("Could not read cached TLE at {}: {}. \
+                                   Downloading and caching new TLE", filename.display(), e);
+                            return download_save_return_tle(addr, &filename);
+                        }
+                    }
+
+                } else {
+                    info!("Found outdated cached TLE. Date: {}
+                          Downloading and caching new TLE", file_date);
+                    return download_save_return_tle(addr, &filename);
+                }
+            },
+            Err(e) => {
+                warn!("Unable to read cached TLE timestamp: {}. Downloading \
+                      and caching new TLE", e);
+                return download_save_return_tle(addr, &filename);
+            }
+        }
+    } else {
+        // Descargar y devolver
+        error!("Could not get system settings directory, can't cache downloaded TLE");
+        return download_tle(addr);
+    }
 }
 
 #[cfg(test)]

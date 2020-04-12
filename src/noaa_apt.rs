@@ -135,8 +135,19 @@ pub fn process(
 
 
     if let Some(orbit_settings) = orbit.clone() {
+        let tle = match orbit_settings.custom_tle {
+            Some(t) => t,
+            None => misc::get_current_tle()?,
+        };
+
         if let Some(map_settings) = orbit_settings.draw_map {
-            map::draw_map(&mut img, orbit_settings.start_time, map_settings);
+            map::draw_map(
+                &mut img,
+                orbit_settings.start_time,
+                map_settings,
+                orbit_settings.sat_name,
+                tle
+            );
         }
     }
 
@@ -151,11 +162,16 @@ pub fn process(
             img = processing::rotate(&img)?;
         },
         Rotate::Orbit => {
-            if let None = orbit {
+            if let Some(orbit_settings) = orbit.clone() {
+                let tle = match orbit_settings.custom_tle {
+                    Some(t) => t,
+                    None => misc::get_current_tle()?,
+                };
+                // TODO
+            } else {
                 return Err(err::Error::Internal(
                     "Can't rotate from orbit if none provided".to_string()));
             }
-            // TODO
         },
         Rotate::No => {},
     }

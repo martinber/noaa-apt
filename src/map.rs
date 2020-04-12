@@ -20,12 +20,20 @@ pub fn draw_map(
     img: &mut Image,
     start_time: chrono::DateTime<chrono::Utc>,
     settings: MapSettings,
+    sat_name: SatName,
+    tle: String,
 ) {
     let height = img.height();
 
-    let (sats, _errors) = satellite::io::parse_multiple(include_str!("../weather-2018-12.txt"));
-    let mut sat = sats.iter().find(|&sat| sat.name == Some("NOAA 19".to_string()))
-        .expect("not found in test TLE file").clone();
+    let (sats, _errors) = satellite::io::parse_multiple(&tle);
+    let sat_string = match sat_name {
+        SatName::Noaa15 => "NOAA 15",
+        SatName::Noaa18 => "NOAA 18",
+        SatName::Noaa19 => "NOAA 19",
+    }.to_string();
+
+    let mut sat = sats.iter().find(|&sat| sat.name.as_ref() == Some(&sat_string))
+        .expect("Satellite \"{}\" not found in TLE").clone();
 
     // Generar vector de estados ///////////////////////////////////////////////
 
@@ -61,8 +69,8 @@ pub fn draw_map(
 
     let s1 = &sat_state[0];
     let s2 = sat_state.last().unwrap();
-    let y_res = geo::distance(s1.latlon, s2.latlon) / height as f64 * settings.vscale;
-    let x_res = 0.0005001960653876187 * settings.hscale;
+    let y_res = geo::distance(s1.latlon, s2.latlon) / height as f64 / settings.vscale;
+    let x_res = 0.0005001960653876187 / settings.hscale;
 
     // latlon_to_rel_px ////////////////////////////////////////////////////////
 
@@ -79,6 +87,7 @@ pub fn draw_map(
         let B = tmp - ref_az;
         let c = dist;
 
+        // TODO
         let a = (B.cos() * c.tan()).max(-PI/2.).min(PI/2.).atan();
         let b = (B.sin() * c.sin()).max(-PI/2.).min(PI/2.).asin();
 
