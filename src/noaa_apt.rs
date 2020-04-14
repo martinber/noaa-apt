@@ -45,12 +45,23 @@ pub enum Rotate {
     Yes
 }
 
+/// Reference time.
+///
+/// Indicates start or end time of recording. Sometimes we have the recording
+/// start time (indicated by the filename) and sometimes we have the recording
+/// end time (indicated by the file modification timestamp).
+#[derive(Clone, Debug)]
+pub enum RefTime {
+    Start(chrono::DateTime<chrono::Utc>),
+    End(chrono::DateTime<chrono::Utc>),
+}
+
 /// Settings that need orbit calculations.
 #[derive(Clone, Debug)]
 pub struct OrbitSettings {
     pub sat_name: SatName,
     pub custom_tle: Option<String>,
-    pub start_time: chrono::DateTime<chrono::Utc>,
+    pub ref_time: RefTime,
     pub draw_map: Option<MapSettings>,
 }
 
@@ -143,7 +154,7 @@ pub fn process(
         if let Some(map_settings) = orbit_settings.draw_map {
             map::draw_map(
                 &mut img,
-                orbit_settings.start_time,
+                orbit_settings.ref_time,
                 map_settings,
                 orbit_settings.sat_name,
                 tle

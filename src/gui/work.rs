@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
+use chrono::prelude::*;
 use chrono::offset::TimeZone;
 use gio::prelude::*;
 use gtk::prelude::*;
@@ -12,7 +13,7 @@ use log::error;
 use crate::context::Context;
 use crate::dsp::{Signal, Rate};
 use crate::err;
-use crate::noaa_apt::{self, Image, Contrast, Rotate, SatName, OrbitSettings, MapSettings};
+use crate::noaa_apt::{self, Image, Contrast, Rotate, RefTime, SatName, OrbitSettings, MapSettings};
 use super::misc;
 use super::state::{
     GuiState, borrow_state, borrow_state_mut, set_state,
@@ -25,11 +26,11 @@ use super::state::{
 /// decoding finishes, etc. Saves the result on the GUI state.
 pub fn decode() {
 
-    // Create callbacks
-
+    // Called when decoding finishes
     let callback = |result: err::Result<Signal>| {
         glib::idle_add(move || {
             borrow_widgets(|widgets| {
+
                 widgets.dec_decode_button.set_sensitive(true);
                 widgets.main_start_button.set_sensitive(true);
                 match &result {
@@ -39,12 +40,58 @@ pub fn decode() {
                         borrow_state_mut(|state| {
                             state.decoded_signal = Some(signal.clone());
                             state.processed_image = None;
-                            // TODO
-                            // let pixbuf = gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png"))
-                                // .expect("Couldn't load ./res/icon.png");
-                            // widgets.img_image.set_from_pixbuf(Some(&pixbuf));
-                            // TODO: Read timestamp from file
                         });
+                        // TODO
+                        // let pixbuf = gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png"))
+                            // .expect("Couldn't load ./res/icon.png");
+                        // widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+
+                        // Read start time from file and update widgets
+                        //
+                        let input_filename: PathBuf =
+                            match widgets.dec_input_chooser.get_filename()
+                        {
+                            Some(path) => path,
+                            None => {
+                                misc::show_info(gtk::MessageType::Info,
+                                    "Could not infer recording start date and \
+                                    time. Set it manually. No input file?");
+
+                                return;
+                            }
+                        };
+
+                        let settings = borrow_state(|state| state.settings.clone());
+
+                        match crate::misc::infer_ref_time(&settings, &input_filename) {
+                            Ok(RefTime::Start(time)) => {
+                                widgets.p_ref_time_combo.set_active_id(Some("start"));
+                                let local_time = time.with_timezone(&chrono::Local);
+                                // GTK counts months from 0 to 11. Years and days are fine
+                                widgets.p_calendar.select_month(
+                                    local_time.month0() as u32, local_time.year() as u32);
+                                widgets.p_calendar.select_day(local_time.day());
+                                widgets.p_hs_spinner.set_value(local_time.hour() as f64);
+                                widgets.p_min_spinner.set_value(local_time.minute() as f64);
+                                widgets.p_sec_spinner.set_value(local_time.second() as f64);
+                            },
+                            Ok(RefTime::End(time)) => {
+                                widgets.p_ref_time_combo.set_active_id(Some("end"));
+                                let local_time = time.with_timezone(&chrono::Local);
+                                // GTK counts months from 0 to 11. Years and days are fine
+                                widgets.p_calendar.select_month(
+                                    local_time.month0() as u32, local_time.year() as u32);
+                                widgets.p_calendar.select_day(local_time.day());
+                                widgets.p_hs_spinner.set_value(local_time.hour() as f64);
+                                widgets.p_min_spinner.set_value(local_time.minute() as f64);
+                                widgets.p_sec_spinner.set_value(local_time.second() as f64);
+                            },
+                            Err(e) => {
+                                misc::show_info(gtk::MessageType::Info,
+                                    "Could not infer recording start date and \
+                                    time. Set it manually");
+                            }
+                        };
                     },
                     Err(e) => {
                         misc::set_progress(1., "Error");
@@ -200,13 +247,13 @@ pub fn process() {
         let resample_step = widgets.dec_resample_step_check.get_active();
 
         let contrast_adjustment: Contrast = match widgets.p_contrast_combo
-            .get_active_text()
+            .get_active_id()
             .as_ref()
             .map(|s| s.as_str())
             {
-                Some("Keep 98 percent") => Contrast::Percent(0.98),
-                Some("From telemetry") => Contrast::Telemetry,
-                Some("Disable") => Contrast::MinMax,
+                Some("98_percent") => Contrast::Percent(0.98),
+                Some("telemetry") => Contrast::Telemetry,
+                Some("minmax") => Contrast::MinMax,
                 Some(id) => {
                     callback(Err(err::Error::Internal(
                         format!("Unknown contrast adjustment \"{}\"", id)
@@ -222,13 +269,13 @@ pub fn process() {
             };
 
         let rotate: Rotate = match widgets.p_rotate_combo
-            .get_active_text()
+            .get_active_id()
             .as_ref()
             .map(|s| s.as_str())
             {
-                Some("Auto (from orbit)") => Rotate::Orbit,
-                Some("No") => Rotate::No,
-                Some("Yes") => Rotate::Yes,
+                Some("auto") => Rotate::Orbit,
+                Some("no") => Rotate::No,
+                Some("yes") => Rotate::Yes,
                 Some(id) => {
                     callback(Err(err::Error::Internal(
                         format!("Unknown rotation \"{}\"", id)
@@ -244,13 +291,13 @@ pub fn process() {
             };
 
         let sat_name: SatName = match widgets.p_satellite_combo
-            .get_active_text()
+            .get_active_id()
             .as_ref()
             .map(|s| s.as_str())
             {
-                Some("NOAA 15") => SatName::Noaa15,
-                Some("NOAA 18") => SatName::Noaa18,
-                Some("NOAA 19") => SatName::Noaa19,
+                Some("noaa_15") => SatName::Noaa15,
+                Some("noaa_18") => SatName::Noaa18,
+                Some("noaa_19") => SatName::Noaa19,
                 Some(id) => {
                     callback(Err(err::Error::Internal(
                         format!("Unknown satellite \"{}\"", id)
@@ -303,7 +350,7 @@ pub fn process() {
         let second = widgets.p_sec_spinner.get_value_as_int();
         let (year, month, day) = widgets.p_calendar.get_date();
 
-        let start_time = match chrono::Local
+        let time = match chrono::Local
             .ymd_opt(year as i32, month + 1, day)
             .and_hms_opt(hour as u32, minute as u32, second as u32)
         {
@@ -321,6 +368,21 @@ pub fn process() {
                 )));
                 return;
             }
+        };
+
+        let ref_time = match widgets.p_ref_time_combo
+            .get_active_id()
+            .as_ref()
+            .map(|s| s.as_str())
+        {
+            Some("start") => RefTime::Start(time),
+            Some("end") => RefTime::End(time),
+            Some(_) | None => {
+                callback(Err(err::Error::Internal(
+                    "Select if provided time is recording start or end".to_string()
+                )));
+                return;
+            },
         };
 
         // Map settings
@@ -345,7 +407,7 @@ pub fn process() {
         let orbit = OrbitSettings {
             sat_name,
             custom_tle,
-            start_time,
+            ref_time,
             draw_map,
         };
 

@@ -4,11 +4,13 @@ use std::fs;
 use std::io::{Read, Write};
 use std::path::Path;
 
-use chrono::offset::TimeZone;
+use chrono::prelude::*;
 use log::{error, info, warn};
 
+use crate::config::Settings;
 use crate::dsp::{self, Signal};
 use crate::err;
+use crate::noaa_apt::RefTime;
 
 
 /// Lookup table for numbers used in `bessel_i0()`
@@ -223,12 +225,28 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
 }
 
 /// Infer recording time from filename and timestamp.
-pub fn infer_start_time(filename: &Path) ->
-    err::Result<chrono::DateTime<chrono::Utc>>
+pub fn infer_ref_time(settings: &Settings, path: &Path) ->
+    err::Result<RefTime>
 {
-    // TODO
-    use chrono::offset::TimeZone;
-    return Ok(chrono::Utc.timestamp(0, 0));
+    use chrono::{TimeZone, FixedOffset, Utc, NaiveDateTime};
+    let filename: &str = path.file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(||
+        err::Error::Internal("Could not get filename".to_string()))?;
+    match settings.prefer_timestamps {
+        true => {
+            return Ok(RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)));
+        },
+        false => {
+            let offset_seconds = (settings.filename_timezone * 3600.) as i32;
+            let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
+            for format in settings.filename_formats.iter() {
+                if let Ok(time) = timezone.datetime_from_str(filename, format) {
+                    return Ok(RefTime::Start(time.with_timezone(&Utc)));
+                }
+            }
+            warn!("Could not parse date and time from filename, using timestamp");
+            return Ok(RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)));
+        },
+    }
 }
 
 /// Try downloading TLE from URL.

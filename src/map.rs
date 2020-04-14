@@ -8,7 +8,7 @@ use shapefile::Shape;
 
 use crate::draw;
 use crate::geo;
-use crate::noaa_apt::{SatName, Image, Pixel, MapSettings};
+use crate::noaa_apt::{SatName, RefTime, Image, Pixel, MapSettings};
 
 #[derive(Debug)]
 struct SatState {
@@ -18,12 +18,13 @@ struct SatState {
 
 pub fn draw_map(
     img: &mut Image,
-    start_time: chrono::DateTime<chrono::Utc>,
+    ref_time: RefTime,
     settings: MapSettings,
     sat_name: SatName,
     tle: String,
 ) {
     let height = img.height();
+    let line_duration = chrono::Duration::milliseconds(500); // Two lines per sec
 
     let (sats, _errors) = satellite::io::parse_multiple(&tle);
     let sat_string = match sat_name {
@@ -39,11 +40,14 @@ pub fn draw_map(
 
     let mut time: Vec<chrono::DateTime<_>> = Vec::with_capacity(height as usize);
 
-    time.push(start_time); // 0 milliseconds
-    let time_step = chrono::Duration::milliseconds(500); // Seconds per line
+    let start_time = match ref_time {
+        RefTime::Start(time) => time,
+        RefTime::End(time) => time - line_duration * height as i32,
+    };
 
+    time.push(start_time);
     for i in 0..height {
-        time.push(*time.last().unwrap() + time_step);
+        time.push(*time.last().unwrap() + line_duration);
     }
 
     let mut sat_state: Vec<SatState> = Vec::with_capacity(height as usize);

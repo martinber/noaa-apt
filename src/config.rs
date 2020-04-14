@@ -9,7 +9,10 @@ use serde::Deserialize;
 
 use crate::err;
 use crate::misc;
-use crate::noaa_apt::{ OrbitSettings, MapSettings, Rotate, Contrast, SatName };
+use crate::noaa_apt::{OrbitSettings, MapSettings, Rotate, Contrast, SatName, RefTime};
+
+// Expected configuration file version.
+const SETTINGS_VERSION: u32 = 2;
 
 
 /// How to launch the program.
@@ -78,13 +81,33 @@ pub struct Settings {
     /// Transition band width in fractions of pi radians per second for the
     /// resampling filter (used only when resampling WAV files).
     pub wav_resample_delta_freq: f32,
+
+    /// If the user prefers to obtain recording times from timestamps instead of
+    /// filenames.
+    pub prefer_timestamps: bool,
+
+    /// Filename formats to parse when trying to obtain recording times.
+    pub filename_formats: Vec<String>,
+
+    /// Timezone offset to use when parsing filenames, in hours.
+    pub filename_timezone: f32,
 }
 
 /// Holds the deserialized raw parsed settings file.
 #[derive(Deserialize)]
 struct DeSettings {
     check_updates: bool,
+    version: u32,
+    timestamps: DeTimestamps,
     profiles: DeProfiles,
+}
+
+/// Holds the deserialized raw parsed timestamps table
+#[derive(Deserialize)]
+struct DeTimestamps {
+    prefer_timestamps: bool,
+    filenames: Vec<String>,
+    timezone: f32,
 }
 
 /// Holds the deserialized raw parsed profiles table
@@ -113,7 +136,16 @@ fn parse_from_file(filename: &std::path::PathBuf) -> err::Result<DeSettings> {
     let mut file = std::fs::File::open(filename)?;
     let mut text = String::new();
     file.read_to_string(&mut text)?;
-    Ok(toml::from_str(text.as_str())?)
+    let de_settings: DeSettings = toml::from_str(text.as_str())?;
+
+    if de_settings.version == SETTINGS_VERSION {
+        Ok(de_settings)
+    } else {
+        Err(err::Error::Deserialize(
+            format!("Wrong settings file version {}. Should be {}",
+                    de_settings.version, SETTINGS_VERSION)
+        ))
+    }
 }
 
 /// Load `DeSettings` from settings file.
@@ -128,30 +160,46 @@ fn load_de_settings() -> DeSettings {
 
         let filename = proj_dirs.config_dir().join("settings.toml");
 
-        if let Ok(de_settings) = parse_from_file(&filename) {
+        match parse_from_file(&filename) {
+            Ok(de_settings) => {
+                return de_settings
+            },
+            Err(e) => {
+                println!("Error loading settings file {:?}: {}", filename, e);
 
-            return de_settings
+                let _result = std::fs::create_dir_all(proj_dirs.config_dir());
 
-        } else {
+                if filename.exists() {
 
-            let _result = std::fs::create_dir_all(proj_dirs.config_dir());
-            if let Ok(mut file) = std::fs::File::create(&filename) {
-                println!(
-                    "Missing or corrupted settings file, created default \
-                    settings file on {:?}",
-                    &filename,
+                    let mut dest = filename.clone();
+                    dest.set_extension("OLD");
+                    println!(
+                        "Outdated or corrupted settings file, moving to {:?} \
+                        and saving default settings file on {:?}",
+                        &dest, &filename);
+
+                    if let Err(e) = std::fs::rename(&filename, &dest) {
+                        println!("Unable to move {:?} to {:?}", &dest, &filename);
+                    }
+                }
+
+                if let Ok(mut file) = std::fs::File::create(&filename) {
+
+                    println!("Saving default settings to {:?}", &filename);
+                    if let Err(e) = file.write_all(default_settings_str.as_bytes()) {
+                        println!("Unable to write: {}", e);
+                    }
+
+                } else {
+                    println!(
+                        "Could not open or create settings file {:?}, using default settings",
+                        &filename,
                     );
-                file.write_all(default_settings_str.as_bytes())
-                    .expect("Could not write to file");
-            } else {
-                println!(
-                    "Could not open or create settings file ({:?}), using default settings",
-                    &filename,
+                }
+                return toml::from_str(default_settings_str).expect(
+                    "Failed to parse default settings"
                 );
             }
-            return toml::from_str(default_settings_str).expect(
-                "Failed to parse default settings"
-            )
         }
     } else {
         println!("Could not get system settings directory, using default settings");
@@ -318,6 +366,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         demodulation_atten: profile.demodulation_atten as f32,
         wav_resample_atten: profile.wav_resample_atten as f32,
         wav_resample_delta_freq: profile.wav_resample_delta_freq as f32,
+        prefer_timestamps: de_settings.timestamps.prefer_timestamps,
+        filename_formats: de_settings.timestamps.filenames,
+        filename_timezone: de_settings.timestamps.timezone,
     };
 
     // If set, then the program will be used as a command-line one, otherwise we
@@ -391,19 +442,22 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                     None => None,
                 };
 
-                use chrono::{DateTime, Utc};
-                let start_time: DateTime<Utc> = match arg_start_time {
-                    Some(s) => DateTime::parse_from_rfc3339(&s)
-                        .unwrap_or_else(|e| {
-                            println!("Could not parse date and time given: {}", e);
-                            std::process::exit(0);
-                        })
-                        .into(),
+                let ref_time: RefTime = match arg_start_time {
+                    Some(s) => {
+                        RefTime::Start(
+                            chrono::DateTime::parse_from_rfc3339(&s)
+                                .unwrap_or_else(|e| {
+                                    println!("Could not parse date and time given: {}", e);
+                                    std::process::exit(0);
+                                })
+                            .into()
+                        )
+                    },
                     None => {
-                        misc::infer_start_time(&input_filename)
+                        misc::infer_ref_time(&settings, &input_filename)
                             .unwrap_or_else(|e| {
-                                println!("Could not open the input file to infer \
-                                    recording date and time: {}", e);
+                                println!("Could not infer recording date and \
+                                         time from file: {}", e);
                                 std::process::exit(0);
                             })
                     }
@@ -427,7 +481,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 let orbit_settings = OrbitSettings {
                     sat_name,
                     custom_tle,
-                    start_time,
+                    ref_time,
                     draw_map,
                 };
 

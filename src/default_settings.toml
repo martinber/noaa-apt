@@ -1,6 +1,28 @@
 # noaa-apt settings
 
+# Settings file version, newer noaa-apt releases will require more fields and
+# variables
+version = 2
+
 check_updates = true
+
+[timestamps]
+
+# Prefer reading recording times from file modification timestamps instead of
+# looking at the date and time on the filename. If the filename format is not
+# recognised, timestamps are going to be used anyways.
+prefer_timestamps = false
+
+# Supported filenames. Indicate where years, hours, etc. are located on the
+# filename. More information:
+# https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+filenames = [
+    "gqrx_%Y%m%d_%H%M%S_137100000.wav", # e.g: gqrx_20181222_203941_137100000.wav
+    "SDRSharp_%Y%m%d_%H%M%SZ_137100000Hz_AF.wav", # e.g: SDRSharp_20200326_000141Z_137100000Hz_AF.wav
+]
+
+# Timezone offset in hours to assume when reading filenames.
+timezone = 0.0
 
 [profiles]
 

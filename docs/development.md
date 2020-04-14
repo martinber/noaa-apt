@@ -79,6 +79,8 @@ Notes:
 
 - Important:
 
+    - Check why -m option is not working.
+
     - Add warnings for short images when reading telemetry.
 
     - Histogram equalization
