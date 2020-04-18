@@ -437,3 +437,50 @@ pub fn process() {
         });
     });
 }
+
+/// Get values from widgets, save and update widgets.
+///
+/// Takes image from the GUI state.
+pub fn save() {
+
+    borrow_widgets(|widgets| {
+
+        widgets.info_revealer.set_reveal_child(false);
+        misc::set_progress(0., "Saving");
+
+        let output_filename: PathBuf = match widgets
+            .sav_output_entry
+            .get_text()
+            .map(|text| PathBuf::from(text.as_str()))
+        {
+            Some(f) => f,
+            None => {
+                misc::set_progress(1., "Error");
+                misc::show_info(gtk::MessageType::Info,
+                    "Error parsing output filename");
+                error!("Error parsing output filename");
+
+                return;
+            },
+        };
+
+        if output_filename.as_os_str().is_empty() {
+            misc::set_progress(1., "Error");
+            misc::show_info(gtk::MessageType::Error, "Select output filename");
+            error!("Select output filename");
+            return;
+        }
+
+        borrow_state(|state| {
+            if let Err(e) = state.processed_image.as_ref().expect("TODO").save(&output_filename) {
+                misc::set_progress(1., "Error");
+                misc::show_info(gtk::MessageType::Info,
+                    &format!("Error saving image: {}", e));
+                error!("Error saving image: {}", e);
+            } else {
+                misc::set_progress(1., "Saved");
+            }
+
+        });
+    });
+}

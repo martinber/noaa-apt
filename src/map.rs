@@ -4,6 +4,7 @@
 use std::f64::consts::PI;
 
 use chrono::prelude::*;
+use log::info;
 use shapefile::Shape;
 
 use crate::draw;
@@ -23,6 +24,9 @@ pub fn draw_map(
     sat_name: SatName,
     tle: String,
 ) {
+
+    info!("Drawing map overlay");
+
     let height = img.height();
     let line_duration = chrono::Duration::milliseconds(500); // Two lines per sec
 
@@ -89,7 +93,8 @@ pub fn draw_map(
         let tmp = geo::azimuth(start_latlon, latlon);
 
         let B = tmp - ref_az;
-        let c = dist;
+        let c = dist.max(-PI).min(PI);
+        // let c = dist;
 
         // TODO
         let a = (B.cos() * c.tan()).max(-PI/2.).min(PI/2.).atan();
@@ -200,7 +205,6 @@ pub fn draw_map(
             }
         }
     }
-    // img2.save("./a.png").unwrap();
 }
 
 #[cfg(test)]

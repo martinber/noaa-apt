@@ -336,6 +336,7 @@ fn dec_ready() {
 
         widgets.dec_decode_button.connect_clicked(|_| work::decode());
         widgets.p_process_button.connect_clicked(|_| work::process());
+        widgets.sav_save_button.connect_clicked(|_| work::save());
     });
 }
 

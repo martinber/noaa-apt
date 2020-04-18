@@ -1,5 +1,6 @@
 //! Image processing functions.
 
+use log::info;
 use image::{GenericImageView, GenericImage};
 
 use crate::noaa_apt::{Image, Pixel};
@@ -15,6 +16,8 @@ use crate::err;
 /// channel. Otherwise there can be a vertical offset of one pixel between each
 /// channel.
 pub fn rotate(img: &Image) -> err::Result<Image> {
+
+    info!("Rotating image");
 
     // Create image with channel A and B swapped
     let mut output = Image::new(img.width(), img.height());

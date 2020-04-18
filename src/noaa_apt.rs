@@ -98,6 +98,7 @@ pub fn process(
     orbit: Option<OrbitSettings>
 ) -> err::Result<Image> {
 
+
     let (low, high) = match contrast_adjustment {
         Contrast::Telemetry => {
             info!("Adjusting contrast from telemetry");

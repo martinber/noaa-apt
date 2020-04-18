@@ -467,8 +467,8 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                     Some("yes") => Some(MapSettings {
                         // TODO
                         yaw: 0.,
-                        hscale: 0.,
-                        vscale: 0.,
+                        hscale: 1.,
+                        vscale: 1.,
                     }),
                     Some("no") => None,
                     Some(_) => {
