@@ -79,7 +79,11 @@ Notes:
 
 - Important:
 
-    - Check why -m option is not working.
+    - Look for defaults for yaw and scales.
+
+    - Remove red line or make it optional
+
+    - Look for state lines
 
     - Add warnings for short images when reading telemetry.
 

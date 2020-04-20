@@ -135,7 +135,6 @@ pub struct Widgets {
 
     pub main_paned:                gtk::Paned,
     pub main_progress_bar:         gtk::ProgressBar,
-    pub main_start_button:         gtk::Button,
     pub main_stack:                gtk::Stack,
     pub dec_stack_child:           gtk::Notebook,
     pub res_stack_child:           gtk::Box,
@@ -221,7 +220,6 @@ impl Widgets {
 
             main_paned:              builder.get_object("main_paned"             ).expect("Couldn't get main_paned"             ),
             main_progress_bar:       builder.get_object("main_progress_bar"      ).expect("Couldn't get main_progress_bar"      ),
-            main_start_button:       builder.get_object("main_start_button"      ).expect("Couldn't get main_start_button"      ),
             main_stack:              builder.get_object("main_stack"             ).expect("Couldn't get main_stack"             ),
             dec_stack_child:         builder.get_object("dec_stack_child"        ).expect("Couldn't get dec_stack_child"        ),
             res_stack_child:         builder.get_object("res_stack_child"        ).expect("Couldn't get res_stack_child"        ),

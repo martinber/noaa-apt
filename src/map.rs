@@ -85,7 +85,10 @@ pub fn draw_map(
     let start_latlon = sat_state[0].latlon;
     let end_latlon = sat_state.last().unwrap().latlon;
     let ref_az = geo::azimuth(start_latlon, end_latlon);
+
     let latlon_to_rel_px = |latlon: (f64, f64)| -> (f64, f64) {
+        // To understand this, you should look at the illustrations on my how
+        // it works page.
 
         let dist = geo::distance(latlon, start_latlon);
         let az = geo::azimuth(start_latlon, latlon) + PI;
@@ -93,14 +96,19 @@ pub fn draw_map(
         let tmp = geo::azimuth(start_latlon, latlon);
 
         let B = tmp - ref_az;
-        let c = dist.max(-PI).min(PI);
-        // let c = dist;
 
-        // TODO
-        let a = (B.cos() * c.tan()).max(-PI/2.).min(PI/2.).atan();
-        let b = (B.sin() * c.sin()).max(-PI/2.).min(PI/2.).asin();
+        // Set maximum, otherwise we get wrapping problems I do not fully
+        // understand: opposite parts of the world are mapped to the same
+        // position because of the cyclic nature of sin(), cos(), etc.
+        let c = dist.max(-PI/3.).min(PI/3.);
+
+        let a = (B.cos() * c.tan()).atan();
+        let b = (B.sin() * c.sin()).asin();
 
         let x = -b / x_res;
+
+        // Add the yaw correction value. I should be calculating sin(yaw) * x
+        // but yaw is always a small value.
         let y = a / y_res + settings.yaw * x;
 
         (x, y)

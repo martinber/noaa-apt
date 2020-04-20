@@ -101,7 +101,7 @@ pub fn process(
 
     let (low, high) = match contrast_adjustment {
         Contrast::Telemetry => {
-            info!("Adjusting contrast from telemetry");
+            context.status(0.1, "Adjusting contrast from telemetry".to_string());
 
             let telemetry = telemetry::read_telemetry(context, &signal)?;
 
@@ -111,11 +111,13 @@ pub fn process(
             (low, high)
         },
         Contrast::Percent(p) => {
-            info!("Adjusting contrast using {} percent", p * 100.);
+            context.status(0.1,
+               format!("Adjusting contrast using {} percent", p * 100.)
+            );
             misc::percent(&signal, p)?
         },
         Contrast::MinMax => {
-            info!("Mapping values (no contrast adjustment)");
+            context.status(0.1, "Mapping values (no contrast adjustment)".to_string());
             let low: f32 = *dsp::get_min(&signal)?;
             let high: f32 = *dsp::get_max(&signal)?;
 
@@ -125,7 +127,7 @@ pub fn process(
 
     // --------------------
 
-    // context.status(0.92, "Generating image".to_string());
+    context.status(0.3, "Generating image".to_string());
 
     let height = signal.len() as u32 / PX_PER_ROW;
 
@@ -138,13 +140,7 @@ pub fn process(
         .ok_or(err::Error::Internal(
             "Could not create image, wrong buffer length".to_string()))?;
 
-    // context.step(Step::signal(
-            // "mapped",
-            // &raw_data.iter().map(|x| f32::from(*x)).collect(),
-            // Some(final_rate)
-    // ))?;
-
-
+    // --------------------
 
     if let Some(orbit_settings) = orbit.clone() {
         let tle = match orbit_settings.custom_tle {
@@ -153,6 +149,9 @@ pub fn process(
         };
 
         if let Some(map_settings) = orbit_settings.draw_map {
+
+            context.status(0.5, "Drawing map".to_string());
+
             map::draw_map(
                 &mut img,
                 orbit_settings.ref_time,
@@ -163,14 +162,11 @@ pub fn process(
         }
     }
 
-
-    // context.status(0.95, format!("Writing PNG to '{}'", settings.output_filename.display()));
-
     // --------------------
 
     match rotate {
         Rotate::Yes => {
-            // context.status(0.93, "Rotating output image".to_string());
+            context.status(0.90, "Rotating output image".to_string());
             img = processing::rotate(&img)?;
         },
         Rotate::Orbit => {
@@ -187,15 +183,6 @@ pub fn process(
         },
         Rotate::No => {},
     }
-
-    // --------------------
-
-    // context.status(1., "Finished".to_string());
-    // debug!("Finished");
-//
-    // context.status(0.0, "Reading WAV file".to_string());
-
-    // --------------------
 
     Ok(img)
 }

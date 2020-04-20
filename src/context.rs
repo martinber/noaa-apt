@@ -385,13 +385,6 @@ impl Context {
                     variant: Variant::Signal,
                     rate: Some(final_rate / PX_PER_ROW),
                 },
-                StepMetadata {
-                    description: "Result of signal mapping, contrast check",
-                    id: "mapped",
-                    filename: "17_mapped",
-                    variant: Variant::Signal,
-                    rate: None,
-                },
             ],
             export_steps: export_wav,
             export_resample_filtered,

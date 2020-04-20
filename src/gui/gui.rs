@@ -166,6 +166,17 @@ fn init_widgets(widgets: &Widgets) {
         time.format("%:z"),
     ).as_str());
 
+    // Disable default mouse scroll behavior on processing calendar
+    // By default, scrolling changes months, too easy and annoying to do by
+    // accident when scrolling the window.
+
+    widgets.p_calendar.connect_scroll_event(|widget, _| {
+        // https://stackoverflow.com/questions/7611813/remove-scroll-ability-from-gtkspinbutton
+        widget.stop_signal_emission("scroll-event");
+        // Propagate signal so it ends up scrolling the window
+        Inhibit(false)
+    });
+
     // Configure GtkEntry filechoosers for saving:
     // sav_output_entry and res_output_entry
 
@@ -319,9 +330,6 @@ fn dec_ready() {
 
         widgets.main_stack.set_visible_child(&widgets.dec_stack_child);
 
-        widgets.main_start_button.set_sensitive(true);
-        widgets.main_start_button.set_tooltip_text(
-            Some("Do everything at once, make sure to configure every tab first."));
         widgets.dec_decode_button.set_sensitive(true);
         misc::set_progress(0., "Ready");
 

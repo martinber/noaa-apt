@@ -32,7 +32,6 @@ pub fn decode() {
             borrow_widgets(|widgets| {
 
                 widgets.dec_decode_button.set_sensitive(true);
-                widgets.main_start_button.set_sensitive(true);
                 match &result {
                     Ok(signal) => {
                         misc::set_progress(1., "Decoded");
@@ -120,7 +119,6 @@ pub fn decode() {
         widgets.dec_decode_button.set_sensitive(false);
         widgets.sav_save_button.set_sensitive(false);
         widgets.p_process_button.set_sensitive(false);
-        widgets.main_start_button.set_sensitive(false);
 
         // Read widgets
 
@@ -182,7 +180,6 @@ pub fn process() {
             borrow_widgets(|widgets| {
                 widgets.dec_decode_button.set_sensitive(true);
                 widgets.p_process_button.set_sensitive(true);
-                widgets.main_start_button.set_sensitive(true);
                 match &result {
                     Ok(image) => {
                         misc::set_progress(1., "Processed");
@@ -229,7 +226,6 @@ pub fn process() {
         widgets.dec_decode_button.set_sensitive(false);
         widgets.sav_save_button.set_sensitive(false);
         widgets.p_process_button.set_sensitive(false);
-        widgets.main_start_button.set_sensitive(false);
 
         // Read widgets
 
