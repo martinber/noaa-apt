@@ -305,6 +305,11 @@ fn init_widgets(widgets: &Widgets) {
         widgets.res_overwrite_tip_label.clone(),
         ".wav",
     );
+
+    // Configure "Normal Size" toggle button
+
+    widgets.img_size_toggle.connect_toggled(|_| misc::update_image());
+    widgets.img_scroll.connect_size_allocate(|_, _| misc::update_image());
 }
 
 /// Show widgets as ready for decoding/processing/saving
@@ -333,12 +338,9 @@ fn dec_ready() {
         widgets.dec_decode_button.set_sensitive(true);
         misc::set_progress(0., "Ready");
 
-        // TODO Reiniciar imagen
-        // Reset image
+        // Reset image from state
 
-        let pixbuf = gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png"))
-            .expect("Couldn't load ./res/icon.png");
-        widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+        misc::update_image();
 
         // Connect buttons
 

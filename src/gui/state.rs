@@ -3,6 +3,7 @@
 //! This includes a widget list and the current image being processed.
 
 use std::cell::RefCell;
+use std::path::Path;
 
 use gtk::prelude::*;
 
@@ -132,6 +133,8 @@ pub struct Widgets {
     pub img_scroll:                gtk::ScrolledWindow,
     pub img_viewport:              gtk::Viewport,
     pub img_image:                 gtk::Image,
+    pub img_size_toggle:           gtk::ToggleButton,
+    pub img_def_pixbuf:            gdk_pixbuf::Pixbuf,
 
     pub main_paned:                gtk::Paned,
     pub main_progress_bar:         gtk::ProgressBar,
@@ -217,6 +220,10 @@ impl Widgets {
             img_scroll:              builder.get_object("img_scroll"             ).expect("Couldn't get img_scroll"             ),
             img_viewport:            builder.get_object("img_viewport"           ).expect("Couldn't get img_viewport"           ),
             img_image:               builder.get_object("img_image"              ).expect("Couldn't get img_image"              ),
+            img_size_toggle:         builder.get_object("img_size_toggle"        ).expect("Couldn't get img_size_toggle"        ),
+
+            // TODO: See path
+            img_def_pixbuf:          gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png")).expect("Couldn't load ./res/icon.png"),
 
             main_paned:              builder.get_object("main_paned"             ).expect("Couldn't get main_paned"             ),
             main_progress_bar:       builder.get_object("main_progress_bar"      ).expect("Couldn't get main_progress_bar"      ),

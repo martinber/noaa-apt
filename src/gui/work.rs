@@ -40,10 +40,7 @@ pub fn decode() {
                             state.decoded_signal = Some(signal.clone());
                             state.processed_image = None;
                         });
-                        // TODO
-                        // let pixbuf = gdk_pixbuf::Pixbuf::new_from_file(Path::new("./res/icon.png"))
-                            // .expect("Couldn't load ./res/icon.png");
-                        // widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+                        misc::update_image();
 
                         // Read start time from file and update widgets
                         //
@@ -100,6 +97,7 @@ pub fn decode() {
                             state.decoded_signal = None;
                             state.processed_image = None;
                         });
+                        misc::update_image();
                     },
                 }
             });
@@ -186,19 +184,8 @@ pub fn process() {
                         widgets.sav_save_button.set_sensitive(true);
                         borrow_state_mut(|state| {
                             state.processed_image = Some(image.clone());
-                            // TODO
-                            let flat_image = image.as_flat_samples();
-                            let pixbuf = gdk_pixbuf::Pixbuf::new_from_bytes(
-                                &glib::Bytes::from(&flat_image.samples),
-                                gdk_pixbuf::Colorspace::Rgb,
-                                false, // has_alpha
-                                8, // bits_per_sample
-                                flat_image.layout.width as i32,
-                                flat_image.layout.height as i32,
-                                flat_image.layout.height_stride as i32,
-                            );
-                            widgets.img_image.set_from_pixbuf(Some(&pixbuf));
                         });
+                        misc::update_image();
                     },
                     Err(e) => {
                         misc::set_progress(1., "Error");
@@ -207,6 +194,7 @@ pub fn process() {
                         borrow_state_mut(|state| {
                             state.processed_image = None;
                         });
+                        misc::update_image();
                     },
                 }
             });

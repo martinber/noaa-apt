@@ -81,6 +81,8 @@ Notes:
 
     - Look for defaults for yaw and scales.
 
+    - See what to do with res folder
+
     - Remove red line or make it optional
 
     - Look for state lines

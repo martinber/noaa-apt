@@ -120,6 +120,50 @@ where W: glib::object::IsA<gtk::Window>
     }
 }
 
+pub fn update_image() {
+    borrow_widgets(|widgets| {
+
+        let pixbuf = match borrow_state_mut(|state| state.processed_image.clone()) {
+            Some(image) => {
+                let flat_image = image.as_flat_samples();
+                gdk_pixbuf::Pixbuf::new_from_bytes(
+                    &glib::Bytes::from(&flat_image.samples),
+                    gdk_pixbuf::Colorspace::Rgb,
+                    false, // has_alpha
+                    8, // bits_per_sample
+                    flat_image.layout.width as i32,
+                    flat_image.layout.height as i32,
+                    flat_image.layout.height_stride as i32,
+                )
+            }
+            None => {
+                widgets.img_def_pixbuf.clone()
+            }
+        };
+
+        if widgets.img_size_toggle.get_active() {
+            widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+        } else {
+            let img_width = pixbuf.get_width() as f32;
+            let img_height = pixbuf.get_height() as f32;
+            let max_width = widgets.img_viewport.get_allocated_width() as f32;
+            let max_height = widgets.img_viewport.get_allocated_height() as f32;
+
+            let scale = f32::min(max_width / img_width, max_height / img_height);
+
+            if scale < 1. {
+                let w = (img_width * scale).floor() as i32;
+                let h = (img_height * scale).floor() as i32;
+                let p = pixbuf.scale_simple(w, h, gdk_pixbuf::InterpType::Bilinear).expect("TODO");
+                widgets.img_image.set_from_pixbuf(Some(&p));
+            } else {
+                // Do not make images bigger than original size
+                widgets.img_image.set_from_pixbuf(Some(&pixbuf));
+            }
+        }
+    });
+}
+
 /*
 pub fn read_timestamp() -> err::Result<()> {
     borrow_widgets(|widgets| {
