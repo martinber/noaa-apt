@@ -2,13 +2,12 @@
 
 use std::path::Path;
 
-use log::{info, warn, debug};
+use log::info;
 
 use crate::config;
 use crate::context::{Context, Step};
-use crate::dsp::{self, Signal, Rate, Freq};
+use crate::dsp::{self, Rate, Freq};
 use crate::err;
-use crate::filters;
 use crate::misc;
 use crate::wav;
 

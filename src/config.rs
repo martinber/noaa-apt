@@ -179,7 +179,8 @@ fn load_de_settings() -> DeSettings {
                         &dest, &filename);
 
                     if let Err(e) = std::fs::rename(&filename, &dest) {
-                        println!("Unable to move {:?} to {:?}", &dest, &filename);
+                        println!("Unable to move {:?} to {:?}: {}",
+                                 &dest, &filename, e);
                     }
                 }
 

@@ -3,7 +3,7 @@
 use log::info;
 use image::{GenericImageView, GenericImage};
 
-use crate::noaa_apt::{Image, Pixel};
+use crate::noaa_apt::Image;
 use crate::decode::PX_PER_CHANNEL;
 use crate::err;
 

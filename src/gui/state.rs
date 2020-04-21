@@ -1,6 +1,6 @@
 //! Code related to managing the state of the GUI.
 //!
-//! This includes a widget list and the current image being processed.
+//! This includes a widget list and a state struct.
 
 use std::cell::RefCell;
 use std::path::Path;
@@ -30,7 +30,8 @@ thread_local!(static GLOBAL_STATE: RefCell<Option<GuiState>> = RefCell::new(None
 /// Work with mutable reference to GuiState.
 ///
 /// Panics if called from a thread different than the GUI one. And also if the
-/// state was already borrowed.
+/// state was already borrowed. So the closures used should be as small as
+/// possible to avoid borrowing twice.
 pub fn borrow_state_mut<F, R>(f: F) -> R
 where F: FnOnce(&mut GuiState) -> R
 {
@@ -47,7 +48,8 @@ where F: FnOnce(&mut GuiState) -> R
 /// Work with reference to GuiState.
 ///
 /// Panics if called from a thread different than the GUI one. And also if the
-/// state was already borrowed mutably.
+/// state was already borrowed mutably. So the closures used should be as small
+/// as possible to avoid borrowing twice.
 pub fn borrow_state<F, R>(f: F) -> R
 where F: FnOnce(&GuiState) -> R
 {
@@ -96,8 +98,9 @@ pub fn set_widgets(widgets: Widgets) {
     });
 }
 
-/// Contains state, to keep track of the decoded image for instance.
+/// Contains changing state.
 ///
+/// For instance it keeps track of the decoded image.
 #[derive(Debug, Clone)]
 pub struct GuiState {
     pub settings:                  Settings,
@@ -105,7 +108,7 @@ pub struct GuiState {
     pub processed_image:           Option<Image>,
 }
 
-/// Contains references to widgets, so I can pass them together around.
+/// Contains references to widgets and some fixed objects.
 ///
 /// Some used prefixes:
 /// - img: Related to the image panel.
@@ -195,9 +198,7 @@ pub struct Widgets {
 }
 
 impl Widgets {
-    /// Create state from widgets on Glade builder.
-    ///
-    /// TODO: Document
+    /// Create from widgets on Glade builder and create the rest.
     pub fn from_builder(
         builder: &gtk::Builder,
         window: &gtk::ApplicationWindow,

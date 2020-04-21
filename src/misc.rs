@@ -228,7 +228,6 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
 pub fn infer_ref_time(settings: &Settings, path: &Path) ->
     err::Result<RefTime>
 {
-    use chrono::{TimeZone, FixedOffset, Utc, NaiveDateTime};
     let filename: &str = path.file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(||
         err::Error::Internal("Could not get filename".to_string()))?;
     match settings.prefer_timestamps {

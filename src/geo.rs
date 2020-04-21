@@ -29,8 +29,6 @@
 ///
 use std::f64::consts::PI;
 
-use chrono::prelude::*;
-
 /// Compute the great-circle distance between two points
 ///
 /// The units of all input and output parameters are radians.

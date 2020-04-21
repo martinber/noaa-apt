@@ -1,6 +1,6 @@
 //! High-level function for decoding APT.
 
-use log::{info, warn, debug};
+use log::info;
 
 use crate::config;
 use crate::context::{Context, Step};

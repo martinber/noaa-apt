@@ -3,13 +3,11 @@
 
 use std::f64::consts::PI;
 
-use chrono::prelude::*;
 use log::info;
-use shapefile::Shape;
 
 use crate::draw;
 use crate::geo;
-use crate::noaa_apt::{SatName, RefTime, Image, Pixel, MapSettings};
+use crate::noaa_apt::{SatName, RefTime, Image, MapSettings};
 
 #[derive(Debug)]
 struct SatState {

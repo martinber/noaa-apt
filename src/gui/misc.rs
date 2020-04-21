@@ -2,13 +2,12 @@
 
 use gio::prelude::*;
 use gtk::prelude::*;
+use gdk_pixbuf::InterpType::Bilinear;
+use log::error;
 
 use crate::err;
 use crate::misc;
-use super::state::{
-    GuiState, borrow_state, borrow_state_mut, set_state,
-    Widgets, borrow_widgets, set_widgets
-};
+use super::state::{borrow_state_mut, borrow_widgets};
 
 /// Set progress of ProgressBar
 pub fn set_progress(fraction: f32, description: &str) {
@@ -49,23 +48,21 @@ pub fn show_info(message_type: gtk::MessageType, text: &str) {
 pub fn check_updates_and_show(version: &'static str) {
     let callback = move |result| {
         glib::idle_add(move || {
-            borrow_widgets(|widgets| {
-                match result {
-                    Some((true, ref latest)) => {
-                        show_info(
-                            gtk::MessageType::Info,
-                            format!("Version \"{}\" available for download!", latest).as_str(),
-                        );
-                    },
-                    Some((false, _)) => {}, // Do nothing, already on latest version
-                    None => {
-                        show_info(
-                            gtk::MessageType::Info,
-                            "Error checking for updates, do you have an internet connection?",
-                        );
-                    },
-                }
-            });
+            match result {
+                Some((true, ref latest)) => {
+                    show_info(
+                        gtk::MessageType::Info,
+                        format!("Version \"{}\" available for download!", latest).as_str(),
+                    );
+                },
+                Some((false, _)) => {}, // Do nothing, already on latest version
+                None => {
+                    show_info(
+                        gtk::MessageType::Info,
+                        "Error checking for updates, do you have an internet connection?",
+                    );
+                },
+            }
             Continue(false)
         });
     };
@@ -154,8 +151,13 @@ pub fn update_image() {
             if scale < 1. {
                 let w = (img_width * scale).floor() as i32;
                 let h = (img_height * scale).floor() as i32;
-                let p = pixbuf.scale_simple(w, h, gdk_pixbuf::InterpType::Bilinear).expect("TODO");
-                widgets.img_image.set_from_pixbuf(Some(&p));
+                if let Some(p) = pixbuf.scale_simple(w, h, Bilinear) {
+                    widgets.img_image.set_from_pixbuf(Some(&p));
+                } else {
+                    let msg = "Can't scale image, running out of memory?";
+                    show_info(gtk::MessageType::Error, msg);
+                    error!("{}", msg);
+                }
             } else {
                 // Do not make images bigger than original size
                 widgets.img_image.set_from_pixbuf(Some(&pixbuf));

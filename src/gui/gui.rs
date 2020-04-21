@@ -1,4 +1,4 @@
-//! Main GUI code. Mostly initialization code.
+//! Main GUI code.
 //!
 //! I'm using two threads, one for the GTK+ GUI and another one that starts when
 //! decoding/resampling.
@@ -11,12 +11,14 @@
 //! and I hide/show widgets if necessary. This makes things easier, otherwise
 //! the code fills up with `Option<>`s and `expect()`s.
 //!
-//! I'm using a `GuiState` struct for keeping track of the current processed
-//! image and also every Widget I'm interested in. This struct is wrapped on
-//! the `RefCell` smart pointer to allow mutable access everywhere.
+//! I'm using a `GuiState` struct for keeping track of changing state (the
+//! current processed image), also I use a `WidgetList` struct that has
+//! references to widgets and some unchanging objects.
+//! Both are wrapped on `RefCell` smart pointer to allow mutable access
+//! from everywhere.
 //!
 //! When doing a callback from another thread I use `ThreadGuard`, lets you
-//! `Send` the Widgets to another thread but you cant use them there (panics in
+//! `Send` the Widgets to another thread, but you cant use them there (panics in
 //! that case). So I use `glib::idle_add()` to execute code on the main thread
 //! from another thread. In the end, we send the widgets to another thread and
 //! back.
@@ -24,7 +26,6 @@
 use std::env;
 use std::path::Path;
 
-use chrono::prelude::*;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
@@ -32,7 +33,7 @@ use log::info;
 
 use crate::config;
 use super::state::{
-    GuiState, borrow_state, borrow_state_mut, set_state,
+    GuiState, borrow_state_mut, set_state,
     Widgets, borrow_widgets, set_widgets
 };
 use super::misc;
@@ -237,55 +238,52 @@ fn init_widgets(widgets: &Widgets) {
         output_filename_extension: &'static str,
     ) {
         entry.connect_changed(move |this| {
-            borrow_widgets(|widgets| {
+            folder_tip_box.hide();
+            extension_tip_label.hide();
+            overwrite_tip_label.hide();
 
-                folder_tip_box.hide();
-                extension_tip_label.hide();
-                overwrite_tip_label.hide();
+            // Exit if no output_filename
 
-                // Exit if no output_filename
+            let output_filename = match this.get_text() {
+                None => return,
+                Some(s) => s,
+            };
+            if output_filename.as_str() == "" {
+                return;
+            }
 
-                let output_filename = match this.get_text() {
-                    None => return,
-                    Some(s) => s,
+            // If saving in CWD
+
+            if !output_filename.starts_with("/") {
+                match env::current_dir() {
+                    Ok(cwd) => {
+                        folder_tip_label.set_text(&format!("{}", cwd.display()));
+                        folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
+                        folder_tip_box.show();
+                    },
+                    Err(_) => {
+                        misc::show_info(gtk::MessageType::Error,
+                            "Invalid current working directory, use \
+                            an absolute output path");
+                    }
                 };
-                if output_filename.as_str() == "" {
-                    return;
-                }
+            }
 
-                // If saving in CWD
+            // Warn missing filename extension
 
-                if !output_filename.starts_with("/") {
-                    match env::current_dir() {
-                        Ok(cwd) => {
-                            folder_tip_label.set_text(&format!("{}", cwd.display()));
-                            folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
-                            folder_tip_box.show();
-                        },
-                        Err(_) => {
-                            misc::show_info(gtk::MessageType::Error,
-                                "Invalid current working directory, use \
-                                an absolute output path");
-                        }
-                    };
-                }
+            if !output_filename.ends_with(output_filename_extension) {
+                extension_tip_label.set_markup(&format!(
+                    "<b>Warning:</b> Missing <i>{}</i> extension in filename",
+                    output_filename_extension
+                ));
+                extension_tip_label.show();
+            }
 
-                // Warn missing filename extension
+            // Warn already existing file
 
-                if !output_filename.ends_with(output_filename_extension) {
-                    extension_tip_label.set_markup(&format!(
-                        "<b>Warning:</b> Missing <i>{}</i> extension in filename",
-                        output_filename_extension
-                    ));
-                    extension_tip_label.show();
-                }
-
-                // Warn already existing file
-
-                if Path::new(&output_filename).exists() {
-                    overwrite_tip_label.show();
-                }
-            })
+            if Path::new(&output_filename).exists() {
+                overwrite_tip_label.show();
+            }
         });
     }
 

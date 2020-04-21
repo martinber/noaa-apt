@@ -15,10 +15,7 @@ use crate::dsp::{Signal, Rate};
 use crate::err;
 use crate::noaa_apt::{self, Image, Contrast, Rotate, RefTime, SatName, OrbitSettings, MapSettings};
 use super::misc;
-use super::state::{
-    GuiState, borrow_state, borrow_state_mut, set_state,
-    Widgets, borrow_widgets, set_widgets
-};
+use super::state::{borrow_state, borrow_state_mut, borrow_widgets};
 
 /// Get values from widgets, decode and update widgets.
 ///
@@ -84,8 +81,9 @@ pub fn decode() {
                             },
                             Err(e) => {
                                 misc::show_info(gtk::MessageType::Info,
-                                    "Could not infer recording start date and \
-                                    time. Set it manually");
+                                    format!("Could not infer recording start date and \
+                                    time. Set it manually: {}", e).as_str()
+                                );
                             }
                         };
                     },
@@ -399,8 +397,13 @@ pub fn process() {
 
         let settings = borrow_state(|state| state.settings.clone());
 
-        let signal = borrow_state(|state| state.decoded_signal.clone())
-            .expect("TODO: No decoded signal");
+        let signal = match borrow_state(|state| state.decoded_signal.clone()) {
+            Some(s) => s,
+            None => {
+                callback(Err(err::Error::Internal("No decoded image?".to_string())));
+                return;
+            },
+        };
 
         std::thread::spawn(move || {
 
@@ -455,16 +458,23 @@ pub fn save() {
             return;
         }
 
-        borrow_state(|state| {
-            if let Err(e) = state.processed_image.as_ref().expect("TODO").save(&output_filename) {
-                misc::set_progress(1., "Error");
+        let processed_image = match borrow_state(|state| state.processed_image.clone()) {
+            Some(i) => i,
+            None => {
                 misc::show_info(gtk::MessageType::Info,
-                    &format!("Error saving image: {}", e));
-                error!("Error saving image: {}", e);
-            } else {
-                misc::set_progress(1., "Saved");
-            }
+                    "No processed image to save?");
+                error!("No processed image to save?");
+                return;
+            },
+        };
 
-        });
+        if let Err(e) = processed_image.save(&output_filename) {
+            misc::set_progress(1., "Error");
+            misc::show_info(gtk::MessageType::Info,
+                &format!("Error saving image: {}", e));
+            error!("Error saving image: {}", e);
+        } else {
+            misc::set_progress(1., "Saved");
+        }
     });
 }

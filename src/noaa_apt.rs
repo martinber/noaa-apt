@@ -7,10 +7,8 @@ pub use crate::resample::resample;
 
 use std::path::Path;
 
-use log::{info, warn, debug};
-
 use crate::context::Context;
-use crate::dsp::{Signal, Rate, Freq};
+use crate::dsp::{Signal, Rate};
 use crate::err;
 use crate::dsp;
 use crate::map;
