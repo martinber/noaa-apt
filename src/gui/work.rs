@@ -111,6 +111,7 @@ pub fn decode() {
 
     borrow_widgets(|widgets| {
 
+        misc::set_progress(0., "Decoding");
         widgets.info_revealer.set_reveal_child(false);
         widgets.dec_decode_button.set_sensitive(false);
         widgets.sav_save_button.set_sensitive(false);
@@ -208,6 +209,7 @@ pub fn process() {
 
     borrow_widgets(|widgets| {
 
+        misc::set_progress(0., "Processing");
         widgets.info_revealer.set_reveal_child(false);
         widgets.dec_decode_button.set_sensitive(false);
         widgets.sav_save_button.set_sensitive(false);
@@ -215,15 +217,6 @@ pub fn process() {
 
         // Read widgets
 
-        // let input_filename: PathBuf = match widgets.dec_input_chooser.get_filename() {
-            // Some(path) => path,
-            // None => {
-                // callback(Err(err::Error::Internal(
-                    // "Select input file".to_string())));
-                // return;
-            // }
-        // };
-//
         let wav_steps = widgets.dec_wav_steps_check.get_active();
 
         let resample_step = widgets.dec_resample_step_check.get_active();
@@ -476,5 +469,190 @@ pub fn save() {
         } else {
             misc::set_progress(1., "Saved");
         }
+    });
+}
+
+/// Get values from widgets, resample and update widgets.
+///
+/// Starts another working thread. Sets buttons as not sensitive until the
+/// resample finishes, etc.
+pub fn resample() {
+
+    // Called when resampling finishes
+    let callback = |result: err::Result<()>| {
+        glib::idle_add(move || {
+            borrow_widgets(|widgets| {
+                widgets.res_resample_button.set_sensitive(true);
+                match &result {
+                    Ok(()) => {
+                        misc::set_progress(1., "Finished");
+                    },
+                    Err(e) => {
+                        misc::set_progress(1., "Error");
+                        misc::show_info(gtk::MessageType::Error, &e.to_string());
+                        error!("{}", e);
+                    },
+                }
+            });
+            Continue(false)
+        });
+    };
+    let progress_callback = |progress, description: String| {
+        glib::idle_add(move || {
+            misc::set_progress(progress, &description);
+            Continue(false)
+        });
+    };
+
+    borrow_widgets(|widgets| {
+
+        misc::set_progress(0., "Resampling");
+        widgets.info_revealer.set_reveal_child(false);
+        widgets.res_resample_button.set_sensitive(false);
+
+        // Read widgets
+
+        let input_filename: PathBuf = match widgets.res_input_chooser.get_filename() {
+            Some(path) => path,
+            None => {
+                callback(Err(err::Error::Internal(
+                    "Select input file".to_string())));
+                return;
+            }
+        };
+        let output_filename: PathBuf = match widgets
+            .res_output_entry
+            .get_text()
+            .map(|text| PathBuf::from(text.as_str()))
+        {
+            Some(f) => f,
+            None => {
+                misc::set_progress(1., "Error");
+                misc::show_info(gtk::MessageType::Info,
+                    "Error parsing output filename");
+                error!("Error parsing output filename");
+
+                return;
+            },
+        };
+
+        let wav_steps = widgets.res_wav_steps_check.get_active();
+        let resample_step = widgets.res_resample_step_check.get_active();
+        let output_rate = widgets.res_rate_spinner.get_value_as_int() as u32;
+
+        let settings = borrow_state(|state| state.settings.clone());
+
+        std::thread::spawn(move || {
+
+            let mut context = Context::resample(
+                progress_callback,
+                wav_steps,
+                resample_step,
+            );
+            callback(noaa_apt::resample(
+                &mut context,
+                settings,
+                &input_filename,
+                &output_filename,
+                output_rate,
+            ));
+        });
+    });
+}
+
+/// Get values from widgets, timestamp and update widgets.
+pub fn write_timestamp() {
+
+    let show_error = |msg: &str| {
+        misc::show_info(gtk::MessageType::Error, msg);
+        error!("{}", msg);
+    };
+
+    borrow_widgets(|widgets| {
+        let filename = match widgets
+            .ts_write_chooser
+            .get_filename()
+        {
+            Some(f) => f,
+            None => {
+                show_error("Select file to write");
+                return;
+            },
+        };
+
+        let hour = widgets.ts_hs_spinner.get_value_as_int();
+        let minute = widgets.ts_min_spinner.get_value_as_int();
+        let second = widgets.ts_sec_spinner.get_value_as_int();
+        let (year, month, day) = widgets.ts_calendar.get_date();
+
+        // Write modification timestamp to file. The filetime library uses
+        // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
+        // nanoseconds precision.
+        // I use the chrono library to convert date and time to timestamp.
+        // As far as I know the timestamp unix_seconds will be relative to
+        // 0:00:00hs UTC.
+
+        // GTK counts months from 0 to 11. Years and days are fine
+        let datetime = match chrono::Local
+            .ymd_opt(year as i32, month + 1, day)
+            .and_hms_opt(hour as u32, minute as u32, second as u32)
+        {
+            chrono::offset::LocalResult::Single(dt) => dt,
+            chrono::offset::LocalResult::None => {
+                show_error("Invalid date or time");
+                return;
+            },
+            chrono::offset::LocalResult::Ambiguous(_, _) => {
+                show_error("Ambiguous date or time");
+                return;
+            }
+        };
+
+        match crate::misc::write_timestamp(datetime.timestamp(), &filename) {
+            Ok(()) =>
+                misc::show_info(gtk::MessageType::Info, "Timestamp written to file"),
+            Err(e) =>
+                show_error(&format!("Error writing timestamp: {}", e)),
+        }
+    });
+}
+
+/// Read file chooser, get timestamp and update widgets.
+pub fn read_timestamp() {
+
+    let show_error = |msg: &str| {
+        misc::show_info(gtk::MessageType::Error, msg);
+        error!("{}", msg);
+    };
+
+    borrow_widgets(|widgets| {
+        let filename = match widgets
+            .ts_read_chooser
+            .get_filename()
+        {
+            Some(f) => f,
+            None => {
+                show_error("Select file to read");
+                return;
+            },
+        };
+
+        let timestamp = match crate::misc::read_timestamp(&filename) {
+            Ok(ts) => ts,
+            Err(e) => {
+                show_error(&format!("Error reading timestamp: {}", e));
+                return;
+            }
+        };
+        let datetime = chrono::Local.timestamp(timestamp, 0); // 0 milliseconds
+
+        // GTK counts months from 0 to 11. Years and days are fine
+        widgets.ts_calendar.select_month(datetime.month0() as u32, datetime.year() as u32);
+        widgets.ts_calendar.select_day(datetime.day());
+        widgets.ts_hs_spinner.set_value(datetime.hour() as f64);
+        widgets.ts_min_spinner.set_value(datetime.minute() as f64);
+        widgets.ts_sec_spinner.set_value(datetime.second() as f64);
+
+        misc::show_info(gtk::MessageType::Info, "Loaded timestamp from file");
     });
 }

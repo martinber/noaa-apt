@@ -83,6 +83,8 @@ Notes:
 
     - See what to do with res folder
 
+    - Add state lines.
+
     - Implement resample and timestamp GUI
 
     - Remove red line or make it optional

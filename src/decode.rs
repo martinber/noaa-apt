@@ -8,7 +8,6 @@ use crate::dsp::{self, Signal, Rate, Freq};
 use crate::err;
 use crate::filters;
 
-
 /// Final signal sample rate.
 ///
 /// This signal has one sample per pixel.

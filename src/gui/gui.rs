@@ -308,6 +308,15 @@ fn init_widgets(widgets: &Widgets) {
 
     widgets.img_size_toggle.connect_toggled(|_| misc::update_image());
     widgets.img_scroll.connect_size_allocate(|_, _| misc::update_image());
+
+    // Connect buttons
+
+    widgets.dec_decode_button.connect_clicked(|_| work::decode());
+    widgets.p_process_button.connect_clicked(|_| work::process());
+    widgets.sav_save_button.connect_clicked(|_| work::save());
+    widgets.res_resample_button.connect_clicked(|_| work::resample());
+    widgets.ts_read_button.connect_clicked(|_| work::read_timestamp());
+    widgets.ts_write_button.connect_clicked(|_| work::write_timestamp());
 }
 
 /// Show widgets as ready for decoding/processing/saving
@@ -332,19 +341,12 @@ fn dec_ready() {
         // Configure widgets
 
         widgets.main_stack.set_visible_child(&widgets.dec_stack_child);
-
         widgets.dec_decode_button.set_sensitive(true);
         misc::set_progress(0., "Ready");
 
         // Reset image from state
 
         misc::update_image();
-
-        // Connect buttons
-
-        widgets.dec_decode_button.connect_clicked(|_| work::decode());
-        widgets.p_process_button.connect_clicked(|_| work::process());
-        widgets.sav_save_button.connect_clicked(|_| work::save());
     });
 }
 
@@ -361,8 +363,10 @@ fn res_ready() {
         widgets.res_action.set_enabled(false);
         widgets.ts_action.set_enabled(true);
 
-        widgets.main_stack.set_visible_child(&widgets.res_stack_child);
+        // Configure widgets
 
+        widgets.main_stack.set_visible_child(&widgets.res_stack_child);
+        misc::set_progress(0., "Ready");
     });
 }
 
@@ -380,29 +384,6 @@ fn ts_ready() {
         widgets.ts_action.set_enabled(false);
 
         widgets.main_stack.set_visible_child(&widgets.ts_stack_child);
-
-        /*
-
-        if let Mode::Timestamp = mode {
-
-            let widgets_clone = widgets.clone();
-            widgets.start_button.connect_clicked(move |_| {
-                if let Err(error) = write_timestamp() {
-                    misc::show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
-                    error!("{}", error);
-                }
-            });
-            let widgets_clone = widgets.clone();
-            widgets.read_button.expect("Couldn't get read_button")
-                .connect_clicked(move |_|
-            {
-                if let Err(error) = read_timestamp() {
-                    misc::show_info(&widgets_clone, gtk::MessageType::Error, error.to_string().as_str());
-                    error!("{}", error);
-                }
-            });
-        */
-
     });
 }
 

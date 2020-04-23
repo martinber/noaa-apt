@@ -185,6 +185,7 @@ pub struct Widgets {
     pub res_overwrite_tip_label:   gtk::Label,
     pub res_wav_steps_check:       gtk::CheckButton,
     pub res_resample_step_check:   gtk::CheckButton,
+    pub res_resample_button:       gtk::Button,
 
     pub ts_read_chooser:           gtk::FileChooserButton,
     pub ts_read_button:            gtk::Button,
@@ -272,6 +273,7 @@ impl Widgets {
             res_overwrite_tip_label: builder.get_object("res_overwrite_tip_label").expect("Couldn't get res_overwrite_tip_label"),
             res_wav_steps_check:     builder.get_object("res_wav_steps_check"    ).expect("Couldn't get res_wav_steps_check"    ),
             res_resample_step_check: builder.get_object("res_resample_step_check").expect("Couldn't get res_resample_step_check"),
+            res_resample_button:     builder.get_object("res_resample_button"    ).expect("Couldn't get res_resample_button"    ),
 
             ts_read_chooser:         builder.get_object("ts_read_chooser"        ).expect("Couldn't get ts_read_chooser"        ),
             ts_read_button:          builder.get_object("ts_read_button"         ).expect("Couldn't get ts_read_button"         ),
