@@ -55,6 +55,10 @@ layout: main
 
 - Generate the final image starting a new line on every sync frame.
 
+- Draw the map overlay.
+
+- Rotate image if necessary.
+
 ### About frequency
 
 ![Frequency unit comparison]({{ site.baseurl }}/images/frequency.png)
@@ -176,6 +180,64 @@ the telemetry band:
 
 Useful for contrast adjustment but I'm not doing this because I can't know the
 value of wedge 16 (channel ID).
+
+### Map overlay
+
+It is necessary to know the position of the satellite when the recording was
+made, so a TLE is loaded and the
+[satellite-rs](https://github.com/richinfante/satellite-rs) library is used.
+
+To draw the map, a shapefile (`.shp`) is loaded with the coordinates of every
+line we need to draw over the image. The coordinates are
+`(latitude, longitude)` pairs and we need to convert them to `(X, Y)` image
+coordinates. Now I'm going to try to explain this conversion.
+
+I never tried to do math over a sphere before, I made lots of mistakes and I
+managed to make it work but I'm not sure if my calculations are good
+approximaions. It is very easy to make mistakes assuming things that happen in
+euclidean geometry (e.g. here triangles do not add up to 180°). Looks like the
+equivalent of a straight line is a
+[geodesic](https://en.wikipedia.org/wiki/Geodesic), and I found these
+[Napier's rules for right spherical triangles](https://en.wikipedia.org/wiki/Spherical_trigonometry#Napier's_rules_for_right_spherical_triangles)
+(triangles of geodesic lines with a 90° angle).
+
+See the drawing for an example of a northbound image taken near the north pole.
+The orange line is a coastline to be drawn.
+
+![Geodesics used to convert latitude/longitude to pixels]({{ site.baseurl }}/images/geomapping.png)
+
+The blue lines and meridians (gray lines that go through the north pole) are
+geodesics. The parallels (gray lines othogonal to meridians) and the red
+satellite track are not geodesics (so I can't solve triangles with them).
+
+The red satellite track is almost a geodesic, so I just use the geodesic that
+goes through the start and end points as an equivalent of the image `Y` axis.
+The `X` axis is equivalent to another perpendicular geodesic.
+
+If we want to convert the orange point from `(latitude, longitude)` to `(X, Y)`,
+we can imagine an `a-b-c` triangle. We took the coordinates of the orange point
+from the shapefile and the coordinates of the blue point from the satellite
+position. Thanks to some functions made by
+[Alexander Barth](https://github.com/Alexander-Barth/APTDecoder.jl/blob/master/src/GeoMapping.jl),
+it is easy to calculate the distance `c` and the angle `B`.
+
+Using the
+[Napier's rules for right spherical triangles](https://en.wikipedia.org/wiki/Spherical_trigonometry#Napier's_rules_for_right_spherical_triangles)
+from Wikipedia we can get the lengths `a`
+and `b` which are equivalent to Y and X in image coordinates. A conversion
+from degrees to pixels is needed, it depends on the resolution of the image.
+
+At this point, there is a slight offset on the X axis because we used the blue
+geodesic instead of the red satellite track. The fix I found is to:
+
+- We already calculated `Y`, and we know that the satellite sends two lines per
+  second. So we can take the start time and add `Y/2` seconds to it to calculate
+  the true position of the satellite at the moment it crossed the `b` line.
+
+- If we convert the position of the satellite at that moment to pixels (using
+  the procedure above), we are going to get the same `Y`, but `X` will be a
+  small number. That small number is the offset we have to use to do the
+  correction.
 
 ## About APT images
 

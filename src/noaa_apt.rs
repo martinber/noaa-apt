@@ -156,7 +156,7 @@ pub fn process(
                 map_settings,
                 orbit_settings.sat_name,
                 tle
-            );
+            )?;
         }
     }
 

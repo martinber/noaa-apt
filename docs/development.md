@@ -81,19 +81,21 @@ Notes:
 
     - Look for defaults for yaw and scales.
 
-    - See what to do with res folder
+    - Map for channel B.
+
+    - Learn whot to ignore drawing map outside the screen.
+
+    - See what to do with res folder.
 
     - Add state lines.
 
-    - Implement resample and timestamp GUI
+    - Implement resample and timestamp GUI.
 
-    - Remove red line or make it optional
-
-    - Look for state lines
+    - Remove red line or make it optional.
 
     - Add warnings for short images when reading telemetry.
 
-    - Histogram equalization
+    - Histogram equalization, independent for each channel.
 
     - Check things that can panic/can fail:
 
@@ -110,7 +112,9 @@ Notes:
 
 - Someday:
 
-    - Use new Rust `async` syntax.
+    - Implement false colors, both from map and from channel values.
+
+    - Use new Rust `async` syntax where needed?.
 
     - Show telemetry bands on GUI.
 
