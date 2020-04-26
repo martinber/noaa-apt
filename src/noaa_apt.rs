@@ -17,8 +17,7 @@ use crate::processing;
 use crate::telemetry;
 use crate::wav;
 
-pub type Pixel = image::Rgb<u8>;
-pub type Image = image::RgbImage;
+pub type Image = image::RgbaImage;
 
 /// Available settings for contrast adjustment.
 #[derive(Clone, Debug)]
@@ -134,7 +133,7 @@ pub fn process(
 
     let mut img: Image = LumaImage::from_vec(
             PX_PER_ROW, height, map(&signal, low, high))
-        .map(|b| b.convert()) // Convert to RGB
+        .map(|b| b.convert()) // Convert to RGBA
         .ok_or(err::Error::Internal(
             "Could not create image, wrong buffer length".to_string()))?;
 
@@ -169,10 +168,10 @@ pub fn process(
         },
         Rotate::Orbit => {
             if let Some(orbit_settings) = orbit.clone() {
-                let tle = match orbit_settings.custom_tle {
-                    Some(t) => t,
-                    None => misc::get_current_tle()?,
-                };
+                // let tle = match orbit_settings.custom_tle {
+                //     Some(t) => t,
+                //     None => misc::get_current_tle()?,
+                // };
                 // TODO
             } else {
                 return Err(err::Error::Internal(

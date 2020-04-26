@@ -437,7 +437,11 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                             std::process::exit(0);
                         });
                         let mut tle = String::new();
-                        file.read_to_string(&mut tle);
+                        if let Err(e) = file.read_to_string(&mut tle) {
+                            println!("Could not read custom TLE file: {}", e);
+                            std::process::exit(0);
+                        }
+
                         Some(tle)
                     },
                     None => None,

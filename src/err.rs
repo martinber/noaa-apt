@@ -31,6 +31,9 @@ pub enum Error {
     /// choose strange sample rates.
     RateOverflow(String),
 
+    /// shapefile library errors.
+    Shapefile(String),
+
     /// Functionality not available because the program was compiled without
     /// those features
     FeatureNotAvailable(Vec<String>),
@@ -46,6 +49,7 @@ impl std::fmt::Display for Error {
             Error::Request(ref msg) => f.write_str(msg.as_str()),
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
+            Error::Shapefile(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref features) =>
                 write!(f, "Program compiled without support for features: {:?}",
                     features),
@@ -96,5 +100,11 @@ impl From<toml::de::Error> for Error {
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
         Error::Request(err.to_string())
+    }
+}
+
+impl From<shapefile::Error> for Error {
+    fn from(err: shapefile::Error) -> Self {
+        Error::Shapefile(err.to_string())
     }
 }

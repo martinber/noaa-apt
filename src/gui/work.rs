@@ -305,7 +305,11 @@ pub fn process() {
                             },
                         };
                         let mut tle = String::new();
-                        file.read_to_string(&mut tle);
+                        if let Err(e) = file.read_to_string(&mut tle) {
+                            callback(Err(err::Error::Internal(
+                                format!("Could not read custom TLE file: {}", e))));
+                            return;
+                        }
 
                         Some(tle)
                     },

@@ -17,7 +17,6 @@
 mod config;
 mod context;
 mod decode;
-mod draw;
 mod dsp;
 mod err;
 mod filters;

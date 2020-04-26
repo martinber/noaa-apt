@@ -69,6 +69,7 @@ pub fn azimuth((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
 ///
 /// This function can also be used to define a spherical coordinate system with
 /// rotated poles.
+#[allow(dead_code)]
 pub fn reckon((lat, lon): (f64, f64), range: f64, azimuth: f64) -> (f64, f64) {
 
     // Based on reckon from Alexander Barth

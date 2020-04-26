@@ -5,12 +5,13 @@ use std::f64::consts::PI;
 
 use line_drawing::XiaolinWu;
 use log::info;
+use image::Pixel;
 
-use crate::draw;
 use crate::err;
 use crate::geo;
 use crate::noaa_apt::{SatName, RefTime, Image, MapSettings};
 
+#[allow(non_snake_case)]
 pub fn draw_map(
     img: &mut Image,
     ref_time: RefTime,
@@ -41,13 +42,13 @@ pub fn draw_map(
 
     // Calculate satellite trajectory
 
-    // (latitude, longitude) of the satellite for each line
-    let mut sat_positions: Vec<(f64, f64)> = Vec::with_capacity(height as usize);
-
     let start_time = match ref_time {
         RefTime::Start(time) => time,
         RefTime::End(time) => time - line_duration * height as i32,
     };
+
+    // (latitude, longitude) of the satellite for each line
+    let mut sat_positions: Vec<(f64, f64)> = Vec::with_capacity(height as usize);
 
     for i in 0..height {
         let t = start_time + line_duration * i as i32;
@@ -62,7 +63,7 @@ pub fn draw_map(
     // Get image resolution (radians per pixel)
 
     let y_res = geo::distance(start_latlon, end_latlon) / height as f64 / settings.vscale;
-    let x_res = 0.0005001960653876187 / settings.hscale;
+    let x_res = 0.0005 / settings.hscale;
 
     // Map (latitude, longitude) to pixel coordinates
 
@@ -92,115 +93,82 @@ pub fn draw_map(
         (x, y)
     };
 
-    // px_rel_to_abs ///////////////////////////////////////////////////////////
+    // Draw line function
 
-    let px_rel_to_abs = |(x, y): (f64, f64)| -> (f64, f64) {
+    let mut draw_line = |
+        latlon1: (f64, f64),
+        latlon2: (f64, f64),
+        (r, g, b): (u8, u8, u8)
+    | {
 
-        let x_abs = x + 539.;
-        let y_abs = y;
-        // let x_abs = (x + 539.).max(0.).min(2070.) as u32;
-        // let y_abs = y.max(0.).min(height as f64) as u32;
+        // Convert latlon to (x, y)
+        let (mut x1, y1) = latlon_to_rel_px(latlon1);
+        let (mut x2, y2) = latlon_to_rel_px(latlon2);
 
-        (x_abs, y_abs)
+        // Offset correction on x
+        let est_y1 = (y1.max(0.) as usize).min(height as usize - 1);
+        let est_y2 = (y2.max(0.) as usize).min(height as usize - 1);
+        let (x1_offset, _) = latlon_to_rel_px(sat_positions[est_y1]);
+        let (x2_offset, _) = latlon_to_rel_px(sat_positions[est_y2]);
+        x1 -= x1_offset;
+        x2 -= x2_offset;
+
+        let h = img.height() as i32;
+        for ((x, y), value) in XiaolinWu::<f64, i32>::new((x1, y1), (x2, y2)) {
+            // Draw A channel
+            if x > -456 && x < 456 && y > 0 && y < h {
+                img.get_pixel_mut((x + 539) as u32, y as u32).blend(
+                    &image::Rgba([r, g, b, (value * 255.) as u8]),
+                );
+                img.get_pixel_mut((x + 1579) as u32, y as u32).blend(
+                    &image::Rgba([r, g, b, (value * 255.) as u8]),
+                );
+            }
+        }
     };
 
-    // Dibujar mapa ////////////////////////////////////////////////////////////
+    // Draw shapefiles
 
     let filename = "./res/shapefiles/states.shp";
     let reader = shapefile::Reader::from_path(filename).unwrap();
-
     for result in reader.iter_shapes_as::<shapefile::Polyline>() {
-        let polyline = result.unwrap(); //TODO
+        let polyline = result?;
         for points in polyline.parts() {
 
             let mut prev_pt = &points[0];
-
             for pt in points {
-                // y: lat, x: lon,
-                let (x, y) = latlon_to_rel_px((pt.y / 180. * PI, pt.x / 180. * PI));
-                let (x2, y2) = latlon_to_rel_px((prev_pt.y / 180. * PI, prev_pt.x / 180. * PI));
-                let est_y = (y.max(0.) as usize).min(height as usize - 1);
-                let est_y2 = (y2.max(0.) as usize).min(height as usize - 1);
-                let (x_offset, _) = latlon_to_rel_px(sat_positions[est_y]);
-                let (x2_offset, _) = latlon_to_rel_px(sat_positions[est_y2]);
-
-                let p1 = px_rel_to_abs((x - x_offset, y));
-                let p2 = px_rel_to_abs((x2 - x2_offset, y2));
-
-                let w = img.width() as i32;
-                let h = img.height() as i32;
-                for ((x, y), value) in XiaolinWu::<f64, i32>::new(p1, p2) {
-                    if x > 0 && y > 0 && x < w && y < h {
-                        img.put_pixel(
-                            x as u32, y as u32,
-                            image::Rgb([100, 150, 0]),
-                        );
-                    }
-                }
+                draw_line(
+                    (pt.y / 180. * PI, pt.x / 180. * PI),
+                    (prev_pt.y / 180. * PI, prev_pt.x / 180. * PI),
+                    (100, 150, 0),
+                );
                 prev_pt = pt;
             }
         }
     }
+
     let filename = "./res/shapefiles/countries.shp";
     let reader = shapefile::Reader::from_path(filename).unwrap();
-
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
-        let polygon = result.unwrap(); //TODO
+        let polygon = result?;
         for ring in polygon.rings() {
 
             use shapefile::record::polygon::PolygonRing;
-
             let points = match ring {
                 PolygonRing::Outer(p) | PolygonRing::Inner(p) => p,
             };
 
             let mut prev_pt = &points[0];
-
             for pt in points {
-                // y: lat, x: lon,
-                let (x, y) = latlon_to_rel_px((pt.y / 180. * PI, pt.x / 180. * PI));
-                let (x2, y2) = latlon_to_rel_px((prev_pt.y / 180. * PI, prev_pt.x / 180. * PI));
-                let est_y = (y.max(0.) as usize).min(height as usize - 1);
-                let est_y2 = (y2.max(0.) as usize).min(height as usize - 1);
-                let (x_offset, _) = latlon_to_rel_px(sat_positions[est_y]);
-                let (x2_offset, _) = latlon_to_rel_px(sat_positions[est_y2]);
-
-                let p1 = px_rel_to_abs((x - x_offset, y));
-                let p2 = px_rel_to_abs((x2 - x2_offset, y2));
-
-                let w = img.width() as i32;
-                let h = img.height() as i32;
-                for ((x, y), value) in XiaolinWu::<f64, i32>::new(p1, p2) {
-                    if x > 0 && y > 0 && x < w && y < h {
-                        img.put_pixel(
-                            x as u32, y as u32,
-                            image::Rgb([0, (255.*value) as u8, 0]),
-                        );
-                    }
-                }
+                draw_line(
+                    (pt.y / 180. * PI, pt.x / 180. * PI),
+                    (prev_pt.y / 180. * PI, prev_pt.x / 180. * PI),
+                    (0, 255, 0),
+                );
                 prev_pt = pt;
             }
         }
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    // #[test]
-    // fn test() {
-//
-        // let filename = "./res/shapefiles/countries.shp";
-        // let reader = shapefile::Reader::from_path(filename).unwrap();
-//
-        // for result in reader.iter_shapes_as::<shapefile::Polygon>() {
-            // let polygon = result.unwrap(); //TODO
-        // }
-        // assert!(false);
-//
-    // }
 }
