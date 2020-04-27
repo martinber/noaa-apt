@@ -229,7 +229,11 @@ fn find_sync(
         // If previous peak is too far, keep it and add this value to the
         // list as a new peak
         if i - peaks.last().unwrap().0 > min_distance {
-            peaks.push((i, corr));
+            // If it looks that we have too few sync frames considering the
+            // length of the signal so far
+            while i / samples_per_work_row as usize > peaks.len() {
+                peaks.push((i, corr));
+            }
         }
 
         // Else if this value is bigger than the previous maximum, set this

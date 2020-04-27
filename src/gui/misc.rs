@@ -117,12 +117,17 @@ where W: glib::object::IsA<gtk::Window>
     }
 }
 
+/// Update image on right pane.
+///
+/// Uses the processed image if any, otherwise puts the noaa-apt logo.
 pub fn update_image() {
     borrow_widgets(|widgets| {
+        use image::ConvertBuffer;
 
         let pixbuf = match borrow_state_mut(|state| state.processed_image.clone()) {
             Some(image) => {
-                let flat_image = image.as_flat_samples();
+                let rgb_image: image::RgbImage = image.convert();
+                let flat_image = rgb_image.as_flat_samples();
                 gdk_pixbuf::Pixbuf::new_from_bytes(
                     &glib::Bytes::from(&flat_image.samples),
                     gdk_pixbuf::Colorspace::Rgb,

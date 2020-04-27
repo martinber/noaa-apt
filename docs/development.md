@@ -81,17 +81,7 @@ Notes:
 
     - Look for defaults for yaw and scales.
 
-    - Map for channel B.
-
-    - Learn whot to ignore drawing map outside the screen.
-
     - See what to do with res folder.
-
-    - Add state lines.
-
-    - Implement resample and timestamp GUI.
-
-    - Remove red line or make it optional.
 
     - Add warnings for short images when reading telemetry.
 
