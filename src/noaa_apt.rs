@@ -68,6 +68,9 @@ pub struct MapSettings {
     pub yaw: f64,
     pub hscale: f64,
     pub vscale: f64,
+    pub countries_color: (u8, u8, u8, u8),
+    pub states_color: (u8, u8, u8, u8),
+    pub lakes_color: (u8, u8, u8, u8),
 }
 
 /// Available satellites enum.

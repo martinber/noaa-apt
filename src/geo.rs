@@ -102,6 +102,7 @@ mod tests {
 
     use super::*;
     use approx::assert_abs_diff_eq;
+    use chrono::prelude::*;
 
     // Checks for equality allowing a difference of epsilon
     // assert_abs_diff_eq!(a, b, epsilon);
@@ -162,15 +163,6 @@ mod tests {
 
     }
 
-    /// Load a NOAA 18 test Satrec object from `test_tle.txt`.
-    fn load_test_sat(name: &str) -> satellite::io::Satrec {
-        let (sats, _errors) = satellite::io::parse_multiple(include_str!("test_tle_2020-01.txt"));
-        sats.iter().find(|&sat| sat.name == Some(name.to_string()))
-            .expect(&format!("{} not found in test TLE file", name)).clone()
-        // TODO: Replace `.expect(format!` with `unwrap_or_else(|_| panic!("Some useful error"))`
-        // On other files too
-    }
-
     /// Check the satellite library against a known TLE and known satellite
     /// positions.
     ///
@@ -193,7 +185,7 @@ mod tests {
     /// This fork of `predict` shows latitude and longitude with more decimal
     /// places. Usage:
     ///
-    ///     > predict -t ./test_tle_2020-01.txt -f "NOAA 18" 1580000000 1580000000
+    ///     > predict -t ./test_tle.txt -f "NOAA 18" 1580000000 1580000000
     ///     1580000000 Sun 26Jan20 00:53:20  -59  339  13.051 124.959  180  11967  75666 *
     ///
     /// Format (see /docs/pdf/predict.pdf):
@@ -202,6 +194,26 @@ mod tests {
     ///
     #[test]
     fn test_against_predict() {
+
+        /// Load a NOAA 18 test Satrec object from test tle
+        fn load_test_sat(name: &str) -> satellite::io::Satrec {
+
+            let (sats, _errors) = satellite::io::parse_multiple(
+"NOAA 15
+1 25338U 98030A   20028.53684332  .00000010  00000-0  22730-4 0  9996
+2 25338  98.7308  54.2052 0009655 316.5487  43.4931 14.25949056128892
+NOAA 18
+1 28654U 05018A   20028.55430359  .00000064  00000-0  59410-4 0  9998
+2 28654  99.0657  83.5290 0013366 267.3059  92.6583 14.12484618757024
+NOAA 19
+1 33591U 09005A   20028.54874297  .00000001  00000-0  25623-4 0  9996
+2 33591  99.1936  30.2411 0014855 109.6767 250.6008 14.12393428565240"
+            );
+            sats.iter().find(|&sat| sat.name == Some(name.to_string()))
+                .expect(&format!("{} not found in test TLE file", name)).clone()
+            // TODO: Replace `.expect(format!` with `unwrap_or_else(|_| panic!("Some useful error"))`
+            // On other files too
+        }
 
         // Known results, we test against each one of these.
         // Everything in degrees. Fields:

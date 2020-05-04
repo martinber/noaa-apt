@@ -98,7 +98,7 @@ pub fn draw_map(
     let mut draw_line = |
         latlon1: (f64, f64),
         latlon2: (f64, f64),
-        (r, g, b): (u8, u8, u8)
+        (r, g, b, a): (u8, u8, u8, u8)
     | {
 
         // Convert latlon to (x, y)
@@ -114,16 +114,25 @@ pub fn draw_map(
         x2 -= x2_offset;
 
         let h = img.height() as i32;
-        for ((x, y), value) in XiaolinWu::<f64, i32>::new((x1, y1), (x2, y2)) {
-            // Draw A channel
-            if x > -456 && x < 456 && y > 0 && y < h {
-                img.get_pixel_mut((x + 539) as u32, y as u32).blend(
-                    &image::Rgba([r, g, b, (value * 255.) as u8]),
-                );
-                img.get_pixel_mut((x + 1579) as u32, y as u32).blend(
-                    &image::Rgba([r, g, b, (value * 255.) as u8]),
-                );
+
+        // See if at least one point is inside
+        if (x1 > -456. && x1 < 456. && y1 > 0. && y1 < h as f64)
+            || (x1 > -600. && x1 < 600. && y1 > 0. && y1 < h as f64)
+        {
+
+            for ((x, y), value) in XiaolinWu::<f64, i32>::new((x1, y1), (x2, y2)) {
+                // Draw A channel
+                if x > -456 && x < 456 && y > 0 && y < h {
+                    img.get_pixel_mut((x + 539) as u32, y as u32).blend(
+                        //value is between 0 and 1. a is between 0 and 255
+                        &image::Rgba([r, g, b, (value * a as f64) as u8]),
+                    );
+                    img.get_pixel_mut((x + 1579) as u32, y as u32).blend(
+                        &image::Rgba([r, g, b, (value * a as f64) as u8]),
+                    );
+                }
             }
+
         }
     };
 
@@ -140,7 +149,7 @@ pub fn draw_map(
                 draw_line(
                     (pt.y / 180. * PI, pt.x / 180. * PI),
                     (prev_pt.y / 180. * PI, prev_pt.x / 180. * PI),
-                    (100, 150, 0),
+                    settings.states_color,
                 );
                 prev_pt = pt;
             }
@@ -163,7 +172,30 @@ pub fn draw_map(
                 draw_line(
                     (pt.y / 180. * PI, pt.x / 180. * PI),
                     (prev_pt.y / 180. * PI, prev_pt.x / 180. * PI),
-                    (0, 255, 0),
+                    settings.countries_color,
+                );
+                prev_pt = pt;
+            }
+        }
+    }
+
+    let filename = "./res/shapefiles/lakes.shp";
+    let reader = shapefile::Reader::from_path(filename).unwrap();
+    for result in reader.iter_shapes_as::<shapefile::Polygon>() {
+        let polygon = result?;
+        for ring in polygon.rings() {
+
+            use shapefile::record::polygon::PolygonRing;
+            let points = match ring {
+                PolygonRing::Outer(p) | PolygonRing::Inner(p) => p,
+            };
+
+            let mut prev_pt = &points[0];
+            for pt in points {
+                draw_line(
+                    (pt.y / 180. * PI, pt.x / 180. * PI),
+                    (prev_pt.y / 180. * PI, prev_pt.x / 180. * PI),
+                    settings.lakes_color,
                 );
                 prev_pt = pt;
             }

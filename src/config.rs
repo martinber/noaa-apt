@@ -91,6 +91,15 @@ pub struct Settings {
 
     /// Timezone offset to use when parsing filenames, in hours.
     pub filename_timezone: f32,
+
+    /// Default countries and coastlines color as RGBA.
+    pub default_countries_color: (u8, u8, u8, u8),
+
+    /// Default provinces and states color as RGBA.
+    pub default_states_color: (u8, u8, u8, u8),
+
+    /// Default lakes color as RGBA.
+    pub default_lakes_color: (u8, u8, u8, u8),
 }
 
 /// Holds the deserialized raw parsed settings file.
@@ -100,6 +109,7 @@ struct DeSettings {
     version: u32,
     timestamps: DeTimestamps,
     profiles: DeProfiles,
+    map_overlay: DeMapOverlay,
 }
 
 /// Holds the deserialized raw parsed timestamps table
@@ -108,6 +118,14 @@ struct DeTimestamps {
     prefer_timestamps: bool,
     filenames: Vec<String>,
     timezone: f32,
+}
+
+/// Holds the deserialized raw parsed map_overlay table
+#[derive(Deserialize)]
+struct DeMapOverlay {
+    default_countries_color: (u8, u8, u8, u8),
+    default_states_color: (u8, u8, u8, u8),
+    default_lakes_color: (u8, u8, u8, u8),
 }
 
 /// Holds the deserialized raw parsed profiles table
@@ -370,6 +388,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         prefer_timestamps: de_settings.timestamps.prefer_timestamps,
         filename_formats: de_settings.timestamps.filenames,
         filename_timezone: de_settings.timestamps.timezone,
+        default_countries_color: de_settings.map_overlay.default_countries_color,
+        default_states_color: de_settings.map_overlay.default_states_color,
+        default_lakes_color: de_settings.map_overlay.default_lakes_color,
     };
 
     // If set, then the program will be used as a command-line one, otherwise we
@@ -474,6 +495,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                         yaw: 0.,
                         hscale: 1.,
                         vscale: 1.,
+                        countries_color: settings.default_countries_color,
+                        states_color: settings.default_states_color,
+                        lakes_color: settings.default_lakes_color,
                     }),
                     Some("no") => None,
                     Some(_) => {

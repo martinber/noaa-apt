@@ -24,6 +24,13 @@ filenames = [
 # Timezone offset in hours to assume when reading filenames.
 timezone = 0.0
 
+[map_overlay]
+
+# Default colors. Set alpha to 0 to disable
+default_countries_color = [255, 255, 0, 255]
+default_states_color = [255, 255, 0, 150]
+default_lakes_color = [50, 200, 200, 255]
+
 [profiles]
 
 default_profile = "standard"

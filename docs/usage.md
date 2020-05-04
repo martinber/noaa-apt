@@ -148,6 +148,12 @@ GNU/Linux:
 - Set any timestamp you want with
     `touch -d "2019-01-31 18:31:20.579283000" recording.wav`.
 
+## Processing
+
+TODO:
+
+https://web.archive.org/web/*/https://www.celestrak.com/NORAD/elements/weather.txt
+
 ## Advanced settings
 
 ### Disable syncing

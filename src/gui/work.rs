@@ -371,12 +371,23 @@ pub fn process() {
                 None,
             true => {
                 use std::f64::consts::PI;
+                let rgba_to_tuple = |rgba: gdk::RGBA| -> (u8, u8, u8, u8) {
+                    (
+                        (rgba.red * 255.).max(0.).min(255.) as u8,
+                        (rgba.green * 255.).max(0.).min(255.) as u8,
+                        (rgba.blue * 255.).max(0.).min(255.) as u8,
+                        (rgba.alpha * 255.).max(0.).min(255.) as u8,
+                    )
+                };
                 Some(MapSettings {
                     // Convert degrees to radians
                     yaw: widgets.p_yaw_spinner.get_value() * PI / 180.,
                     // Convert percent to fraction
                     hscale: widgets.p_hscale_spinner.get_value() / 100.,
                     vscale: widgets.p_vscale_spinner.get_value() / 100.,
+                    countries_color: rgba_to_tuple(widgets.p_countries_color.get_rgba()),
+                    states_color: rgba_to_tuple(widgets.p_states_color.get_rgba()),
+                    lakes_color: rgba_to_tuple(widgets.p_lakes_color.get_rgba())
                 })
             },
         };

@@ -33,7 +33,7 @@ use log::info;
 
 use crate::config;
 use super::state::{
-    GuiState, borrow_state_mut, set_state,
+    GuiState, borrow_state_mut, borrow_state, set_state,
     Widgets, borrow_widgets, set_widgets
 };
 use super::misc;
@@ -227,6 +227,28 @@ fn init_widgets(widgets: &Widgets) {
             file_chooser.destroy();
         });
     });
+
+    // Set default map lines colors
+
+    let (countries_color, states_color, lakes_color) = borrow_state(|state| {
+        (
+            state.settings.default_countries_color,
+            state.settings.default_states_color,
+            state.settings.default_lakes_color,
+        )
+    });
+    let tuple_to_rgba = |(r, g, b, a): (u8, u8, u8, u8)| -> gdk::RGBA {
+        gdk::RGBA {
+            red: r as f64 / 255.,
+            green: g as f64 / 255.,
+            blue: b as f64 / 255.,
+            alpha: a as f64 / 255.,
+        }
+    };
+
+    widgets.p_countries_color.set_rgba(&tuple_to_rgba(countries_color));
+    widgets.p_states_color.set_rgba(&tuple_to_rgba(states_color));
+    widgets.p_lakes_color.set_rgba(&tuple_to_rgba(lakes_color));
 
     // Configure tips to update when GtkEntry changes
     fn configure_tips(

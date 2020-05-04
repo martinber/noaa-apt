@@ -83,6 +83,10 @@ Notes:
 
     - See what to do with res folder.
 
+    - Rotate image automatically.
+
+    - See if yaw problems are caused by az_ref
+
     - Add warnings for short images when reading telemetry.
 
     - Histogram equalization, independent for each channel.
@@ -101,6 +105,8 @@ Notes:
             sample rates.
 
 - Someday:
+
+    - Make seconds spinner add a minute when wrapping
 
     - Implement false colors, both from map and from channel values.
 
