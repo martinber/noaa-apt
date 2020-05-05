@@ -51,6 +51,7 @@ pub fn draw_map(
 
     for i in 0..height {
         let t = start_time + line_duration * i as i32;
+        // TODO: Remove unwrap()
         let result = satellite::propogation::propogate_datetime(&mut sat, t).unwrap();
         let gmst = satellite::propogation::gstime::gstime_datetime(t);
         let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);

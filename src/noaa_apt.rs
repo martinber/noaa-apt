@@ -7,6 +7,8 @@ pub use crate::resample::resample;
 
 use std::path::Path;
 
+use log::warn;
+
 use crate::context::Context;
 use crate::dsp::{Signal, Rate};
 use crate::err;
@@ -171,14 +173,12 @@ pub fn process(
         },
         Rotate::Orbit => {
             if let Some(orbit_settings) = orbit.clone() {
-                // let tle = match orbit_settings.custom_tle {
-                //     Some(t) => t,
-                //     None => misc::get_current_tle()?,
-                // };
-                // TODO
+                if processing::south_to_north_pass(&orbit_settings)? {
+                    context.status(0.90, "Rotating output image".to_string());
+                    img = processing::rotate(&img)?;
+                }
             } else {
-                return Err(err::Error::Internal(
-                    "Can't rotate from orbit if none provided".to_string()));
+                warn!("Can't rotate automatically if no orbit information is provided");
             }
         },
         Rotate::No => {},

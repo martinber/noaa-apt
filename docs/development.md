@@ -81,10 +81,6 @@ Notes:
 
     - Look for defaults for yaw and scales.
 
-    - See what to do with res folder.
-
-    - Rotate image automatically.
-
     - See if yaw problems are caused by az_ref
 
     - Add warnings for short images when reading telemetry.
