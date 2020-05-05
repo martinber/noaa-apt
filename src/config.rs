@@ -273,6 +273,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let mut arg_start_time: Option<String> = None;
     let mut arg_tle_filename: Option<String> = None;
     let mut arg_map: Option<String> = None;
+    let mut arg_yaw: Option<f64> = None;
+    let mut arg_hscale: Option<f64> = None;
+    let mut arg_vscale: Option<f64> = None;
     let mut arg_rotate: Option<String> = None;
     let mut arg_rotate_deprecated = false;
     {
@@ -322,6 +325,18 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             "Enable map overlay, a --sat must be provided. Possible values: \
             \"yes\" or \"no\".")
             .metavar("MAP_MODE");
+        parser.refer(&mut arg_yaw)
+            .add_option(&["--map-yaw"], argparse::StoreOption,
+            "Yaw correction for map overlay in degrees. Default: 0.")
+            .metavar("YAW");
+        parser.refer(&mut arg_hscale)
+            .add_option(&["--map-hscale"], argparse::StoreOption,
+            "Horizontal map scale correction for map overlay. Default: 1.")
+            .metavar("HSCALE");
+        parser.refer(&mut arg_vscale)
+            .add_option(&["--map-vscale"], argparse::StoreOption,
+            "Vertical map scale correction for map overlay. Default: 1.")
+            .metavar("VSCALE");
         parser.refer(&mut arg_rotate)
             .add_option(&["-R", "--rotate"], argparse::StoreOption,
             "Rotate image, useful for South to North passes where the raw image \
@@ -512,10 +527,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
                 let draw_map = match arg_map.as_deref() {
                     Some("yes") => Some(MapSettings {
-                        // TODO
-                        yaw: 0.,
-                        hscale: 1.,
-                        vscale: 1.,
+                        yaw: arg_yaw.unwrap_or(0.),
+                        hscale: arg_hscale.unwrap_or(1.),
+                        vscale: arg_vscale.unwrap_or(1.),
                         countries_color: settings.default_countries_color,
                         states_color: settings.default_states_color,
                         lakes_color: settings.default_lakes_color,
