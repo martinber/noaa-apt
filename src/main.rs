@@ -14,7 +14,7 @@
 #![warn(elided_lifetimes_in_paths)]
 
 
-mod config;
+#[macro_use] mod config;
 mod context;
 mod decode;
 mod dsp;

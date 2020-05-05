@@ -1,5 +1,4 @@
 /// Functions to read shapefiles and draw maps.
-///
 
 use std::f64::consts::PI;
 
@@ -138,8 +137,10 @@ pub fn draw_map(
 
     // Draw shapefiles
 
-    let filename = "./res/shapefiles/states.shp";
-    let reader = shapefile::Reader::from_path(filename).unwrap();
+    let filename = res_path!("shapefiles", "states.shp");
+    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+        err::Error::Internal(format!("Could not load {:?}", filename))
+    })?;
     for result in reader.iter_shapes_as::<shapefile::Polyline>() {
         let polyline = result?;
         for points in polyline.parts() {
@@ -156,8 +157,10 @@ pub fn draw_map(
         }
     }
 
-    let filename = "./res/shapefiles/countries.shp";
-    let reader = shapefile::Reader::from_path(filename).unwrap();
+    let filename = res_path!("shapefiles", "countries.shp");
+    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+        err::Error::Internal(format!("Could not load {:?}", filename))
+    })?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;
         for ring in polygon.rings() {
@@ -179,8 +182,10 @@ pub fn draw_map(
         }
     }
 
-    let filename = "./res/shapefiles/lakes.shp";
-    let reader = shapefile::Reader::from_path(filename).unwrap();
+    let filename = res_path!("shapefiles", "lakes.shp");
+    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+        err::Error::Internal(format!("Could not load {:?}", filename))
+    })?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;
         for ring in polygon.rings() {

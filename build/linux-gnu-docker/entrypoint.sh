@@ -74,6 +74,9 @@ rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER/test/results" || true
 # Verbose build for dpkg-buildpackage
 DH_VERBOSE=1
 
+# Indicate resources folder before compiling
+NOAA_APT_RES_DIR="/usr/share/noaa-apt"
+
 # -us -uc: Do not sign anything. When upgrading to a newer Debian version I
 #          should change to --no-sign
 # -d: Do not check build dependencies, because cargo is a build dependency and I

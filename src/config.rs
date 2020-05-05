@@ -15,6 +15,27 @@ use crate::noaa_apt::{OrbitSettings, MapSettings, Rotate, Contrast, SatName, Ref
 const SETTINGS_VERSION: u32 = 2;
 
 
+/// Returns a PathBuf of the requested resource file.
+///
+///
+/// Expands the path using the resources directory given at compile time. For
+/// example use `res_path!("shapefiles", "lakes.shp");` to get
+/// `./res/shapefiles/lakes.shp` or `/usr/share/noaa-apt/shapefiles/lakes.shp`
+#[macro_export]
+macro_rules! res_path {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_path = std::path::PathBuf::from(
+                option_env!("NOAA_APT_RES_DIR").unwrap_or("./res/")
+            );
+            $(
+                temp_path = temp_path.join($x);
+            )*
+            temp_path
+        }
+    };
+}
+
 /// How to launch the program.
 #[derive(Debug)]
 pub enum Mode {

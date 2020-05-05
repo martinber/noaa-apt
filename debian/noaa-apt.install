@@ -3,3 +3,5 @@ target/release/noaa-apt                    usr/bin
 debian/ar.com.mbernardi.noaa-apt.desktop   usr/share/applications
 debian/noaa-apt.png                        usr/share/icons/hicolor/48x48/apps
 debian/noaa-apt.svg                        usr/share/icons/hicolor/scalable/apps
+
+res/*                                      usr/share/noaa-apt
