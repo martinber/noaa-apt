@@ -1,6 +1,6 @@
 //! Code for telemetry decoding.
 
-use log::{debug, info};
+use log::{debug, info, warn};
 
 use crate::context::{Context, Step};
 use crate::dsp::Signal;
@@ -171,6 +171,10 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     if mean_a.len() < telemetry_sample.len() {
         return Err(err::Error::Internal(
             "Recording too short for telemetry decoding".to_string()));
+    }
+
+    if mean_a.len() < 2 * telemetry_sample.len() {
+        warn!("Reading telemetry on short recording, expect unreliable results");
     }
 
     // Cross correlation of both telemetry bands with a sample

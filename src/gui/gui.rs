@@ -353,21 +353,17 @@ fn dec_ready() {
     });
 
     borrow_widgets(|widgets| {
-
         // Set enabled actions on the menu bar
-
         widgets.dec_action.set_enabled(false);
         widgets.res_action.set_enabled(true);
         widgets.ts_action.set_enabled(true);
 
-        // Configure widgets
-
+        // Show widgets
         widgets.main_stack.set_visible_child(&widgets.dec_stack_child);
+
+        // Configure widgets
         widgets.dec_decode_button.set_sensitive(true);
         misc::set_progress(0., "Ready");
-
-        // Reset image from state
-
         misc::update_image();
     });
 }
@@ -376,19 +372,18 @@ fn dec_ready() {
 ///
 /// Called every time the user selects the resample action on the menu bar.
 fn res_ready() {
-
     borrow_widgets(|widgets| {
-
         // Set enabled actions on the menu bar
-
         widgets.dec_action.set_enabled(true);
         widgets.res_action.set_enabled(false);
         widgets.ts_action.set_enabled(true);
 
-        // Configure widgets
-
+        // Show widgets
         widgets.main_stack.set_visible_child(&widgets.res_stack_child);
+
+        // Configure widgets
         misc::set_progress(0., "Ready");
+        misc::update_image();
     });
 }
 
@@ -396,16 +391,18 @@ fn res_ready() {
 ///
 /// Called every time the user selects the timestamp action on the menu bar.
 fn ts_ready() {
-
     borrow_widgets(|widgets| {
-
         // Set enabled actions on the menu bar
-
         widgets.dec_action.set_enabled(true);
         widgets.res_action.set_enabled(true);
         widgets.ts_action.set_enabled(false);
 
+        // Show widgets
         widgets.main_stack.set_visible_child(&widgets.ts_stack_child);
+
+        // Configure widgets
+        misc::set_progress(0., "Ready");
+        misc::update_image();
     });
 }
 

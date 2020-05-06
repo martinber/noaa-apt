@@ -79,13 +79,14 @@ Notes:
 
 - Important:
 
-    - Look for defaults for yaw and scales.
-
-    - See if yaw problems are caused by az_ref
-
-    - Add warnings for short images when reading telemetry.
+    - Look for defaults for yaw and scales?.  See if yaw problems are caused by
+        az_ref?. Ask someone.
 
     - Histogram equalization, independent for each channel.
+
+- Someday:
+
+    - Make seconds spinner add a minute when wrapping
 
     - Check things that can panic/can fail:
 
@@ -100,11 +101,11 @@ Notes:
         - Make sure that Rate cant overflow when resampling against strange
             sample rates.
 
-- Someday:
+    - The error system is a mess. I'd like to make it consistent. Functions
+        should add context to errors using for example `map_err()`?.
 
-    - Make seconds spinner add a minute when wrapping
-
-    - Implement false colors, both from map and from channel values.
+    - Implement false colors, both from map and from channel values. See
+        [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
 
     - Use new Rust `async` syntax where needed?.
 
@@ -121,13 +122,6 @@ Notes:
     - Check OSX build dependencies, now on GNU/Linux we need `libssl-dev`.
 
     - [Compile as a library and create an Android client](https://mozilla.github.io/firefox-browser-architecture/experiments/2017-09-21-rust-on-android.html)
-
-    - Post-processing GUI window for rotating images, false color, histogram
-      equalization, telemetry bands, etc.
-
-    - Implement false color [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
-
-    - Implement a map overlay, see [APTDecoder.jl](https://github.com/Alexander-Barth/APTDecoder.jl)
 
     - Improve syncing performance. Make it faster and more resilent to noise,
         maybe working with the mean and variance?. Especially for Raspberry Pi.
