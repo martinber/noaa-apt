@@ -81,17 +81,21 @@ pub fn draw_map(
         // position because of the cyclic nature of sin(), cos(), etc.
         let c = geo::distance(latlon, start_latlon).max(-PI/3.).min(PI/3.);
 
-        let a = (B.cos() * c.tan()).atan();
-        let b = (B.sin() * c.sin()).asin();
+        let C = PI/2. + settings.yaw;
+
+        let b = (c.sin() * B.sin() / C.sin()).asin();
+
+        let a = 2. * ( ((c-b)/2.).tan() * ((C+B)/2.).sin() / ((C-B)/2.).sin() ).atan();
 
         let x = -b / x_res;
 
         // Add the yaw correction value. I should be calculating sin(yaw) * x
         // but yaw is always a small value.
-        let y = a / y_res + settings.yaw * x;
+        let y = a / y_res;
 
         (x, y)
     };
+    println!("{:?}", settings.yaw);
 
     // Draw line function
 
