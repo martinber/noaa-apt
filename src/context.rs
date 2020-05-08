@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use log::debug;
 
+use crate::decode::PX_PER_ROW;
 use crate::dsp::{Signal, Rate};
 use crate::err;
-use crate::decode::PX_PER_ROW;
 use crate::wav;
 
 
@@ -72,9 +72,7 @@ struct StepMetadata {
     rate: Option<Rate>,
 }
 
-/// Keep track of settings and keep track of progress of the process.
-///
-/// - Keep track of the settings.
+/// Keeps track of progress of the decoding.
 ///
 /// - Notify the UI about the current progress. Some functions notify the
 ///     `Context` about the progress (`Context.status()`) and the `Context`
@@ -84,11 +82,11 @@ struct StepMetadata {
 ///     debug every step of the decode by storing the samples as a WAV file.
 ///
 /// Meanwhile in the future maybe instead of saving the samples on WAV files I
-/// can plot them on the GUI. Also I don't want clutter every function on the
-/// `dsp` and `noaa_apt` modules with code for WAV export.
+/// can plot them on the GUI. I did this because I don't want clutter every
+/// function on the `dsp` and `noaa_apt` modules with code for WAV export.
 ///
-/// So every interesting function (on the `dsp` or `noaa_apt` module) should get
-/// an instance of `Context`, and send to it results of each step
+/// So every interesting function (on the `dsp`, `decode` or `noaa_apt` module)
+/// should get an instance of `Context`, and send to it results of each step
 /// (`Context.step()`). Then the `Context` will save them as WAV or do nothing
 /// depending on the user's settings.
 ///

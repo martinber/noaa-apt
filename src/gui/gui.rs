@@ -27,16 +27,16 @@ use std::env;
 use std::path::Path;
 
 use gio::prelude::*;
-use gtk::prelude::*;
 use gtk::Builder;
+use gtk::prelude::*;
 use log::info;
 
 use crate::config;
+use super::misc;
 use super::state::{
     GuiState, borrow_state_mut, borrow_state, set_state,
     Widgets, borrow_widgets, set_widgets
 };
-use super::misc;
 use super::work;
 
 

@@ -1,11 +1,14 @@
 //! Functions to decode, process, resample, etc.
+//!
+//! These functions are called when the user presses the most important buttons
+//! (decode, resample, process, save, etc.).
 
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use chrono::prelude::*;
 use chrono::offset::TimeZone;
+use chrono::prelude::*;
 use gio::prelude::*;
 use gtk::prelude::*;
 use log::error;

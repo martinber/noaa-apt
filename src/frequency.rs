@@ -18,13 +18,13 @@
 
 use std::f32::consts::PI;
 use std::ops::Add;
-use std::ops::Sub;
-use std::ops::Mul;
-use std::ops::Div;
 use std::ops::AddAssign;
-use std::ops::SubAssign;
-use std::ops::MulAssign;
+use std::ops::Div;
 use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -38,7 +38,7 @@ pub struct Freq {
 /// radians per second, not as Hertz. When resampling, the frequencies measured
 /// as Hertz stay the same, but measured as radians per second change.
 ///
-/// Usefil for unit conversion
+/// Useful for unit conversion
 ///
 /// - `Freq::hertz()` and `Freq.get_hertz()`: On discrete systems it
 ///   doesn't make much sense to talk about frequency on terms of Hertz because

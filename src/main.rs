@@ -152,7 +152,7 @@ fn inner_main() -> err::Result<()> {
 /// Application entry point.
 ///
 /// Logs errors and exits.
-fn main() -> () {
+fn main() {
 
     std::process::exit(match inner_main() {
         Ok(_) => 0,

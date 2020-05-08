@@ -1,9 +1,17 @@
 //! Code related to managing the state of the GUI.
 //!
-//! This includes a widget list and a state struct.
+//! This includes a widget list and a state struct. See more info on `gui.rs`
+//! documentation.
+//!
+//! Use the functions below when accesing the widget list and state struct. Only
+//! available from the GUI thread. Both are wrapped on Option because it's None
+//! before building the GUI.
+//!
+//! The widget list is wrapped on RefCell because I need mutable references when
+//! building the GUI. The state is also wrapped on RefCell to modify the state
+//! during runtime.
 
 use std::cell::RefCell;
-use std::path::Path;
 
 use gtk::prelude::*;
 
@@ -14,9 +22,6 @@ use crate::noaa_apt::Image;
 
 // Stores the Widgets.
 //
-// Use the functions below when accesing it. Only available from the GUI thread.
-// Wrapped on Option because it's None before building the GUI.
-// Wrapped on RefCell because I need mutable references when building the GUI.
 thread_local!(static GLOBAL_WIDGETS: RefCell<Option<Widgets>> = RefCell::new(None));
 
 // Stores the GuiState.

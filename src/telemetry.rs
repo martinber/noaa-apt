@@ -3,9 +3,9 @@
 use log::{debug, info, warn};
 
 use crate::context::{Context, Step};
+use crate::decode::PX_PER_ROW;
 use crate::dsp::Signal;
 use crate::err;
-use crate::decode::PX_PER_ROW;
 
 
 /// Determines if working channel A or B.

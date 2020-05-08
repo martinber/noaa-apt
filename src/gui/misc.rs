@@ -1,8 +1,8 @@
-//! Some helper functions.
+//! Some helper functions for GUI code.
 
+use gdk_pixbuf::InterpType::Bilinear;
 use gio::prelude::*;
 use gtk::prelude::*;
-use gdk_pixbuf::InterpType::Bilinear;
 use log::error;
 
 use crate::err;

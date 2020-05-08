@@ -227,7 +227,7 @@ Unit tests are located on the bottom of every module.
 cargo test
 ```
 
-There is an additional test that needs a [N2YO.com](https://www.n2yo.com)` API
+There is an additional test that needs a [N2YO.com](https://www.n2yo.com) API
 key.
 
 ```

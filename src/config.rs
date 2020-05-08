@@ -1,5 +1,8 @@
-//! Manages configurations from commandline and settings file
-
+//! Manages configurations from commandline and settings file.
+//!
+//! Does a lot of work to determine from where to get information. For example
+//! determiners if using custom TLE or not, if using the date from the timestamp
+//! or from the commandline, etc.
 
 use std::fs::File;
 use std::io::prelude::*; // For std::fs::File.read_to_string()
@@ -16,7 +19,6 @@ const SETTINGS_VERSION: u32 = 2;
 
 
 /// Returns a PathBuf of the requested resource file.
-///
 ///
 /// Expands the path using the resources directory given at compile time. For
 /// example use `res_path!("shapefiles", "lakes.shp");` to get
@@ -579,9 +581,6 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
     // Input filename not set, launch GUI
     } else {
-
         return (check_updates, verbosity, Mode::Gui { settings } );
-
     }
-
 }

@@ -1,16 +1,19 @@
-/// Functions to read shapefiles and draw maps.
+/// Code to read shapefiles and draw the map overlay.
 
 use std::f64::consts::PI;
 
+use image::Pixel;
 use line_drawing::XiaolinWu;
 use log::info;
-use image::Pixel;
 
 use crate::err;
 use crate::geo;
 use crate::noaa_apt::{SatName, RefTime, Image, MapSettings};
 
+
+/// Draws the map overlay mutating the image.
 #[allow(non_snake_case)]
+#[allow(clippy::many_single_char_names)]
 pub fn draw_map(
     img: &mut Image,
     ref_time: RefTime,
@@ -139,7 +142,7 @@ pub fn draw_map(
     // Draw shapefiles
 
     let filename = res_path!("shapefiles", "states.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
         err::Error::Internal(format!("Could not load {:?}", filename))
     })?;
     for result in reader.iter_shapes_as::<shapefile::Polyline>() {
@@ -159,7 +162,7 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "countries.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
         err::Error::Internal(format!("Could not load {:?}", filename))
     })?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
@@ -184,7 +187,7 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "lakes.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|e| {
+    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
         err::Error::Internal(format!("Could not load {:?}", filename))
     })?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
