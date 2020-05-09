@@ -19,10 +19,10 @@ The available documentation is:
 - Everything on this website, built from the `/docs` folder on the repository.
 
 - Rustdoc documentation, generated from docstrings, built using `cargo doc
-  --document-private-items` and available on `/target/doc/noaa-apt/index.html`
+  --document-private-items --open`
 
 - Also there are a lot of comments on the code because I tend to forget
-  everything quite fast.
+  how it works quite fast.
 
 ## Code style
 
@@ -79,10 +79,12 @@ Notes:
 
 - Important:
 
-    - Look for defaults for yaw and scales?.  See if yaw problems are caused by
+    - Look for defaults for yaw and scales?. See if yaw problems are caused by
         az_ref?. Ask someone.
 
     - Histogram equalization, independent for each channel.
+
+    - Better filenames on config file.
 
 - Someday:
 

@@ -29,11 +29,12 @@ program.
     noaa-apt
     ```
 
-- On GNU/Linux, if you extracted the `.zip` file, open a terminal and run it
-    indicating where it was saved. E.g:
+- On GNU/Linux, if you extracted the `.zip` file, `cd` to the directory and run
+    it. E.g:
 
     ```
-    ~/Desktop/folder/noaa-apt
+    cd ~/Desktop/folder/
+    ./noaa-apt
     ```
 
 ### Terminal
@@ -55,11 +56,12 @@ input filename as an option.
     noaa-apt input.wav -o output.png
     ```
 
-- On GNU/Linux, if you extracted the `.zip` file, open a terminal and run it
-    indicating where it was saved. E.g:
+- On GNU/Linux, if you extracted the `.zip` file, `cd` to the directory and run
+    it. E.g:
 
     ```
-    ~/Desktop/folder/noaa-apt input.wav -o output.png
+    cd ~/Desktop/folder/
+    ./noaa-apt input.wav -o output.png
     ```
 
 See below for more command-line options.
@@ -67,30 +69,37 @@ See below for more command-line options.
 ## Program usage
 
 Takes a recorded WAV file (from GQRX, SDR#, etc.) and decodes the raw image.
-Later you can rotate the image and adjust the contrast with something like GIMP
-or Photoshop.
-
 Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 When loading audio files with more than one channel (stereo), only the first one
 is used.
 
-When using a Raspberry Pi, I recommend the "fast" profile, you can enable it
-using `-p fast` or editing the
-[configuration file](./usage.html#configuration-file).
-
 ### GUI
 
-On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
-useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
-requires a specific sample rate. If resampling, the modification timestamp
-should be preserved correctly.
+The program has three steps: Decoding, Processing and Saving:
 
-On _Tools > Timestamp WAV_ you can change the modification date and time present
-on the metadata of a file. Useful when you want to decode a WAV file on
-[WXtoIMG] and you need to change the timestamp to fix the map overlay. You can
-load a timestamp from another file in the case you want to copy the timestamp
-from one file to another. Otherwise just select time, date and write the
-timestamp to your WAV recording.
+- First, load a WAV file and press the *Decode* button. You will see the
+    progress on a bar below.
+
+- Then, move to the *Processing* tab. Try pressing the *Process* button right
+    away to see the image. Now you can play with the settings and press the
+    *Process* button as many times as you like until you are happy with the
+    result. See below for a better explanation of the settings available here.
+
+- Finally, go to the *Save* tab to write the image to a file.
+
+There are also two optional *tools*:
+
+- On _Tools > Resample WAV_ you can resample a WAV into another WAV, this is
+    useful if you want to try a program like [WXtoIMG] or [atp-dec/apt-dec] that
+    requires a specific sample rate. If resampling, the modification timestamp
+    should be preserved correctly.
+
+- On _Tools > Timestamp WAV_ you can change the modification date and time present
+    on the metadata of a file. Useful when you want to decode a WAV file on
+    [WXtoIMG] and you need to change the timestamp to fix the map overlay. You
+    can load a timestamp from another file in the case you want to copy the
+    timestamp from one file to another. Otherwise just select time, date and
+    write the timestamp to your WAV recording.
 
 ![GUI]({{ site.baseurl }}/images/gui.png)
 
@@ -107,9 +116,47 @@ Positional arguments:
 
 Optional arguments:
   -h,--help             Show this help message and exit
+  -o,--output FILENAME  Set output path. When decoding images the default is
+                        './output.png', when resampling the default is
+                        './output.wav'.
   -v,--version          Show version and quit.
   -d,--debug            Print debugging messages.
   -q,--quiet            Don't print info messages.
+  -r,--resample SAMPLE_RATE
+                        Resample WAV file to a given sample rate, no APT image
+                        will be decoded.
+  --no-sync             Disable syncing, useful when the sync frames are noisy
+                        and the syncing attempts do more harm than good.
+  -c,--contrast METHOD  Contrast adjustment method for decode. Possible values:
+                        "98_percent" (default), "telemetry" or "disable".
+  -s,--sat SATELLITE    Enable orbit calculations and indicate satellite name.
+                        Possible values "noaa_15", "noaa_18" or "noaa_19". If
+                        no --tle was provided and the current cached TLE is
+                        older than a week, a new weather.txt TLE from
+                        celestrak.com will be downloaded and cached.
+  -m,--map MAP_MODE     Enable map overlay, a --sat must be provided. Possible
+                        values: "yes" or "no".
+  --map-yaw YAW         Yaw correction for map overlay in degrees. Default: 0.
+  --map-hscale HSCALE   Horizontal map scale correction for map overlay.
+                        Default: 1.
+  --map-vscale VSCALE   Vertical map scale correction for map overlay. Default:
+                        1.
+  -R,--rotate METHOD    Rotate image, useful for South to North passes where
+                        the raw image is received upside-down. Possible values:
+                        "auto", "yes", "no" (default). If using "auto", a --sat
+                        must be provided. In that case the program uses orbit
+                        calculations and reception time to determine if the
+                        pass was South to North.
+  -t,--start-time START_TIME
+                        Provide recording start time, used for orbit
+                        calculations. Use RFC 3339 format which includes date,
+                        time and timezone, e.g. "1996-12-19T16:39:57-08:00". If
+                        this option is not provided, it will be inferred from
+                        the filename or from the file modification timestamp.
+  -T,--tle TLE          Load TLE from given path. Very useful when decoding old
+                        images and if you have a TLE from around that date.
+  -p,--profile PROFILE  Profile to use, values loaded from settings file.
+                        Possible values: "standard", "fast" or "slow".
   --wav-steps           Export a WAV for every step of the decoding process for
                         debugging, the files will be located on the current
                         folder, named {number}_{description}.wav
@@ -118,22 +165,6 @@ Optional arguments:
                         the resampling step. Very expensive operation, can take
                         several GiB of both RAM and disk. --wav-steps should be
                         set.
-  --no-sync             Disable syncing, useful when the sync frames are noisy
-                        and the syncing attempts do more harm than good.
-  -c,--contrast CONTRAST
-                        Contrast adjustment method for decode. Possible values:
-                        "98_percent", "telemetry" or "disable". 98 Percent used
-                        by default.
-  --rotate-image        Rotate the image 180 degrees, useful when the satellite had an
-                        ascending pass (South to North) and the image appears upside down.
-  -p,--profile PROFILE  Profile to use, values loaded from settings file.
-                        Possible values: "standard", "fast" or "slow".
-  -o,--output FILENAME  Set output path. When decoding images the default is
-                        './output.png', when resampling the default is
-                        './output.wav'.
-  -r,--resample SAMPLE_RATE
-                        Resample WAV file to a given sample rate, no APT image
-                        will be decoded.
 ```
 
 If resampling, the modification timestamp should be preserved correctly.
@@ -150,20 +181,6 @@ GNU/Linux:
 
 ## Processing
 
-TODO:
-
-https://web.archive.org/web/*/https://www.celestrak.com/NORAD/elements/weather.txt
-
-## Advanced settings
-
-### Disable syncing
-
-The program aligns the image to sync frames (the black and white stripes),
-disabling can help with some noisy images, but the resulting image has some
-slant. See also [Troubleshooting](./usage.html#troubleshooting).
-
-![Comparison between synced and not synced image]({{ site.baseurl }}/images/syncing.jpg)
-
 ### Contrast adjustment
 
 You can choose between three contrast adjustment methods:
@@ -179,6 +196,104 @@ You can choose between three contrast adjustment methods:
     shades of grey that go from black to white. This method is better than "98
     percent" but can fail on noisy images.
 
+### Rotate image
+
+These satellites have polar orbits, so sometimes you see them go from north to
+south and sometimes from south to north. The program will try to guess the
+correct orientation from the satellite position at the recording time, be sure
+to select the correct satellite. If this fails, you can manually set to rotate
+the image or not.
+
+### Satellite prediction
+
+The program needs to calculate the satellite position at the recording time to
+draw accurate map overlays. The following information is used:
+
+- Satellite name: NOAA 15, 18 or 19
+
+- TLE or Keplerian elements: This is a file with information about the orbit of
+    satellites. Orbit information for NOAA satellites is usually taken from a
+    TLE file named `weather.txt`, and it is important to use a TLE file with a
+    date close (a few months) to the recording time to get accurate predictions.
+    This program automatically downloads a new TLE file from
+    [celestrak.com](https://www.celestrak.com/NORAD/elements/weather.txt) once a
+    week, so if the WAV recording is recent you don't wave to do anything. But
+    if you are working with a reception from years ago, be sure to use an
+    [historic `weather.txt`](https://web.archive.org/web/*/https://www.celestrak.com/NORAD/elements/weather.txt)
+    file as a custom TLE.
+
+- Recording time: You can provide the recording start or end time.
+    This program will try to guess it automatically, take a look at the
+    [recording time guessing section](./usage.html#recording-time-guessing).
+
+### Map overlay
+
+Limits of countries/states/provinces/lakes can be drawn over the image according
+to the satellite position prediction. Line colors can be set from the GUI or
+from the configuration file. You can disable some lines by setting the color to
+completely transparent.
+
+Currently I'm unable to make it completely accurate (see the relevant issue on
+the GitHub repository), so you will have to play around with some settings:
+
+- Make sure to select the correct satellite (NOAA 15, 18 or 19).
+
+- Change the recording time and date slightly to move the map overlay up and
+    down.
+
+- Change the *Yaw correction* setting to rotate the map a bit.
+
+- Change the horizontal and vertical scale if necessary.
+
+## Advanced settings
+
+### Disable syncing
+
+The program aligns the image to sync frames (the black and white stripes),
+disabling can help with some noisy images, but the resulting image has some
+slant. See also [Troubleshooting](./usage.html#troubleshooting).
+
+![Comparison between synced and not synced image]({{ site.baseurl }}/images/syncing.jpg)
+
+### Configuration file
+
+The first time you open noaa-apt, a default configuration file will be created
+on `~/.config/noaa-apt/settings.toml` or
+`C:\Users\[USER]\AppData\Roaming\noaa-apt\settings.toml` depending on your
+operating system.
+
+There you can change some advanced settings, be sure to check it if you plan to
+use noaa-apt for automatic image reception. [Here you can see the default
+configuration file](./default_settings.toml).
+
+### Profile
+
+The profile can be set using a commandline option, or you can change the default
+profile by editing the [configuration file](./usage.html#configuration-file).
+Different profiles use different filters and sample rates, as a compromise
+between image quality and decoding speed.
+On Raspberry Pi I recommend using the "fast" profile. If you are having noisy
+images you can try the "slow" profile once just in case, but the default
+"standard" profile should always work fine.
+
+### Recording time guessing
+
+The program tries to guess the exact time the recording was made. Three methods
+are tried in order:
+
+- Priority is given to the date and time provided manually by the user, it can
+    be done from the GUI or from the command-line.
+
+- If no time and date was given, the program looks at the WAV filename if it has
+    a known format (e.g. `gqrx_20201231_235959_...wav`). Add more filename
+    formats in the configuration file if necessary.
+
+- Otherwise, the file modification timestamp will be used. This is not very
+    precise and it tends to change unexpectedly when editing the WAV file.
+
+It is important to provide an exact recording time, if there is a difference of
+at least a few seconds, the map overlay will be placed at the wrong place.
+
 ### Export WAV steps
 
 If enabled, the program will save lots of WAV files, one for each step done on
@@ -190,37 +305,13 @@ Exporting the "resample filtered" is a very expensive operation, can take
 several GiB of both RAM and disk, so this step is not exported by default and
 has to be enabled separately.
 
-### Profile
-
-Only available as a commandline option, but you can change the default profile
-by editing the [configuration file](./usage.html#configuration-file). On
-Raspberry Pi I recommend using the "fast" profile. If you are having noisy
-images you can try the "slow" profile once just in case, but the "standard"
-profile should always work fine.
-
-### Configuration file
-
-The first time you open noaa-apt, a default configuration file will be created
-on `~/.config/noaa-apt/settings.toml` or
-`C:\Users\[USER]\AppData\Roaming\noaa-apt\settings.toml` depending on your
-operating system.
-
-There you can disable the update check, select the default profile to use (fast,
-standard or slow), or edit those profiles.
 
 ## Troubleshooting
 
 ### Problems with noaa-apt
 
 If the program crashes or you want more information, run noaa-apt with console
-output, see above.
-
-### Upside down images
-
-These satellites have polar orbits, so sometimes you see them go from north to
-south and sometimes from south to north. If the satellite went from south to
-north you should rotate the image by checking the "Rotate image" checkbox in
-"Advanced settings".
+output, see above. Anyways, please contact me so I can fix it.
 
 ### Bad contrast, dark images
 
@@ -246,15 +337,15 @@ visible to infrared and went from a dark to a bright image.
 
 ### Syncing problems
 
-This program starts a new line when it receives a sync frame (those seven white
-and black stripes), works well if the signal has clear sync frames but can
-produce horizontal lines on some images.
+This program starts a new line when it sees a sync frame (those seven white and
+black stripes), works well if the signal has clear sync frames but can produce
+horizontal lines on some images.
 
 You can disable the syncing (on GUI there is a checkbox, for commandline the
 option is `--no-sync`). The image should have a
 [smooth slant](./usage.html#disable-syncing) and you can manually edit and
-straighten the image. If without syncing the image looks worse, you have missing
-samples, see below.
+straighten the image using GIMP. If without syncing the image looks worse, you
+have missing samples, see below.
 
 ![Example of syncing problems]({{ site.baseurl }}/images/disable_sync.jpg)
 

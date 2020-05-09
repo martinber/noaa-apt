@@ -13,6 +13,10 @@ layout: landing
 					<img src="images/index_sidebar.jpg" alt="Example image"/>
 					Example image of Argentina, better antennas yield better results.
 				</section>
+				<section>
+					<img src="images/index_sidebar_2.jpg" alt="Example image"/>
+					Another image with a map overlay drawn over it.
+				</section>
 			</div>
 
 		<div id="content" class="8u skel-cell-important">
@@ -53,15 +57,7 @@ layout: landing
 				<a href="{{ site.baseurl }}/guide.html#wxtoimg-guide">
 					steps required to decode WAV files on it
 				</a>
-				are not that obvious:
-			</p>
-
-			<p>
-				<em>WXtoIMG</em> requires WAV files with a sample rate of 11025Hz, also
-				needs correct file modification timestamps for post processing. For
-				convenience, you can use <em>noaa-apt</em> for resampling your files to
-				any sample rate preserving the timestamps. <em>noaa-apt</em> also
-				includes a tool that allows to set arbitrary timestamps on your files
+				are not that obvious.
 			</p>
 
 			<p>
@@ -77,9 +73,11 @@ layout: landing
 
 			<p>
 				<em>WXtoIMG</em> has lots of features you might want that
-				<em>noaa-apt</em> does not have, for example false-color images, live
-				decoding or map overlay. Anyways, the quality of the black and white
-				image should be the same.
+				<em>noaa-apt</em> does not have, for example false-color images and live
+				decoding. Anyways, the quality of the black and white image should be
+				the same. Currently, my program has problems doing accurate map
+				overlays, but you can get nice results if you play a bit with some
+				settings.
 			</p>
 
 			<p>
@@ -97,7 +95,8 @@ layout: landing
 
 			<ul>
 				<li>Decode raw images from WAV files.</li>
-				<li>Really easy to use GUI.</li>
+				<li>Add map overlays with countries, states, provinces and lakes.</li>
+				<li>Really easy to use GUI (at least easier than most decoders).</li>
 				<li>You can disable syncing and export every step of the decoding
 					process, useful for corrupted recordings.</li>
 				<li>Telemetry band reading.</li>

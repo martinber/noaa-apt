@@ -1,4 +1,4 @@
-/// Code to read shapefiles and draw the map overlay.
+//! Code to read shapefiles and draw the map overlay.
 
 use std::f64::consts::PI;
 

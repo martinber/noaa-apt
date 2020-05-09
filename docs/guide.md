@@ -28,17 +28,18 @@ to use noaa-apt check the [Usage](./usage.html) page.
     colorized, probably by WXtoImg.
 
 - NOAA **images don't have map lines** (divisions between countries, states,
-    or coastlines). When you see on the internet images with lines, it means
-    that they used WXtoImg to draw them according to a map and calculations
-    about the position of the satellite when the image was taken.
+		or coastlines). When you see images with lines, it means that they used
+		noaa-apt or WXtoImg to draw them according to a map and calculations about
+		the position of the satellite when the image was taken.
 
 - The **images are upside down 50% of the time**, that's because the satellites
     sometimes go from south to north and sometimes fron north to south.
-    WXtoImg calculates the orbit of the satellites and rotates the image
-    accordingly, but noaa-apt doesn't do that.
+    noaa-apt and WXtoImg can calculate the orbit of the satellite and rotate
+    the image accordingly.
 
 - Images look **much better on daylight**, the satellites also send infrared
-    images but I recommend midday passes.
+    images at night but I recommend receiving passes when the sun is high in the
+    sky,
 
 - These satellites send images at realtime, line by line. Something like a
     1000x1 resolution video or like a flying
@@ -81,6 +82,8 @@ drivers](https://rtlsdr.org/start)
 so it can receive anything else. There are lots of variations and all of them
 have similar performance.
 
+![RTL-SDR and V-dipole antenna]({{ site.baseurl }}/images/sdr.jpg)
+
 ### Antenna
 
 The most simple antenna you can use is a
@@ -103,12 +106,13 @@ If you are going to build one yourself you need:
 
 - At least some connector for the coax cable, there are
     [lots of different connectors](https://dpdproductions.com/pages/connector-guide).
-    You need SMA female or MCX male because SDRs have a SMA male or MCX female
-    port. You can crimp the connectors yourself (you need a crimping tool) or
-    you can buy coax cables with connectors on both sides (and cut one side to
-    solder the antenna there). You can buy for example type N connectors and
-    then use adapters or pigtails (pigtails are short cables used as adapters,
-    they have different connectors on each side).
+    You need SMA female or MCX male because SDRs can have a SMA male or MCX
+    female port depending on the model. You can crimp the connectors yourself
+    (you need a crimping tool) or you can buy coax cables with connectors on
+    both sides (and cut one side to solder the antenna there). You can use type
+    N connectors instead of using SMA/MCX ports and then use adapters or
+    pigtails (pigtails are short cables used as adapters, they have different
+    connectors on each side).
 
 - The rods can be made of any conductive material, hollow or solid, one of them
     should be soldered to the inner conductor and the other one to the shield of
@@ -131,7 +135,7 @@ RTL-SDR dongle and the antenna and open GQRX/SDR#.
 </div>
 
 With SDR# or GQRX you can tune your SDR to any frequency and demodulate FM
-signals, try it with broadcast radio first.
+signals, try it with broadcast radio first (around 90MHz - 110MHz).
 
 NOAA satellites can be received several times a day. To track the satellites you
 can use for example gpredict (GNU/Linux) or Heavens-Above (online or Android).
@@ -149,9 +153,9 @@ depending on the satellite:
 
 - NOAA 19: 137.1MHz.
 
-When the satellite is passing start recording a WAV file, you should hear the
-sound of the demodulated FM signal. When finished open the WAV file on noaa-apt
-to decode the image.
+When the satellite starts to rise above the horizon start recording a WAV file,
+you should hear the sound of the demodulated FM signal. When finished open the
+WAV file on noaa-apt to decode the image.
 
 If using GNU/Linux, here you can see a screenshot of GQRX, things to note:
 
@@ -166,7 +170,7 @@ If using GNU/Linux, here you can see a screenshot of GQRX, things to note:
 
 Check this video for instructions on recording with SDR# on Windows, if using
 GQRX you can watch it too so you know what you should be seeing when the
-satellite is passing.
+satellite is passing. Both programs are similar.
 
 <div class="videoWrapper">
 <iframe src="https://www.youtube-nocookie.com/embed/j4begllwQls" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -185,7 +189,7 @@ make much difference.
 - AGC (Automatic Gain Control): off.
 
 - LNA gain: Max, but you can play with it and guess where it has the best
-    signal to noise ratio.
+    signal to noise ratio (i.e. where it sounds better).
 
 - No "Noise Blanker" or "Noise Reduction".
 
@@ -207,7 +211,7 @@ Download noaa-apt and load the WAV file.
 Once you receive your first images, you can try:
 
 - Decode your recordings using WXtoIMG instead. This program allows you to
-  overlay a computer generated map and to colorize your image.
+  colorize your image.
 
 - Set up an automated receiving station with
   [Auto137](https://gitlab.altillimity.com/altillimity/auto137) or similar
