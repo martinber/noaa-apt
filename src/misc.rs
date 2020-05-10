@@ -10,7 +10,7 @@ use log::{error, info, warn};
 use crate::config::Settings;
 use crate::dsp::{self, Signal};
 use crate::err;
-use crate::noaa_apt::RefTime;
+use crate::noaa_apt::{RefTime, SatName};
 
 
 /// Lookup table for numbers used in `bessel_i0()`
@@ -224,26 +224,174 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
     Ok(())
 }
 
+/// Parse filename to get recording time and satellite name.
+fn parse_filename(filename: &str, format: &str) -> Option<(RefTime, SatName)> {
+
+    fn skip(chars: &mut std::str::Chars, n: usize) {
+        for _ in 0..n {
+            chars.next();
+        }
+    }
+
+    fn closest_freq(references: &[(u32, SatName)], freq: u32) -> SatName {
+        let mut closest: (u32, SatName) = references[0].clone();
+        for r in references {
+            if (freq as i64 - r.0 as i64).abs() < (freq as i64 - closest.0 as i64).abs() {
+                closest = r.clone();
+            }
+        }
+        return closest.1;
+    }
+
+
+    let mut fname_chars = filename.chars();
+    let mut fmt_chars = format.chars();
+
+    let now = Utc::now();
+    let mut year: i32 = now.year();
+    let mut month: u32 = now.month();
+    let mut day: u32 = now.day();
+    let mut hour: u32 = now.hour();
+    let mut minute: u32 = now.minute();
+    let mut second: u32 = now.second();
+    let mut sat: SatName = SatName::Noaa19;
+
+    // Return None as soon as an inconsistency is detected between the filename
+    // and the format strings. If the format string ends without some kind of
+    // problem, maybe we were able to parse everything, in that case break from
+    // the loop.
+    loop {
+
+        match fmt_chars.next() {
+
+            None => {
+                // Format string ended
+                break;
+            },
+            Some('%') => {
+                match fmt_chars.next() {
+                    Some('Y') => {
+                        year = match fname_chars.as_str()[0..4].parse::<i32>() {
+                            Ok(y) => y,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 4);
+                    },
+                    Some('m') => {
+                        month = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(m) => m,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('d') => {
+                        day = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(d) => d,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('H') => {
+                        hour = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(h) => h,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('M') => {
+                        minute = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(m) => m,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('S') => {
+                        second = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(s) => s,
+                            _ => return None,
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('N') => {
+                        sat = match fname_chars.as_str()[0..2].parse::<u32>() {
+                            Ok(15) => SatName::Noaa15,
+                            Ok(18) => SatName::Noaa18,
+                            Ok(19) => SatName::Noaa19,
+                            _ => return None, // Exit entire function
+                        };
+                        skip(&mut fname_chars, 2);
+                    },
+                    Some('!') => {
+                        sat = match fname_chars.as_str()[0..9].parse::<u32>() {
+                            Ok(freq) => closest_freq(
+                                &[
+                                    (137620000, SatName::Noaa15),
+                                    (137912500, SatName::Noaa18),
+                                    (137100000, SatName::Noaa19),
+                                ], freq
+                            ),
+                            Err(_) => return None, // Exit entire function
+                        };
+                        skip(&mut fname_chars, 9);
+                    },
+                    Some(character) => {
+                        // Skip n characters
+                        match character.to_digit(10) {
+                            Some(n) => skip(&mut fname_chars, n as usize),
+                            None => return None, // Exit entire function
+                        }
+                    },
+                    None => {
+                        // Format string ended unexpectedly (with %)
+                        return None;
+                    }
+                }
+            },
+
+            Some(c) => {
+                if fname_chars.next() != Some(c) {
+                    return None;
+                }
+            }
+        }
+    }
+
+    let time = match Utc.ymd_opt(year, month, day).and_hms_opt(hour, minute, second) {
+        chrono::LocalResult::Single(t) => t,
+        _ => return None,
+    };
+
+    return Some((RefTime::Start(time), sat));
+}
+
 /// Infer recording time from filename and timestamp.
-pub fn infer_ref_time(settings: &Settings, path: &Path) ->
-    err::Result<RefTime>
+pub fn infer_time_sat(settings: &Settings, path: &Path) ->
+    err::Result<(RefTime, SatName)>
 {
     let filename: &str = path.file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(||
         err::Error::Internal("Could not get filename".to_string()))?;
     match settings.prefer_timestamps {
         true => {
-            return Ok(RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)));
+            return Ok((
+                RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+                SatName::Noaa19
+            ));
         },
         false => {
             let offset_seconds = (settings.filename_timezone * 3600.) as i32;
             let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
+            // Try every supported format
             for format in settings.filename_formats.iter() {
-                if let Ok(time) = timezone.datetime_from_str(filename, format) {
-                    return Ok(RefTime::Start(time.with_timezone(&Utc)));
+                if let Some(result) = parse_filename(filename, format) {
+                    return Ok(result);
                 }
             }
-            warn!("Could not parse date and time from filename, using timestamp");
-            return Ok(RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)));
+            warn!("Could not parse date and time from filename {}, using timestamp",
+                filename);
+            return Ok((
+                RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+                SatName::Noaa19
+            ));
         },
     }
 }
@@ -387,5 +535,94 @@ mod tests {
             assert!(max / 10000. > 1. - max_remainder);
             assert!(max / 10000. < 1. - min_remainder);
         }
+    }
+
+    #[test]
+    fn test_parse_filename() {
+
+        fn check_result(
+            result: Option<(RefTime, SatName)>,
+            exp_time: chrono::DateTime<chrono::Utc>,
+            exp_sat: SatName,
+        ) {
+            let time = match result.clone().unwrap().0 {
+                RefTime::Start(t) => t,
+                _ => panic!(),
+            };
+            let sat = result.unwrap().1;
+
+            assert!(time == exp_time);
+
+            use std::mem::discriminant;
+            assert!(discriminant(&sat) == discriminant(&exp_sat));
+        }
+
+        check_result(
+            parse_filename("gqrx_20181222_203941_137100000.wav",
+                           "gqrx_%Y%m%d_%H%M%S_%!.wav"),
+            Utc.ymd(2018, 12, 22).and_hms(20, 39, 41),
+            SatName::Noaa19,
+        );
+
+        check_result(
+            parse_filename("gqrx_20111001_111111_137600000.wav",
+                           "gqrx_%Y%m%d_%H%M%S_%!.wav"),
+            Utc.ymd(2011, 10, 1).and_hms(11, 11, 11),
+            SatName::Noaa15,
+        );
+        check_result(
+            parse_filename("NOAA15-20200325-060601.wav",
+                           "NOAA%N-%Y%m%d-%H%M%S.wav"),
+            Utc.ymd(2020, 03, 25).and_hms(6, 6, 1),
+            SatName::Noaa15,
+        );
+        check_result(
+            parse_filename("N1520200327073417.wav",
+                           "N%N%Y%m%d%H%M%S.wav"),
+            Utc.ymd(2020, 03, 27).and_hms(7, 34, 17),
+            SatName::Noaa15,
+        );
+        check_result(
+            parse_filename("2020-02-09-05-24-16-NOAA_19.wav",
+                           "%Y-%m-%d-%H-%M-%S-NOAA_%N.wav"),
+            Utc.ymd(2020, 02, 09).and_hms(05, 24, 16),
+            SatName::Noaa19,
+        );
+        check_result(
+            parse_filename("20200320-213957NOAA19El64.wav",
+                           "%Y%m%d-%H%M%SNOAA%NEl%2.wav"),
+            Utc.ymd(2020, 03, 20).and_hms(21, 39, 57),
+            SatName::Noaa19,
+        );
+        check_result(
+            parse_filename("SDRSharp_20200325_204556Z_137102578Hz_AF.wav",
+                           "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav"),
+            Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
+            SatName::Noaa19,
+        );
+
+        // Check that default satellite is NOAA19
+        check_result(
+            parse_filename("20200325_204556Z.wav",
+                           "%Y%m%d_%H%M%SZ.wav"),
+            Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
+            SatName::Noaa19,
+        );
+
+        // Check that invalid datetime returns None
+        assert!(parse_filename("2020-03-99_20-55-10.wav",
+                               "%Y-%m-%d_%H-%M-%S.wav").is_none());
+        assert!(parse_filename("2020-03-10_20-72-10.wav",
+                               "%Y-%m-%d_%H-%M-%S.wav").is_none());
+
+        // Check invalid satellite name
+        assert!(parse_filename("2020-03-10_20-72-10_NOAA80.wav",
+                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav").is_none());
+        assert!(parse_filename("2020-03-10_20-72-10_NOAA8.wav",
+                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav").is_none());
+
+        // Check invalid format option
+        assert!(parse_filename("2020-03-10_20-72-10_NOAA80.wav",
+                               "%Y-%m-%d_%H-%M-%S_NOAA%Z.wav").is_none());
     }
 }

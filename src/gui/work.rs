@@ -59,8 +59,8 @@ pub fn decode() {
 
                         let settings = borrow_state(|state| state.settings.clone());
 
-                        match crate::misc::infer_ref_time(&settings, &input_filename) {
-                            Ok(RefTime::Start(time)) => {
+                        match crate::misc::infer_time_sat(&settings, &input_filename) {
+                            Ok((RefTime::Start(time), sat_name)) => {
                                 widgets.p_ref_time_combo.set_active_id(Some("start"));
                                 let local_time = time.with_timezone(&chrono::Local);
                                 // GTK counts months from 0 to 11. Years and days are fine
@@ -70,8 +70,17 @@ pub fn decode() {
                                 widgets.p_hs_spinner.set_value(local_time.hour() as f64);
                                 widgets.p_min_spinner.set_value(local_time.minute() as f64);
                                 widgets.p_sec_spinner.set_value(local_time.second() as f64);
+
+                                match sat_name {
+                                    SatName::Noaa15 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_15")),
+                                    SatName::Noaa18 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_18")),
+                                    SatName::Noaa19 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_19")),
+                                };
                             },
-                            Ok(RefTime::End(time)) => {
+                            Ok((RefTime::End(time), sat_name)) => {
                                 widgets.p_ref_time_combo.set_active_id(Some("end"));
                                 let local_time = time.with_timezone(&chrono::Local);
                                 // GTK counts months from 0 to 11. Years and days are fine
@@ -81,11 +90,20 @@ pub fn decode() {
                                 widgets.p_hs_spinner.set_value(local_time.hour() as f64);
                                 widgets.p_min_spinner.set_value(local_time.minute() as f64);
                                 widgets.p_sec_spinner.set_value(local_time.second() as f64);
+
+                                match sat_name {
+                                    SatName::Noaa15 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_15")),
+                                    SatName::Noaa18 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_18")),
+                                    SatName::Noaa19 => widgets.p_satellite_combo
+                                        .set_active_id(Some("noaa_19")),
+                                };
                             },
                             Err(e) => {
                                 misc::show_info(gtk::MessageType::Info,
-                                    format!("Could not infer recording start date and \
-                                    time. Set it manually: {}", e).as_str()
+                                    format!("Could not infer recording time and
+                                        satellite. Set them manually: {}", e).as_str()
                                 );
                             }
                         };

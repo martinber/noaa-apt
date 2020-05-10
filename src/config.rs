@@ -317,15 +317,13 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             .metavar("METHOD");
         parser.refer(&mut arg_sat)
             .add_option(&["-s", "--sat"], argparse::StoreOption,
-            "Enable orbit calculations and indicate satellite name. Possible \
-            values \"noaa_15\", \"noaa_18\" or \"noaa_19\". If no --tle was \
-            provided and the current cached TLE is older than a week, a new \
-            weather.txt TLE from celestrak.com will be downloaded and cached.")
+            "Indicate satellite name. Possible values \"noaa_15\", \"noaa_18\" \
+            or \"noaa_19\". If no --sat is provided, it will be guessed from \
+            the filename, otherwise it will be NOAA 19")
             .metavar("SATELLITE");
         parser.refer(&mut arg_map)
             .add_option(&["-m", "--map"], argparse::StoreOption,
-            "Enable map overlay, a --sat must be provided. Possible values: \
-            \"yes\" or \"no\".")
+            "Enable map overlay. Possible values: \"yes\" or \"no\".")
             .metavar("MAP_MODE");
         parser.refer(&mut arg_yaw)
             .add_option(&["--map-yaw"], argparse::StoreOption,
@@ -343,9 +341,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             .add_option(&["-R", "--rotate"], argparse::StoreOption,
             "Rotate image, useful for South to North passes where the raw image \
             is received upside-down. Possible values: \"auto\", \"yes\", \
-            \"no\" (default). If using \"auto\", a --sat must be provided. In \
-            that case the program uses orbit calculations and reception time to \
-            determine if the pass was South to North.")
+            \"no\" (default). If using \"auto\", the program uses orbit \
+            calculations and reception time to determine if the pass was South \
+            to North.")
             .metavar("METHOD");
         parser.refer(&mut arg_start_time)
             .add_option(&["-t", "--start-time"], argparse::StoreOption,
@@ -357,7 +355,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         parser.refer(&mut arg_tle_filename)
             .add_option(&["-T", "--tle"], argparse::StoreOption,
             "Load TLE from given path. Very useful when decoding old images and \
-            if you have a TLE from around that date.");
+            if you have a TLE from around that date. If no --tle is provided \
+            and the current cached TLE is older than a week, a new weather.txt \
+            TLE from celestrak.com will be downloaded and cached.");
         parser.refer(&mut arg_profile)
             .add_option(&["-p", "--profile"], argparse::StoreOption,
             "Profile to use, values loaded from settings file. Possible values: \
@@ -474,109 +474,106 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 rotate = Rotate::Yes;
             }
 
-            // A satellite name was provided
-            if let Some(_) = arg_sat {
-
-                let sat_name: SatName = match arg_sat.as_deref() {
-                    Some("noaa_15") => SatName::Noaa15,
-                    Some("noaa_18") => SatName::Noaa18,
-                    Some("noaa_19") => SatName::Noaa19,
-                    Some(_) => {
-                        println!("Invalid satellite name");
-                        std::process::exit(0);
-                    },
-                    None => unreachable!(),
-                };
-
-                let custom_tle: Option<String> = match arg_tle_filename {
-                    Some(s) => {
-                        let path = PathBuf::from(s);
-                        let mut file = File::open(path).unwrap_or_else(|e| {
-                            println!("Could not open custom TLE file: {}", e);
-                            std::process::exit(0);
-                        });
-                        let mut tle = String::new();
-                        if let Err(e) = file.read_to_string(&mut tle) {
-                            println!("Could not read custom TLE file: {}", e);
-                            std::process::exit(0);
-                        }
-
-                        Some(tle)
-                    },
-                    None => None,
-                };
-
-                let ref_time: RefTime = match arg_start_time {
-                    Some(s) => {
-                        RefTime::Start(
-                            chrono::DateTime::parse_from_rfc3339(&s)
-                                .unwrap_or_else(|e| {
-                                    println!("Could not parse date and time given: {}", e);
-                                    std::process::exit(0);
-                                })
-                            .into()
-                        )
-                    },
-                    None => {
-                        misc::infer_ref_time(&settings, &input_filename)
-                            .unwrap_or_else(|e| {
-                                println!("Could not infer recording date and \
-                                         time from file: {}", e);
-                                std::process::exit(0);
-                            })
-                    }
-                };
-
-                let draw_map = match arg_map.as_deref() {
-                    Some("yes") => Some(MapSettings {
-                        yaw: arg_yaw.unwrap_or(0.),
-                        hscale: arg_hscale.unwrap_or(1.),
-                        vscale: arg_vscale.unwrap_or(1.),
-                        countries_color: settings.default_countries_color,
-                        states_color: settings.default_states_color,
-                        lakes_color: settings.default_lakes_color,
-                    }),
-                    Some("no") => None,
-                    Some(_) => {
-                        println!("Invalid map argument");
-                        std::process::exit(0);
-                    },
-                    None => None,
-                };
-
-                let orbit_settings = OrbitSettings {
-                    sat_name,
-                    custom_tle,
-                    ref_time,
-                    draw_map,
-                };
-
-                return (check_updates, verbosity, Mode::Decode {
-                    settings,
-                    input_filename,
-                    output_filename: arg_output_filename.unwrap_or_else(
-                        || PathBuf::from("./output.wav")),
-                    sync: arg_sync,
-                    contrast_adjustment,
-                    rotate,
-                    orbit_settings: Some(orbit_settings),
-                });
-
-            // A satellite name was not provided
-            } else {
-
-                return (check_updates, verbosity, Mode::Decode {
-                    settings,
-                    input_filename,
-                    output_filename: arg_output_filename.unwrap_or_else(
-                        || PathBuf::from("./output.wav")),
-                    sync: arg_sync,
-                    contrast_adjustment,
-                    rotate,
-                    orbit_settings: None,
-                });
-
+            let mut sat_name: Option<SatName> = None;
+            let mut ref_time: Option<RefTime> = None;
+            match misc::infer_time_sat(&settings, &input_filename) {
+                Ok((time, sat)) => {
+                    sat_name = Some(sat);
+                    ref_time = Some(time);
+                },
+                Err(e) => println!(
+                    "Unable to determine satellite name and recording time \
+                    from filename: {}", e
+                ),
             }
+
+            sat_name = match arg_sat.as_deref() {
+                Some("noaa_15") => Some(SatName::Noaa15),
+                Some("noaa_18") => Some(SatName::Noaa18),
+                Some("noaa_19") => Some(SatName::Noaa19),
+                Some(_) => {
+                    println!("Invalid provided satellite name");
+                    std::process::exit(0);
+                },
+                None => unreachable!(),
+            };
+
+            let custom_tle: Option<String> = match arg_tle_filename {
+                Some(s) => {
+                    let path = PathBuf::from(s);
+                    let mut file = File::open(path).unwrap_or_else(|e| {
+                        println!("Could not open custom TLE file: {}", e);
+                        std::process::exit(0);
+                    });
+                    let mut tle = String::new();
+                    if let Err(e) = file.read_to_string(&mut tle) {
+                        println!("Could not read custom TLE file: {}", e);
+                        std::process::exit(0);
+                    }
+
+                    Some(tle)
+                },
+                None => None,
+            };
+
+            if let Some(s) = arg_start_time {
+                ref_time = Some(RefTime::Start(
+                    chrono::DateTime::parse_from_rfc3339(&s)
+                        .unwrap_or_else(|e| {
+                            println!("Could not parse date and time given: {}", e);
+                            std::process::exit(0);
+                        })
+                    .into()
+                ));
+            }
+
+            let draw_map = match arg_map.as_deref() {
+                Some("yes") => Some(MapSettings {
+                    yaw: arg_yaw.unwrap_or(0.),
+                    hscale: arg_hscale.unwrap_or(1.),
+                    vscale: arg_vscale.unwrap_or(1.),
+                    countries_color: settings.default_countries_color,
+                    states_color: settings.default_states_color,
+                    lakes_color: settings.default_lakes_color,
+                }),
+                Some("no") => None,
+                Some(_) => {
+                    println!("Invalid map argument");
+                    std::process::exit(0);
+                },
+                None => None,
+            };
+
+            let mut orbit_settings = None;
+            if sat_name.is_none() || ref_time.is_none() {
+                if let Rotate::Orbit = rotate {
+                    println!("Can't rotate automatically if no satellite and \
+                        time is provided");
+                    std::process::exit(0);
+                }
+                if draw_map.is_some() {
+                    println!("Can't draw map if no satellite and time is provided");
+                    std::process::exit(0);
+                }
+            } else {
+                orbit_settings = Some(OrbitSettings {
+                    sat_name: sat_name.unwrap(),
+                    custom_tle,
+                    ref_time: ref_time.unwrap(),
+                    draw_map,
+                });
+            }
+
+            return (check_updates, verbosity, Mode::Decode {
+                settings,
+                input_filename,
+                output_filename: arg_output_filename.unwrap_or_else(
+                    || PathBuf::from("./output.wav")),
+                sync: arg_sync,
+                contrast_adjustment,
+                rotate,
+                orbit_settings: orbit_settings,
+            });
         }
 
     // Input filename not set, launch GUI
