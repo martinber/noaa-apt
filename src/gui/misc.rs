@@ -122,7 +122,7 @@ where W: glib::object::IsA<gtk::Window>
 /// Uses the processed image if any, otherwise puts the noaa-apt logo.
 pub fn update_image() {
     borrow_widgets(|widgets| {
-        use image::ConvertBuffer;
+        use image::buffer::ConvertBuffer;
 
         let pixbuf = match borrow_state_mut(|state| state.processed_image.clone()) {
             Some(image) => {

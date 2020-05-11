@@ -135,7 +135,7 @@ pub fn process(
     let height = signal.len() as u32 / PX_PER_ROW;
 
     type LumaImage = image::ImageBuffer::<image::Luma<u8>, Vec<u8>>;
-    use image::ConvertBuffer;
+    use image::buffer::ConvertBuffer;
 
     let mut img: Image = LumaImage::from_vec(
             PX_PER_ROW, height, map(&signal, low, high))

@@ -225,9 +225,14 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
 }
 
 /// Parse filename to get recording time and satellite name.
-fn parse_filename(filename: &str, format: &str) -> Option<(RefTime, SatName)> {
+///
+/// Provide timezone to use.
+fn parse_filename(filename: &str,
+    format: &str,
+    timezone: impl chrono::offset::TimeZone
+) -> Option<(RefTime, SatName)> {
 
-    fn skip(chars: &mut std::str::Chars, n: usize) {
+    fn skip(chars: &mut std::str::Chars<'_>, n: usize) {
         for _ in 0..n {
             chars.next();
         }
@@ -247,7 +252,7 @@ fn parse_filename(filename: &str, format: &str) -> Option<(RefTime, SatName)> {
     let mut fname_chars = filename.chars();
     let mut fmt_chars = format.chars();
 
-    let now = Utc::now();
+    let now = Utc::now().with_timezone(&timezone);
     let mut year: i32 = now.year();
     let mut month: u32 = now.month();
     let mut day: u32 = now.day();
@@ -356,8 +361,8 @@ fn parse_filename(filename: &str, format: &str) -> Option<(RefTime, SatName)> {
         }
     }
 
-    let time = match Utc.ymd_opt(year, month, day).and_hms_opt(hour, minute, second) {
-        chrono::LocalResult::Single(t) => t,
+    let time = match timezone.ymd_opt(year, month, day).and_hms_opt(hour, minute, second) {
+        chrono::LocalResult::Single(t) => t.with_timezone(&Utc),
         _ => return None,
     };
 
@@ -382,7 +387,7 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) ->
             let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
             // Try every supported format
             for format in settings.filename_formats.iter() {
-                if let Some(result) = parse_filename(filename, format) {
+                if let Some(result) = parse_filename(filename, format, timezone) {
                     return Ok(result);
                 }
             }
@@ -559,44 +564,50 @@ mod tests {
 
         check_result(
             parse_filename("gqrx_20181222_203941_137100000.wav",
-                           "gqrx_%Y%m%d_%H%M%S_%!.wav"),
+                           "gqrx_%Y%m%d_%H%M%S_%!.wav", Utc),
             Utc.ymd(2018, 12, 22).and_hms(20, 39, 41),
             SatName::Noaa19,
         );
-
         check_result(
             parse_filename("gqrx_20111001_111111_137600000.wav",
-                           "gqrx_%Y%m%d_%H%M%S_%!.wav"),
-            Utc.ymd(2011, 10, 1).and_hms(11, 11, 11),
+                           "gqrx_%Y%m%d_%H%M%S_%!.wav",
+                           FixedOffset::east(3600)), // 1 hour
+            Utc.ymd(2011, 10, 1).and_hms(10, 11, 11),
             SatName::Noaa15,
         );
         check_result(
+            parse_filename("gqrx_20181222_203941_137100000.wav",
+                           "gqrx_%Y%m%d_%H%M%S_%!.wav", Utc),
+            Utc.ymd(2018, 12, 22).and_hms(20, 39, 41),
+            SatName::Noaa19,
+        );
+        check_result(
             parse_filename("NOAA15-20200325-060601.wav",
-                           "NOAA%N-%Y%m%d-%H%M%S.wav"),
+                           "NOAA%N-%Y%m%d-%H%M%S.wav", Utc),
             Utc.ymd(2020, 03, 25).and_hms(6, 6, 1),
             SatName::Noaa15,
         );
         check_result(
             parse_filename("N1520200327073417.wav",
-                           "N%N%Y%m%d%H%M%S.wav"),
+                           "N%N%Y%m%d%H%M%S.wav", Utc),
             Utc.ymd(2020, 03, 27).and_hms(7, 34, 17),
             SatName::Noaa15,
         );
         check_result(
             parse_filename("2020-02-09-05-24-16-NOAA_19.wav",
-                           "%Y-%m-%d-%H-%M-%S-NOAA_%N.wav"),
+                           "%Y-%m-%d-%H-%M-%S-NOAA_%N.wav", Utc),
             Utc.ymd(2020, 02, 09).and_hms(05, 24, 16),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("20200320-213957NOAA19El64.wav",
-                           "%Y%m%d-%H%M%SNOAA%NEl%2.wav"),
+                           "%Y%m%d-%H%M%SNOAA%NEl%2.wav", Utc),
             Utc.ymd(2020, 03, 20).and_hms(21, 39, 57),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("SDRSharp_20200325_204556Z_137102578Hz_AF.wav",
-                           "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav"),
+                           "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav", Utc),
             Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
             SatName::Noaa19,
         );
@@ -604,25 +615,25 @@ mod tests {
         // Check that default satellite is NOAA19
         check_result(
             parse_filename("20200325_204556Z.wav",
-                           "%Y%m%d_%H%M%SZ.wav"),
+                           "%Y%m%d_%H%M%SZ.wav", Utc),
             Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
             SatName::Noaa19,
         );
 
         // Check that invalid datetime returns None
         assert!(parse_filename("2020-03-99_20-55-10.wav",
-                               "%Y-%m-%d_%H-%M-%S.wav").is_none());
+                               "%Y-%m-%d_%H-%M-%S.wav", Utc).is_none());
         assert!(parse_filename("2020-03-10_20-72-10.wav",
-                               "%Y-%m-%d_%H-%M-%S.wav").is_none());
+                               "%Y-%m-%d_%H-%M-%S.wav", Utc).is_none());
 
         // Check invalid satellite name
         assert!(parse_filename("2020-03-10_20-72-10_NOAA80.wav",
-                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav").is_none());
+                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav", Utc).is_none());
         assert!(parse_filename("2020-03-10_20-72-10_NOAA8.wav",
-                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav").is_none());
+                               "%Y-%m-%d_%H-%M-%S_NOAA%N.wav", Utc).is_none());
 
         // Check invalid format option
         assert!(parse_filename("2020-03-10_20-72-10_NOAA80.wav",
-                               "%Y-%m-%d_%H-%M-%S_NOAA%Z.wav").is_none());
+                               "%Y-%m-%d_%H-%M-%S_NOAA%Z.wav", Utc).is_none());
     }
 }

@@ -495,7 +495,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                     println!("Invalid provided satellite name");
                     std::process::exit(0);
                 },
-                None => unreachable!(),
+                None => sat_name, // Keep previous value
             };
 
             let custom_tle: Option<String> = match arg_tle_filename {
