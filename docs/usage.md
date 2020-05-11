@@ -73,6 +73,15 @@ Works with WAV files of any sample rate, 32 bit float or 16 bit integer encoded.
 When loading audio files with more than one channel (stereo), only the first one
 is used.
 
+This program needs to know the position of the satellite when the recording was
+made for some features (especially the map overlay). So by default it will try
+to guess the satellite name and recording time from the filename, and then it
+will download an updated TLE file with orbit information from the internet.
+
+If the filename has a custom name, this can fail. So you will have to check the
+recording time and choose a satellite. See below to edit the configuration file
+to "teach" noaa-apt how read your filenames.
+
 ### GUI
 
 The program has three steps: Decoding, Processing and Saving:
@@ -129,13 +138,11 @@ Optional arguments:
                         and the syncing attempts do more harm than good.
   -c,--contrast METHOD  Contrast adjustment method for decode. Possible values:
                         "98_percent" (default), "telemetry" or "disable".
-  -s,--sat SATELLITE    Enable orbit calculations and indicate satellite name.
-                        Possible values "noaa_15", "noaa_18" or "noaa_19". If
-                        no --tle was provided and the current cached TLE is
-                        older than a week, a new weather.txt TLE from
-                        celestrak.com will be downloaded and cached.
-  -m,--map MAP_MODE     Enable map overlay, a --sat must be provided. Possible
-                        values: "yes" or "no".
+  -s,--sat SATELLITE    Indicate satellite name. Possible values "noaa_15",
+                        "noaa_18" or "noaa_19". If no --sat is provided, it
+                        will be guessed from the filename, otherwise it will be
+                        NOAA 19
+  -m,--map MAP_MODE     Enable map overlay. Possible values: "yes" or "no".
   --map-yaw YAW         Yaw correction for map overlay in degrees. Default: 0.
   --map-hscale HSCALE   Horizontal map scale correction for map overlay.
                         Default: 1.
@@ -143,10 +150,9 @@ Optional arguments:
                         1.
   -R,--rotate METHOD    Rotate image, useful for South to North passes where
                         the raw image is received upside-down. Possible values:
-                        "auto", "yes", "no" (default). If using "auto", a --sat
-                        must be provided. In that case the program uses orbit
-                        calculations and reception time to determine if the
-                        pass was South to North.
+                        "auto", "yes", "no" (default). If using "auto", the
+                        program uses orbit calculations and reception time to
+                        determine if the pass was South to North.
   -t,--start-time START_TIME
                         Provide recording start time, used for orbit
                         calculations. Use RFC 3339 format which includes date,
@@ -154,7 +160,10 @@ Optional arguments:
                         this option is not provided, it will be inferred from
                         the filename or from the file modification timestamp.
   -T,--tle TLE          Load TLE from given path. Very useful when decoding old
-                        images and if you have a TLE from around that date.
+                        images and if you have a TLE from around that date. If
+                        no --tle is provided and the current cached TLE is
+                        older than a week, a new weather.txt TLE from
+                        celestrak.com will be downloaded and cached.
   -p,--profile PROFILE  Profile to use, values loaded from settings file.
                         Possible values: "standard", "fast" or "slow".
   --wav-steps           Export a WAV for every step of the decoding process for
@@ -209,7 +218,13 @@ the image or not.
 The program needs to calculate the satellite position at the recording time to
 draw accurate map overlays. The following information is used:
 
-- Satellite name: NOAA 15, 18 or 19
+- Satellite name: NOAA 15, 18 or 19. This program will try to guess it
+    automatically, take a look at the
+    [filename guessing section](./usage.html#filename-guessing).
+
+- Recording time: You can provide the recording start or end time.
+    This program will try to guess it automatically, take a look at the
+    [recording time guessing section](./usage.html#recording-time-guessing).
 
 - TLE or Keplerian elements: This is a file with information about the orbit of
     satellites. Orbit information for NOAA satellites is usually taken from a
@@ -221,10 +236,6 @@ draw accurate map overlays. The following information is used:
     if you are working with a reception from years ago, be sure to use an
     [historic `weather.txt`](https://web.archive.org/web/*/https://www.celestrak.com/NORAD/elements/weather.txt)
     file as a custom TLE.
-
-- Recording time: You can provide the recording start or end time.
-    This program will try to guess it automatically, take a look at the
-    [recording time guessing section](./usage.html#recording-time-guessing).
 
 ### Map overlay
 
@@ -276,7 +287,7 @@ On Raspberry Pi I recommend using the "fast" profile. If you are having noisy
 images you can try the "slow" profile once just in case, but the default
 "standard" profile should always work fine.
 
-### Recording time guessing
+### Filename guessing
 
 The program tries to guess the exact time the recording was made. Three methods
 are tried in order:
@@ -294,6 +305,12 @@ are tried in order:
 It is important to provide an exact recording time, if there is a difference of
 at least a few seconds, the map overlay will be placed at the wrong place.
 
+Something similar happens with the satellite name. If the filename format is
+known (i.e. it is defined in the configuration file), the program will
+automatically detect if NOAA 15, NOAA 18 or NOAA 19 was recorded. This is
+possible because some filenames indicate the satellite number or the recording
+frequency.
+
 ### Export WAV steps
 
 If enabled, the program will save lots of WAV files, one for each step done on
@@ -304,7 +321,6 @@ working directory of the program, generally your home folder.
 Exporting the "resample filtered" is a very expensive operation, can take
 several GiB of both RAM and disk, so this step is not exported by default and
 has to be enabled separately.
-
 
 ## Troubleshooting
 

@@ -1,3 +1,14 @@
+noaa-apt (1.2.0-1) testing; urgency=medium
+
+  * Redesigned GUI.
+  * Satellite prediction and map overlay (with offsets I can't fix).
+  * Automatic image rotation from satellite orbit.
+  * GUI tips when selecting output file (thanks Nodraak).
+  * Changed syncing algorithm slightly.
+  * A few minor fixes.
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Mon, 11 May 2020 18:55:23 -0300
+
 noaa-apt (1.1.2-1) testing; urgency=medium
 
   * Added option to rotate images, useful for South -> North passes.
