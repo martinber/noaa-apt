@@ -68,7 +68,7 @@ fn inner_main() -> err::Result<()> {
             {
                 return Err(err::Error::FeatureNotAvailable("Program compiled \
                     without gui support, please download the gui version of \
-                    this program or use --help to see available options."
+                    this program or use --help to see available options.".to_string()
                 ));
             }
 

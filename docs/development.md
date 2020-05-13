@@ -84,7 +84,13 @@ Notes:
 
     - Histogram equalization, independent for each channel.
 
-    - Better filenames on config file.
+    - Update test.sh.
+
+    - Allow different timezones per filename.
+
+    - The program eats RAM when opening bad custom TLE files.
+
+    - More information link not working on Windows.
 
 - Someday:
 
@@ -356,7 +362,9 @@ If you want to disable this you can do it from the
 
 - Ossi Herrala: Did some fixes and updated dependencies.
 
-- Arcadie Z.: Added a feature for rotating images.
+- Arcadie Z.: Added a feature for rotating images. Did some fixes.
+
+- Nodraak: Added tips when saving files.
 
 - Grant T. Olson: OSX build instructions.
 
@@ -370,6 +378,9 @@ If you want to disable this you can do it from the
 
 - Gagootron, xxretartistxx and unknownantipatriot: Provided example images of
     missing samples.
+
+- BGNLouie, nosduh2, samarrangepas, KiwiEntropy, budude2, K2SDR, K6KZO,
+    TheLAX18: Provided recordings to test map overlays.
 
 ## References
 

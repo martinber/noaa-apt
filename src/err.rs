@@ -36,7 +36,7 @@ pub enum Error {
 
     /// Functionality not available because the program was compiled without
     /// those features
-    FeatureNotAvailable(Vec<String>),
+    FeatureNotAvailable(String),
 }
 
 impl std::fmt::Display for Error {
@@ -50,9 +50,7 @@ impl std::fmt::Display for Error {
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::Shapefile(ref msg) => f.write_str(msg.as_str()),
-            Error::FeatureNotAvailable(ref features) =>
-                write!(f, "Program compiled without support for features: {:?}",
-                    features),
+            Error::FeatureNotAvailable(ref msg) => f.write_str(msg.as_str()),
         }
     }
 }
