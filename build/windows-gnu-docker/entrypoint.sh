@@ -36,6 +36,10 @@ cp ./build/windows-files/settings.ini "$GUI_PACKAGE_FOLDER/share/gtk-3.0/"
 # Copy test files
 mkdir "$GUI_PACKAGE_FOLDER/test"
 cp ./test/*.wav "$GUI_PACKAGE_FOLDER/test/"
+cp ./test/*.txt "$GUI_PACKAGE_FOLDER/test/"
+
+# Copy res folder
+cp -r ./res "$GUI_PACKAGE_FOLDER/"
 
 # Zip
 

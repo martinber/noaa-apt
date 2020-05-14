@@ -30,6 +30,7 @@ rm -r "$X86_64_GUI_PACKAGE_FOLDER" || true
 mkdir -p "$X86_64_GUI_PACKAGE_FOLDER"
 cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$X86_64_GUI_PACKAGE_FOLDER/"
 cp -r "./test" "$X86_64_GUI_PACKAGE_FOLDER/"
+cp -r "./res" "$X86_64_GUI_PACKAGE_FOLDER/"
 rm -r "$X86_64_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI
@@ -40,6 +41,7 @@ rm -r "$X86_64_NOGUI_PACKAGE_FOLDER" || true
 mkdir -p "$X86_64_NOGUI_PACKAGE_FOLDER"
 cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$X86_64_NOGUI_PACKAGE_FOLDER/"
 cp -r "./test" "$X86_64_NOGUI_PACKAGE_FOLDER/"
+cp -r "./res" "$X86_64_NOGUI_PACKAGE_FOLDER/"
 rm -r "$X86_64_NOGUI_PACKAGE_FOLDER/test/results" || true
 
 # Build with GUI for Raspberry Pi
@@ -57,6 +59,7 @@ rm -r "$ARMV7_GUI_PACKAGE_FOLDER" || true
 mkdir -p "$ARMV7_GUI_PACKAGE_FOLDER"
 cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_GUI_PACKAGE_FOLDER/"
 cp -r "./test" "$ARMV7_GUI_PACKAGE_FOLDER/"
+cp -r "./res" "$ARMV7_GUI_PACKAGE_FOLDER/"
 rm -r "$ARMV7_GUI_PACKAGE_FOLDER/test/results" || true
 
 # Build without GUI for Raspberry Pi
@@ -67,6 +70,7 @@ rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER" || true
 mkdir -p "$ARMV7_NOGUI_PACKAGE_FOLDER"
 cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_NOGUI_PACKAGE_FOLDER/"
 cp -r "./test" "$ARMV7_NOGUI_PACKAGE_FOLDER/"
+cp -r "./res" "$ARMV7_NOGUI_PACKAGE_FOLDER/"
 rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER/test/results" || true
 
 # Build deb
@@ -75,7 +79,7 @@ rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER/test/results" || true
 DH_VERBOSE=1
 
 # Indicate resources folder before compiling
-NOAA_APT_RES_DIR="/usr/share/noaa-apt"
+export NOAA_APT_RES_DIR="/usr/share/noaa-apt"
 
 # -us -uc: Do not sign anything. When upgrading to a newer Debian version I
 #          should change to --no-sign

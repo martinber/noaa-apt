@@ -49,3 +49,5 @@ set -x
 "$PROGRAM" -q "$TEST_DIR/test_11025hz.wav" -r 3675 -o "$RESULTS_DIR/decimated_apt.wav"
 "$PROGRAM" -q "$TEST_DIR/noise_48000hz.wav" -r 80000 -o "$RESULTS_DIR/upsampled_noise.wav"
 "$PROGRAM" -q "$TEST_DIR/noise_48000hz.wav" -r 11025 -o "$RESULTS_DIR/downsampled_noise.wav"
+"$PROGRAM" -q "$TEST_DIR/test_11025hz.wav" --tle "$TEST_DIR/test_tle.txt" -s "noaa_19" \
+		-R "auto" -m "yes" -t "2018-12-22T20:39:41-00:00" -o "$RESULTS_DIR/decoded_apt_map.png"
