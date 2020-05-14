@@ -84,15 +84,21 @@ Notes:
 
     - Histogram equalization, independent for each channel.
 
-    - Update test.sh.
-
     - Allow different timezones per filename.
 
     - The program eats RAM when opening bad custom TLE files.
 
     - More information link not working on Windows.
 
+    - Add latitude longitude grid.
+
 - Someday:
+
+    - Show user position on map. Add support for
+        [gpsd](https://gpsd.gitlab.io/gpsd/index.html). Maybe using
+        [gpsd_proto](https://crates.io/crates/gpsd_proto)
+
+    - Draw image over mercator (or at least equirectangular) projection.
 
     - Make seconds spinner add a minute when wrapping
 
