@@ -372,6 +372,8 @@ If you want to disable this you can do it from the
 
 - Nodraak: Added tips when saving files.
 
+- Dirk Lison: Testing and filename guessing for WXtoIMG.
+
 - Grant T. Olson: OSX build instructions.
 
 - FMighty: Helped with cross compilation to Raspberry Pi.

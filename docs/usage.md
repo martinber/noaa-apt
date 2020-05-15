@@ -311,6 +311,10 @@ automatically detect if NOAA 15, NOAA 18 or NOAA 19 was recorded. This is
 possible because some filenames indicate the satellite number or the recording
 frequency.
 
+Note for people decoding recordings from WXtoIMG: Download the latest
+[configuration file](./default_settings.toml) and set the filename template
+in WXtoIMG to `%Y%m%d-%H%M-%e-%s` (In Options > File Names and Locations...).
+
 ### Export WAV steps
 
 If enabled, the program will save lots of WAV files, one for each step done on

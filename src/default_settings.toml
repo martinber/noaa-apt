@@ -42,6 +42,10 @@ filenames = [
     # SDRSharp_20200325_204556Z_137102578Hz_AF.wav
     "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav",
 
+    # On WXtoIMG go to Option > File Names and Locations...
+    # Set this template: %Y%m%d-%H%M-%e-%s
+    "%Y%m%d-%H%M-noaa-%N.wav",
+
     # NOAA15-20200325-060601.wav
     "NOAA%N-%Y%m%d-%H%M%S.wav",
 

@@ -10,23 +10,61 @@ check_updates = true
 
 # Prefer reading recording times from file modification timestamps instead of
 # looking at the date and time on the filename. If the filename format is not
-# recognised, timestamps are going to be used anyways.
+# recognised, timestamps are going to be used anyways. In this case the inferred
+# satellite will be always NOAA 19 and you will have to indicate it otherwise.
 prefer_timestamps = false
 
 # Supported filenames. Indicate where years, hours, etc. are located on the
-# filename. More information:
-# https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+# filename, used to detemine recording time and satellite received from
+# filename. The program will compare the loaded WAV filename against each one of
+# these formats until it finds a match, if no match is found, the time will be
+# loaded from the file modification timestamp and the sat will be NOAA 19. If
+# some date/time value is missing, the current will be used. E.g. if there is no
+# month, the current month will be used.
+#
+# Supported variables:
+# - %Y: Year as a 4 digit number.
+# - %m: Month as a 2 digit number.
+# - %d: Day as a 2 digit number.
+# - %H: Hour as a 2 digit number.
+# - %M: Minute as a 2 digit number.
+# - %S: Second as a 2 digit number.
+# - %N: Satellite number, should be 15, 18 or 19.
+# - %!: Recording frequency in Hz, also used to determine satellite number
+#   (noaa-apt knows that e.g. NOAA 19 uses 137.1MHz or close). Should have 9
+#   consecutive digits, e.g: 137100000.
+# - %1, %2, %3, ..., %9: Ignore 1, 2, 3, ... 9 characters. Useful if the
+#   filename has something not useful that can change, for example pass elevation.
 filenames = [
-    "gqrx_%Y%m%d_%H%M%S_137100000.wav", # e.g: gqrx_20181222_203941_137100000.wav
-    "SDRSharp_%Y%m%d_%H%M%SZ_137100000Hz_AF.wav", # e.g: SDRSharp_20200326_000141Z_137100000Hz_AF.wav
+    # gqrx_20181222_203941_137100000.wav
+    "gqrx_%Y%m%d_%H%M%S_%!.wav",
+
+    # SDRSharp_20200325_204556Z_137102578Hz_AF.wav
+    "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav",
+
+    # On WXtoIMG go to Option > File Names and Locations...
+    # Set this template: %Y%m%d-%H%M-%e-%s
+    "%Y%m%d-%H%M-noaa-%N.wav",
+
+    # NOAA15-20200325-060601.wav
+    "NOAA%N-%Y%m%d-%H%M%S.wav",
+
+    # N1520200327073417.wav
+    "N%N%Y%m%d%H%M%S.wav",
+
+    # 2020-02-09-05-24-16-NOAA_19.wav
+    "%Y-%m-%d-%H-%M-%S-NOAA_%N.wav",
+
+    # 20200320-213957NOAA19El64.wav
+    "%Y%m%d-%H%M%SNOAA%NEl%2.wav",
 ]
 
 # Timezone offset in hours to assume when reading filenames.
-timezone = 0.0
+timezone = 0.0 # UTC+0
 
 [map_overlay]
 
-# Default colors. Set alpha to 0 to disable
+# Default colors as RGBA. Set alpha to 0 to disable
 default_countries_color = [255, 255, 0, 255]
 default_states_color = [255, 255, 0, 150]
 default_lakes_color = [50, 200, 200, 255]
