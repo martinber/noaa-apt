@@ -77,11 +77,11 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 ### OSX
 
-- [Compile it yourself](./development.html#compilation).
+- [Compile it yourself following these instructions](./development.html#compilation).
 
 ### Something else?
 
-- [Compile it yourself](./development.html#compilation).
+- [Compile it yourself following these instructions](./development.html#compilation).
 
 ## Dependencies
 

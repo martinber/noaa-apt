@@ -462,11 +462,11 @@ fn build_system_menu(widgets: &Widgets) {
         dialog.add_credit_section("Thank you",
                 &[
                     "RTL-SDR.com", "pietern", "Ossi Herrala", "Arcadie Z.",
-                    "Nodraak", "Dirk Lison", "Grant T. Olson", "FMighty",
-                    "Sylogista", "Peter Vogel", "wren84", "Florentin314",
-                    "Gagootron", "xxretartistxx", "unknownantipatriot",
-                    "BGNLouie", "nosduh2", "samarrangepas", "KiwiEntropy",
-                    "budude2", "K2SDR", "K6KZO", "TheLAX18"
+                    "Nodraak", "Dirk Lison", "Grant T. Olson", "Sasha Engelmann",
+                    "Bill Liles", "FMighty", "Sylogista", "Peter Vogel",
+                    "wren84", "Florentin314", "Gagootron", "xxretartistxx",
+                    "unknownantipatriot", "BGNLouie", "nosduh2", "samarrangepas",
+                    "KiwiEntropy", "budude2", "K2SDR", "K6KZO", "TheLAX18"
                 ]);
 
         dialog.set_website_label(Some("noaa-apt website"));

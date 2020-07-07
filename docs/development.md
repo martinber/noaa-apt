@@ -169,6 +169,10 @@ Build with `--release`, Rust does some optimizations and it works faster.
 
 - `cargo build --release`.
 
+Run with:
+
+    ./target/release/noaa-apt
+
 ### GNU/Linux portable
 
 I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so
@@ -198,13 +202,34 @@ GUI version and the GUI .deb package. Also I build the Raspberry Pi versions
 
 ### Mac / OSX
 
-- Install [rustup](https://rustup.rs/). The 'unix installer' is fine for Macs.
+This is a summary of
+[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac)
 
-- Install dependencies via [Homebrew](https://brew.sh/). I'm not entirely sure
-  if these are enough:
-  `brew install gtk+3 adwaita-icon-theme openssl`.
+- Install [rustup](https://rustup.rs/):
 
-- `cargo build --release`.
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+      source $HOME/.cargo/env
+
+- Install dependencies via [Homebrew](https://brew.sh/).
+
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+      brew install gtk+3 adwaita-icon-theme openssl
+
+- Download the [source code zip file](https://github.com/martinber/noaa-apt/releases)
+  and extract it somewhere.
+
+- Move to the downloaded folder
+
+      cd Downloads/noaa-apt-1.2.0/
+
+- Compile
+
+      export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
+      cargo build --release
+
+Run with:
+
+    ./target/release/noaa-apt
 
 ### Windows portable
 
@@ -374,7 +399,9 @@ If you want to disable this you can do it from the
 
 - Dirk Lison: Testing and filename guessing for WXtoIMG.
 
-- Grant T. Olson: OSX build instructions.
+- Grant T. Olson: Early OSX build instructions
+
+- Sasha Engelmann and Bill Liles: [Further OSX build instructions](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac).
 
 - FMighty: Helped with cross compilation to Raspberry Pi.
 

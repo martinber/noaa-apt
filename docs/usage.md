@@ -79,8 +79,12 @@ to guess the satellite name and recording time from the filename, and then it
 will download an updated TLE file with orbit information from the internet.
 
 If the filename has a custom name, this can fail. So you will have to check the
-recording time and choose a satellite. See below to edit the configuration file
-to "teach" noaa-apt how read your filenames.
+recording time and choose a satellite. Below there are instructions on how to
+edit the configuration file and "teach" noaa-apt how read your filenames.
+
+IQ files are not supported, these files should be FM demodulated into WAVs
+first. SDR# and GQRX can load and demodulate IQ files with a specific format,
+[more information here](https://github.com/martinber/noaa-apt/issues/20).
 
 ### GUI
 

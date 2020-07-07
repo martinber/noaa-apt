@@ -21,6 +21,9 @@ cheap. Read this to get started.
 This is a guide about how to receive images, if you want information about how
 to use noaa-apt check the [Usage](./usage.html) page.
 
+Check [this tutorial](https://publiclab.org/notes/sashae/06-26-2020/diy-satellite-ground-station)
+too. It is meant for another decoder, WXtoImg, but it has useful information.
+
 ## Important things to know
 
 - NOAA **images are black and white**. People on the internet share color
