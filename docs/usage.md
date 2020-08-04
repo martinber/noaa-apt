@@ -141,7 +141,8 @@ Optional arguments:
   --no-sync             Disable syncing, useful when the sync frames are noisy
                         and the syncing attempts do more harm than good.
   -c,--contrast METHOD  Contrast adjustment method for decode. Possible values:
-                        "98_percent" (default), "telemetry" or "disable".
+                        "98_percent" (default), "telemetry", "histogram" or
+                        "disable".
   -s,--sat SATELLITE    Indicate satellite name. Possible values "noaa_15",
                         "noaa_18" or "noaa_19". If no --sat is provided, it
                         will be guessed from the filename, otherwise it will be

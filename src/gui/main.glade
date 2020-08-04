@@ -343,6 +343,7 @@
                                                     <items>
                                                       <item id="98_percent" translatable="yes">Keep 98 percent</item>
                                                       <item id="telemetry" translatable="yes">From telemetry</item>
+                                                      <item id="histogram" translatable="yes">Histogram equalization</item>
                                                       <item id="minmax" translatable="yes">Disable</item>
                                                     </items>
                                                   </object>

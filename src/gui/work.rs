@@ -249,6 +249,7 @@ pub fn process() {
             {
                 Some("98_percent") => Contrast::Percent(0.98),
                 Some("telemetry") => Contrast::Telemetry,
+                Some("histogram") => Contrast::Histogram,
                 Some("minmax") => Contrast::MinMax,
                 Some(id) => {
                     callback(Err(err::Error::Internal(
