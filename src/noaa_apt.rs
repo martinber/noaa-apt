@@ -2,7 +2,7 @@
 //!
 //! Used by both the command-line and GUI versions of the program.
 
-pub use crate::decode::{decode, FINAL_RATE, PX_PER_ROW};
+pub use crate::decode::{decode, FINAL_RATE, PX_PER_ROW, PX_PER_CHANNEL};
 pub use crate::resample::resample;
 
 use std::path::Path;
@@ -35,6 +35,10 @@ pub enum Contrast {
     /// Don't do anything, map the minimum value to zero and the maximum value
     /// to 255
     MinMax,
+
+    /// Histogram equalization, per channel.
+    /// See also: [Histogram equalization (wikipedia)](https://en.wikipedia.org/wiki/Histogram_equalization)
+    Histogram
 }
 
 /// Available rotation settings.
@@ -119,8 +123,8 @@ pub fn process(
             );
             misc::percent(&signal, p)?
         },
-        Contrast::MinMax => {
-            context.status(0.1, "Mapping values (no contrast adjustment)".to_string());
+        Contrast::MinMax | Contrast::Histogram => {
+            context.status(0.1, "Mapping values".to_string());
             let low: f32 = *dsp::get_min(&signal)?;
             let high: f32 = *dsp::get_max(&signal)?;
 
@@ -134,14 +138,18 @@ pub fn process(
 
     let height = signal.len() as u32 / PX_PER_ROW;
 
-    type LumaImage = image::ImageBuffer::<image::Luma<u8>, Vec<u8>>;
-    use image::buffer::ConvertBuffer;
+    use image::GrayImage;
 
-    let mut img: Image = LumaImage::from_vec(
+    let mut img: GrayImage = GrayImage::from_vec(
             PX_PER_ROW, height, map(&signal, low, high))
-        .map(|b| b.convert()) // Convert to RGBA
         .ok_or(err::Error::Internal(
             "Could not create image, wrong buffer length".to_string()))?;
+    
+    if let Contrast::Histogram = contrast_adjustment {
+        img = processing::histogram_equalization(&img)?;
+    }
+
+    let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
 
     // --------------------
 

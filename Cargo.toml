@@ -27,10 +27,10 @@ directories = "2.0.2"
 filetime = "0.2.10"
 gcd = "2.0.1"
 hound = "3.4.0"
-itertools = "0.9.0"
 line_drawing = "0.8.0"
 log = "0.4.8"
 image = { version = "0.23.4", features = ["png"] }
+imageproc = "0.21.0"
 reqwest = { version = "0.10.4", features = ["blocking"] }
 rustfft = "3.0.1"
 satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
