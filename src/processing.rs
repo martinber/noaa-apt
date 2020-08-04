@@ -1,6 +1,6 @@
 //! Image processing functions.
 
-use image::{GenericImageView, GenericImage};
+use image::{GenericImageView, GenericImage, GrayImage};
 use log::info;
 
 use crate::decode::PX_PER_CHANNEL;
@@ -79,4 +79,25 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 
     use std::f64::consts::PI;
     return Ok(azimuth < PI / 4. || azimuth > 3. * PI / 4.);
+}
+
+/// Histogram equalization, for each channel separately.
+/// Works only on the grayscale image, 
+/// needs to be done before the RGBA conversion.
+pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
+    info!("Performing histogram equalization");
+
+    let mut output = GrayImage::new(img.width(), img.height());
+    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, img.height()).to_image();
+    let mut channel_b = img
+        .view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height())
+        .to_image();
+
+    imageproc::contrast::equalize_histogram_mut(&mut channel_a);
+    imageproc::contrast::equalize_histogram_mut(&mut channel_b);
+
+    output.copy_from(&channel_a, 0, 0)?;
+    output.copy_from(&channel_b, PX_PER_CHANNEL, 0)?;
+
+    Ok(output)
 }

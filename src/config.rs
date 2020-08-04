@@ -313,7 +313,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         parser.refer(&mut arg_contrast_adjustment)
             .add_option(&["-c", "--contrast"], argparse::StoreOption,
             "Contrast adjustment method for decode. Possible values: \
-            \"98_percent\" (default), \"telemetry\" or \"disable\".")
+            \"98_percent\" (default), \"telemetry\", \"histogram\" or \"disable\".")
             .metavar("METHOD");
         parser.refer(&mut arg_sat)
             .add_option(&["-s", "--sat"], argparse::StoreOption,
@@ -452,6 +452,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             let contrast_adjustment: Contrast = match arg_contrast_adjustment.as_deref() {
                 Some("telemetry") => Contrast::Telemetry,
                 Some("disable") => Contrast::MinMax,
+                Some("histogram") => Contrast::Histogram,
                 Some("98_percent") | None => Contrast::Percent(0.98),
                 Some(_) => {
                     println!("Invalid contrast adjustment argument");

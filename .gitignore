@@ -16,3 +16,4 @@ salida*.png
 /debian/debhelper-build-stamp
 
 **/.DS_Store
+.vscode

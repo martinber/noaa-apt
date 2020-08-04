@@ -86,8 +86,10 @@ fn inner_main() -> err::Result<()> {
             println!("noaa-apt image decoder version {}", VERSION);
 
             if !sync {
-                if let noaa_apt::Contrast::Telemetry = contrast_adjustment {
-                    warn!("Reading telemetry without syncing, expect horrible results!");
+                match contrast_adjustment {
+                    noaa_apt::Contrast::Telemetry | noaa_apt::Contrast::Histogram => 
+                        warn!("Adjusting contrast without syncing, expect horrible results!"),
+                    _ => ()
                 }
             }
 
