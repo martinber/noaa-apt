@@ -569,7 +569,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 settings,
                 input_filename,
                 output_filename: arg_output_filename.unwrap_or_else(
-                    || PathBuf::from("./output.wav")),
+                    || PathBuf::from("./output.png")),
                 sync: arg_sync,
                 contrast_adjustment,
                 rotate,
