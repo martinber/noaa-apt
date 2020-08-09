@@ -7,7 +7,7 @@ use crate::decode::PX_PER_CHANNEL;
 use crate::err;
 use crate::geo;
 use crate::misc;
-use crate::noaa_apt::{Image, OrbitSettings, RefTime, SatName};
+use crate::noaa_apt::{Image, OrbitSettings, RefTime};
 
 
 /// Rotate image without changing the location of the channels.
