@@ -330,9 +330,9 @@ fn parse_filename(filename: &str,
                         sat = match fname_chars.as_str()[0..9].parse::<u32>() {
                             Ok(freq) => closest_freq(
                                 &[
-                                    (137620000, SatName::Noaa15),
-                                    (137912500, SatName::Noaa18),
-                                    (137100000, SatName::Noaa19),
+                                    (137_620_000, SatName::Noaa15),
+                                    (137_912_500, SatName::Noaa18),
+                                    (137_100_000, SatName::Noaa19),
                                 ], freq
                             ),
                             Err(_) => return None, // Exit entire function

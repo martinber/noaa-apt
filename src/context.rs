@@ -132,7 +132,7 @@ impl Context {
     }
 
     /// Export step.
-    pub fn step(&mut self, step: Step<'_>) -> err::Result<()> {
+    pub fn step(&mut self, step: &Step<'_>) -> err::Result<()> {
         if self.export_wav {
 
             debug!("Got step: {}", step.id);

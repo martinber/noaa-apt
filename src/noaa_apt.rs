@@ -88,6 +88,16 @@ pub enum SatName {
     Noaa19,
 }
 
+impl ToString for SatName {
+    fn to_string(&self) -> String {
+        match self {
+            SatName::Noaa15 => "NOAA 15".to_owned(),
+            SatName::Noaa18 => "NOAA 18".to_owned(),
+            SatName::Noaa19 => "NOAA 19".to_owned(),
+        }
+    }
+}
+
 /// Load WAV from file.
 ///
 /// Returns the Signal and its sample rate.

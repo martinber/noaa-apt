@@ -43,11 +43,7 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
     };
 
     let (sats, _errors) = satellite::io::parse_multiple(&tle);
-    let sat_string = match orbit_settings.sat_name {
-        SatName::Noaa15 => "NOAA 15",
-        SatName::Noaa18 => "NOAA 18",
-        SatName::Noaa19 => "NOAA 19",
-    }.to_string();
+    let sat_string = orbit_settings.sat_name.to_string();
 
     let sat = sats.iter()
         .find(|&sat| sat.name.as_ref() == Some(&sat_string))
