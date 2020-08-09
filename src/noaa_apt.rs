@@ -142,7 +142,7 @@ pub fn process(
 
     let mut img: GrayImage = GrayImage::from_vec(
             PX_PER_ROW, height, map(&signal, low, high))
-        .ok_or(err::Error::Internal(
+        .ok_or_else(|| err::Error::Internal(
             "Could not create image, wrong buffer length".to_string()))?;
     
     if let Contrast::Histogram = contrast_adjustment {
@@ -181,7 +181,7 @@ pub fn process(
             img = processing::rotate(&img)?;
         },
         Rotate::Orbit => {
-            if let Some(orbit_settings) = orbit.clone() {
+            if let Some(orbit_settings) = orbit {
                 if processing::south_to_north_pass(&orbit_settings)? {
                     context.status(0.90, "Rotating output image".to_string());
                     img = processing::rotate(&img)?;

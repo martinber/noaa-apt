@@ -113,7 +113,7 @@ where W: glib::object::IsA<gtk::Window>
             window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
             url,
             gtk::get_current_event_time(),
-        ).or_else(|_| Err(err::Error::Internal("Could not open browser".to_string())))
+        ).map_err(|_| err::Error::Internal("Could not open browser".to_string()))
     }
 }
 

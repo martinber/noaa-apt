@@ -546,6 +546,17 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             };
 
             let mut orbit_settings = None;
+            if let Some(s_name) = &sat_name {
+                if let Some(r_time) = &ref_time {
+                    orbit_settings = Some(OrbitSettings {
+                        sat_name: s_name.to_owned(),
+                        custom_tle,
+                        ref_time: r_time.to_owned(),
+                        draw_map: draw_map.to_owned(),
+                    });
+                };
+            };
+
             if sat_name.is_none() || ref_time.is_none() {
                 if let Rotate::Orbit = rotate {
                     println!("Can't rotate automatically if no satellite and \
@@ -556,13 +567,6 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                     println!("Can't draw map if no satellite and time is provided");
                     std::process::exit(0);
                 }
-            } else {
-                orbit_settings = Some(OrbitSettings {
-                    sat_name: sat_name.unwrap(),
-                    custom_tle,
-                    ref_time: ref_time.unwrap(),
-                    draw_map,
-                });
             }
 
             return (check_updates, verbosity, Mode::Decode {
@@ -573,7 +577,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 sync: arg_sync,
                 contrast_adjustment,
                 rotate,
-                orbit_settings: orbit_settings,
+                orbit_settings,
             });
         }
 

@@ -36,7 +36,7 @@ pub fn draw_map(
         SatName::Noaa19 => "NOAA 19",
     }.to_string();
 
-    let mut sat = sats.iter()
+    let sat = sats.iter()
         .find(|&sat| sat.name.as_ref() == Some(&sat_string))
         .ok_or_else(||
             err::Error::Internal(format!("Satellite \"{}\" not found in TLE", sat_string))
@@ -55,7 +55,7 @@ pub fn draw_map(
     for i in 0..height {
         let t = start_time + line_duration * i as i32;
         // TODO: Remove unwrap()
-        let result = satellite::propogation::propogate_datetime(&mut sat, t).unwrap();
+        let result = satellite::propogation::propogate_datetime(&sat, t).unwrap();
         let gmst = satellite::propogation::gstime::gstime_datetime(t);
         let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
         sat_positions.push((sat_pos.latitude, sat_pos.longitude));

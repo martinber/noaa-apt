@@ -403,7 +403,7 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) ->
 
 /// Try downloading TLE from URL.
 fn download_tle(addr: &str) -> err::Result<String> {
-    Ok(reqwest::blocking::get(addr)?.text()?.to_string())
+    Ok(reqwest::blocking::get(addr)?.text()?)
 }
 
 /// Try reading TLE from file.

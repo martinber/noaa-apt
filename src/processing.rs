@@ -49,7 +49,7 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
         SatName::Noaa19 => "NOAA 19",
     }.to_string();
 
-    let mut sat = sats.iter()
+    let sat = sats.iter()
         .find(|&sat| sat.name.as_ref() == Some(&sat_string))
         .ok_or_else(||
             err::Error::Internal(format!("Satellite \"{}\" not found in TLE", sat_string))
@@ -61,14 +61,14 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
     };
 
     // TODO: Remove unwrap()
-    let result = satellite::propogation::propogate_datetime(&mut sat, start_time).unwrap();
+    let result = satellite::propogation::propogate_datetime(&sat, start_time).unwrap();
     let gmst = satellite::propogation::gstime::gstime_datetime(start_time);
     let sat_start_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
 
     let end_time = start_time + chrono::Duration::seconds(2);
 
     // TODO: Remove unwrap()
-    let result = satellite::propogation::propogate_datetime(&mut sat, end_time).unwrap();
+    let result = satellite::propogation::propogate_datetime(&sat, end_time).unwrap();
     let gmst = satellite::propogation::gstime::gstime_datetime(end_time);
     let sat_end_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
 

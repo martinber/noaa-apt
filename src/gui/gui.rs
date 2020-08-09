@@ -276,7 +276,7 @@ fn init_widgets(widgets: &Widgets) {
 
             // If saving in CWD
 
-            if !output_filename.starts_with("/") {
+            if !output_filename.starts_with('/') {
                 match env::current_dir() {
                     Ok(cwd) => {
                         folder_tip_label.set_text(&format!("{}", cwd.display()));
