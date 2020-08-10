@@ -460,20 +460,20 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 },
             };
 
-            let mut rotate: Rotate = match arg_rotate.as_deref() {
-                Some("auto") => Rotate::Orbit,
-                Some("yes") => Rotate::Yes,
-                Some("no") => Rotate::No,
-                Some(_) => {
-                    println!("Invalid rotate argument");
-                    std::process::exit(0);
-                },
-                None => Rotate::No,
-            };
-
-            if arg_rotate_deprecated {
-                rotate = Rotate::Yes;
-            }
+            let rotate: Rotate =
+                if arg_rotate_deprecated {
+                    Rotate::Yes
+                 } else {
+                    match arg_rotate.as_deref() {
+                        Some("auto") => Rotate::Orbit,
+                        Some("yes") => Rotate::Yes,
+                        Some("no") => Rotate::No,
+                        Some(_) => { println!("Invalid rotate argument");
+                            std::process::exit(0);
+                        },
+                        None => Rotate::No,
+                    }
+                };
 
             let mut sat_name: Option<SatName> = None;
             let mut ref_time: Option<RefTime> = None;

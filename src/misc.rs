@@ -375,29 +375,26 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) ->
 {
     let filename: &str = path.file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(||
         err::Error::Internal("Could not get filename".to_string()))?;
-    match settings.prefer_timestamps {
-        true => {
-            return Ok((
-                RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
-                SatName::Noaa19
-            ));
-        },
-        false => {
-            let offset_seconds = (settings.filename_timezone * 3600.) as i32;
-            let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
-            // Try every supported format
-            for format in settings.filename_formats.iter() {
-                if let Some(result) = parse_filename(filename, format, timezone) {
-                    return Ok(result);
-                }
+    if settings.prefer_timestamps {
+        return Ok((
+            RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+            SatName::Noaa19
+        ));
+    } else {
+        let offset_seconds = (settings.filename_timezone * 3600.) as i32;
+        let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
+        // Try every supported format
+        for format in settings.filename_formats.iter() {
+            if let Some(result) = parse_filename(filename, format, timezone) {
+                return Ok(result);
             }
-            warn!("Could not parse date and time from filename {}, using timestamp",
-                filename);
-            return Ok((
-                RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
-                SatName::Noaa19
-            ));
-        },
+        }
+        warn!("Could not parse date and time from filename {}, using timestamp",
+            filename);
+        return Ok((
+            RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+            SatName::Noaa19
+        ));
     }
 }
 

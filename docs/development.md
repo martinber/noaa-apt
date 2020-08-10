@@ -282,7 +282,7 @@ located on `/test/`. Results are on `/test/results/`, check with Audacity.
 
 I use Clippy too:
 
-- `cargo clippy -- -A clippy::ptr_arg`: Should have no warnings.
+- `cargo clippy -- -A clippy::ptr_arg -A clippy::match_bool`: Should have no warnings.
 
 - `cargo clippy -- -A clippy::ptr_arg -W clippy::pedantic`: Check once in a
     while but ignore most of the lints
