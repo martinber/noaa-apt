@@ -2,7 +2,7 @@
 //!
 //! Used by both the command-line and GUI versions of the program.
 
-pub use crate::decode::{decode, FINAL_RATE, PX_PER_ROW, PX_PER_CHANNEL};
+pub use crate::decode::{decode, FINAL_RATE, PX_PER_CHANNEL, PX_PER_ROW};
 pub use crate::resample::resample;
 
 use std::path::Path;
@@ -10,15 +10,14 @@ use std::path::Path;
 use log::warn;
 
 use crate::context::Context;
-use crate::dsp::{Signal, Rate};
 use crate::dsp;
+use crate::dsp::{Rate, Signal};
 use crate::err;
 use crate::map;
 use crate::misc;
 use crate::processing;
 use crate::telemetry;
 use crate::wav;
-
 
 pub type Image = image::RgbaImage;
 
@@ -38,7 +37,7 @@ pub enum Contrast {
 
     /// Histogram equalization, per channel.
     /// See also: [Histogram equalization (wikipedia)](https://en.wikipedia.org/wiki/Histogram_equalization)
-    Histogram
+    Histogram,
 }
 
 /// Available rotation settings.
@@ -46,7 +45,7 @@ pub enum Contrast {
 pub enum Rotate {
     Orbit,
     No,
-    Yes
+    Yes,
 }
 
 /// Reference time.
@@ -112,10 +111,8 @@ pub fn process(
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
-    orbit: Option<OrbitSettings>
+    orbit: Option<OrbitSettings>,
 ) -> err::Result<Image> {
-
-
     let (low, high) = match contrast_adjustment {
         Contrast::Telemetry => {
             context.status(0.1, "Adjusting contrast from telemetry".to_string());
@@ -126,13 +123,14 @@ pub fn process(
             let high = telemetry.get_wedge_value(8, None);
 
             (low, high)
-        },
+        }
         Contrast::Percent(p) => {
-            context.status(0.1,
-               format!("Adjusting contrast using {} percent", p * 100.)
+            context.status(
+                0.1,
+                format!("Adjusting contrast using {} percent", p * 100.),
             );
             misc::percent(&signal, p)?
-        },
+        }
         Contrast::MinMax | Contrast::Histogram => {
             context.status(0.1, "Mapping values".to_string());
             let low: f32 = *dsp::get_min(&signal)?;
@@ -150,16 +148,77 @@ pub fn process(
 
     use image::GrayImage;
 
-    let mut img: GrayImage = GrayImage::from_vec(
-            PX_PER_ROW, height, map(&signal, low, high))
-        .ok_or_else(|| err::Error::Internal(
-            "Could not create image, wrong buffer length".to_string()))?;
-    
+    let mut img: GrayImage = GrayImage::from_vec(PX_PER_ROW, height, map(&signal, low, high))
+        .ok_or_else(|| {
+            err::Error::Internal("Could not create image, wrong buffer length".to_string())
+        })?;
+
     if let Contrast::Histogram = contrast_adjustment {
         img = processing::histogram_equalization(&img)?;
     }
 
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
+    let mut img_clone = img.clone();
+    // --------------------
+
+    // colorize
+    for x in 0..PX_PER_CHANNEL {
+        for y in 0..height {
+            let val_pixel = img.get_pixel_mut(x, y);
+            let irval_pixel = img_clone.get_pixel_mut(x + PX_PER_CHANNEL, y);
+
+            let val = val_pixel[0];
+            let irval = irval_pixel[0];
+
+            let r;
+            let g;
+            let b;
+
+            // Water identification
+            if val < (13000 * 256 / 65536) as u8 {
+                r = (8.0 + val as f32 * 0.2) as u8;
+                g = (20.0 + val as f32 * 1.0) as u8;
+                b = (50.0 + val as f32 * 0.75) as u8;
+            }
+            // Cloud/snow/ice identification
+            // IR channel helps distinguish clouds and water, particularly in arctic areas
+            else if irval > (35000 * 256 / 65536) as u8 {
+                r = (irval as f32 * 0.5 + val as f32) as u8; // Average the two for a little better cloud distinction
+                g = r;
+                b = r;
+            }
+            // Vegetation identification
+            else if val < (27000 * 256 / 65536) as u8 {
+                // green
+                r = (val as f32 * 0.8) as u8;
+                g = (val as f32 * 0.9) as u8;
+                b = (val as f32 * 0.6) as u8;
+            }
+            // Desert/dirt identification
+            else if val <= (35000 * 256 / 65536) as u8 {
+                // brown
+                r = (val as f32 * 1.0) as u8;
+                g = (val as f32 * 0.9) as u8;
+                b = (val as f32 * 0.7) as u8;
+            }
+            // Everything else, but this was probably captured by the IR channel above
+            else {
+                // Clouds, snow, and really dry desert
+                r = val;
+                g = val;
+                b = val;
+            }
+
+            // if (j < SPACE_WORDS || j >= SPACE_WORDS + CHANNEL_DATA_WORDS) {
+            //     r = 0;
+            //     g = 0;
+            //     b = 0;
+            //   }
+            
+            *val_pixel = image::Rgba([r, g, b, 255]);
+            *irval_pixel = image::Rgba([r, g, b, 255]);
+        }
+    }
 
     // --------------------
 
@@ -170,7 +229,6 @@ pub fn process(
         };
 
         if let Some(map_settings) = orbit_settings.draw_map {
-
             context.status(0.5, "Drawing map".to_string());
 
             map::draw_map(
@@ -178,7 +236,7 @@ pub fn process(
                 orbit_settings.ref_time,
                 map_settings,
                 orbit_settings.sat_name,
-                tle
+                tle,
             )?;
         }
     }
@@ -189,7 +247,7 @@ pub fn process(
         Rotate::Yes => {
             context.status(0.90, "Rotating output image".to_string());
             img = processing::rotate(&img)?;
-        },
+        }
         Rotate::Orbit => {
             if let Some(orbit_settings) = orbit {
                 if processing::south_to_north_pass(&orbit_settings)? {
@@ -199,26 +257,25 @@ pub fn process(
             } else {
                 warn!("Can't rotate automatically if no orbit information is provided");
             }
-        },
-        Rotate::No => {},
+        }
+        Rotate::No => {}
     }
 
     Ok(img)
 }
-
 
 /// Maps float signal values to `u8`.
 ///
 /// `low` becomes 0 and `high` becomes 255. Values are clamped to prevent `u8`
 /// overflow.
 fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
-
     let range = high - low;
-    let raw_data: Vec<u8> = signal.iter()
+    let raw_data: Vec<u8> = signal
+        .iter()
         .map(|x|
              // Map and clamp between 0 and 255 using min() and max()
-             ((x - low) / range * 255.).max(0.).min(255.).round() as u8
-        ).collect();
+             ((x - low) / range * 255.).max(0.).min(255.).round() as u8)
+        .collect();
 
     raw_data
 }
@@ -230,14 +287,13 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let expected: Vec<u8> = vec![
-            0, 0, 0, 0, 1, 2, 50, 120, 200, 255, 255, 255];
+        let expected: Vec<u8> = vec![0, 0, 0, 0, 1, 2, 50, 120, 200, 255, 255, 255];
         let test_values: Signal = vec![
-            -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.];
+            -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.,
+        ];
 
         // Shift values somewhere
-        let shifted_values: Signal =
-            test_values.iter().map(|x| x * 123.123 - 234.234).collect();
+        let shifted_values: Signal = test_values.iter().map(|x| x * 123.123 - 234.234).collect();
 
         // See where 0 and 255 end up after that
         let low = 0. * 123.123 - 234.234;
