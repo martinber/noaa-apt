@@ -118,43 +118,43 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             let val_pixel = img.get_pixel_mut(x, y);
             let irval_pixel = img_clone.get_pixel(x + PX_PER_CHANNEL, y);
 
-            let val = val_pixel[0];
-            let irval = irval_pixel[0];
+            let val = val_pixel[0] as f32;
+            let irval = irval_pixel[0] as f32;
 
-            let r;
-            let g;
-            let b;
+            let r: f32;
+            let g: f32;
+            let b: f32;
 
             if x < CHANNEL_IMAGE_START_OFFSET || x >= CHANNEL_IMAGE_END_OFFSET {
                 r = val;
                 g = val;
                 b = val;
-            } else if val < (13000 * 256 / 65536) as u8 {
+            } else if val < 13000. * 256. / 65536. {
                 // Water identification
-                r = (8.0 + val as f32 * 0.2) as u8;
-                g = (20.0 + val as f32 * 1.0) as u8;
-                b = (50.0 + val as f32 * 0.75) as u8;
+                r = 8.0 + val * 0.2;
+                g = 20.0 + val * 1.0;
+                b = 50.0 + val * 0.75;
             }
-            else if irval > (35000 * 256 / 65536) as u8 {
+            else if irval > 35000. * 256. / 65536. {
                 // Cloud/snow/ice identification
                 // IR channel helps distinguish clouds and water, particularly in arctic areas
-                r = (irval as f32 * 0.5 + val as f32) as u8; // Average the two for a little better cloud distinction
+                r = irval * 0.5 + val; // Average the two for a little better cloud distinction
                 g = r;
                 b = r;
             }            
-            else if val < (27000 * 256 / 65536) as u8 {
+            else if val < 27000. * 256. / 65536. {
                 // Vegetation identification
                 // green
-                r = (val as f32 * 0.8) as u8;
-                g = (val as f32 * 0.9) as u8;
-                b = (val as f32 * 0.6) as u8;
+                r = val * 0.8;
+                g = val * 0.9;
+                b = val * 0.6;
             }
-            else if val <= (35000 * 256 / 65536) as u8 {
+            else if val <= 35000. * 256. / 65536. {
                 // Desert/dirt identification
                 // brown
-                r = (val as f32 * 1.0) as u8;
-                g = (val as f32 * 0.9) as u8;
-                b = (val as f32 * 0.7) as u8;
+                r = val * 1.0;
+                g = val * 0.9;
+                b = val * 0.7;
             }
             else {
                 // Everything else, but this was probably captured by the IR channel above
@@ -164,8 +164,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 b = val;
             }
             
-            *val_pixel = image::Rgba([r, g, b, 255]);
-            // *irval_pixel = image::Rgba([r, g, b, 255]);
+            *val_pixel = image::Rgba([r as u8, g as u8, b as u8, 255]);
         }
     }
 }
