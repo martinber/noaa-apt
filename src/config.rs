@@ -348,7 +348,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             to North.")
             .metavar("METHOD");
         parser.refer(&mut arg_false_color)
-            .add_option(&["-F", "--false-color"], argparse::StoreFalse,
+            .add_option(&["-F", "--false-color"], argparse::StoreTrue,
             "Attempt to produce a colored image, from the grayscale channel \
             and IR values. Experimental. Works best with \"--contrast telemetry\".");
         parser.refer(&mut arg_start_time)
