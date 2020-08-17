@@ -249,7 +249,7 @@ impl Widgets {
             dec_decode_button:       builder.get_object("dec_decode_button"      ).expect("Couldn't get dec_decode_button"      ),
 
             p_contrast_combo:        builder.get_object("p_contrast_combo"       ).expect("Couldn't get p_contrast_combo"       ),
-            p_false_color_check:     builder.get_object("p_false_color_check"     ).expect("Couldn't get p_false_color_check"   ),
+            p_false_color_check:     builder.get_object("p_false_color_check"    ).expect("Couldn't get p_false_color_check"    ),
             p_rotate_combo:          builder.get_object("p_rotate_combo"         ).expect("Couldn't get p_rotate_combo"         ),
             p_satellite_combo:       builder.get_object("p_satellite_combo"      ).expect("Couldn't get p_satellite_combo"      ),
             p_custom_tle_check:      builder.get_object("p_custom_tle_check"     ).expect("Couldn't get p_custom_tle_check"     ),
