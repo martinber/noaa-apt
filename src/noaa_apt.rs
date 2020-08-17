@@ -189,13 +189,13 @@ pub fn process(
     match rotate {
         Rotate::Yes => {
             context.status(0.90, "Rotating output image".to_string());
-            img = processing::rotate(&img)?;
+            processing::rotate(&mut img);
         },
         Rotate::Orbit => {
             if let Some(orbit_settings) = orbit {
                 if processing::south_to_north_pass(&orbit_settings)? {
                     context.status(0.90, "Rotating output image".to_string());
-                    img = processing::rotate(&img)?;
+                    processing::rotate(&mut img);
                 }
             } else {
                 warn!("Can't rotate automatically if no orbit information is provided");

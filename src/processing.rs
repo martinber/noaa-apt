@@ -10,7 +10,7 @@ use crate::misc;
 use crate::noaa_apt::{Image, OrbitSettings, RefTime};
 
 
-/// Rotate image without changing the location of the channels.
+/// Rotates the channels in place, keeping the sync bands and telemetry intact.
 ///
 /// Takes as an argument a raw image, that is, with syncing frames and telemetry
 /// bands. These will not be removed.
@@ -18,20 +18,25 @@ use crate::noaa_apt::{Image, OrbitSettings, RefTime};
 /// Care is taken to leave lines from the A channel at the same height as the B
 /// channel. Otherwise there can be a vertical offset of one pixel between each
 /// channel.
-pub fn rotate(img: &Image) -> err::Result<Image> {
-
+pub fn rotate(img: &mut Image) {
     info!("Rotating image");
 
-    // Create image with channel A and B swapped
-    let mut output = Image::new(img.width(), img.height());
-    let channel_a = img.view(0, 0, PX_PER_CHANNEL, img.height());
-    let channel_b = img.view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height());
-    output.copy_from(&channel_b, 0, 0)?;
-    output.copy_from(&channel_a, PX_PER_CHANNEL, 0)?;
+    // where the actual image data starts, past the sync frames and deep space band
+    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA - 1; // !
 
-    image::imageops::rotate180_in_place(&mut output);
+    // Note: not sure why the (-1) offsets were needed (lines marked with // !), 
+    // maybe some off by one errors, but otherwise the rotated images would not align 
+    // in the original positions. TODO: investigate & fix
 
-    Ok(output)
+    let mut channel_a = img.sub_image(
+        x_offset, 0, PX_CHANNEL_IMAGE_DATA - 1, img.height() // !
+    );
+    image::imageops::rotate180_in_place(&mut channel_a);
+    
+    let mut channel_b = img.sub_image(
+        x_offset + PX_PER_CHANNEL, 0, PX_CHANNEL_IMAGE_DATA - 1, img.height() // !
+    );
+    image::imageops::rotate180_in_place(&mut channel_b);
 }
 
 /// Rotate image if the pass was south to north.
@@ -78,7 +83,7 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 }
 
 /// Histogram equalization, for each channel separately.
-/// Works only on the grayscale image, 
+/// Works only on the grayscale image,
 /// needs to be done before the RGBA conversion.
 pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
     info!("Performing histogram equalization");
@@ -104,13 +109,13 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 /// and dirt detection, from the UI or command line.
 pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     info!("Colorize image (false color)");
-    
+
     // hack to access IR channel at the same time
-    let img_clone = img.clone(); 
+    let img_clone = img.clone();
 
     const CHANNEL_IMAGE_START_OFFSET: u32 = PX_SYNC_FRAME + PX_SPACE_DATA;
-    const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET + 
-        PX_CHANNEL_IMAGE_DATA;
+    const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET +
+        PX_CHANNEL_IMAGE_DATA - 1;
 
     // colorize
     for x in 0..PX_PER_CHANNEL {
@@ -141,7 +146,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 r = (irval + val) * 0.5; // Average the two for a little better cloud distinction
                 g = r;
                 b = r;
-            }            
+            }
             else if val < 27000. * 256. / 65536. {
                 // Vegetation identification
                 // green
@@ -163,7 +168,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 g = val;
                 b = val;
             }
-            
+
             *val_pixel = image::Rgba([r as u8, g as u8, b as u8, 255]);
         }
     }
