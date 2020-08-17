@@ -201,7 +201,7 @@ pub fn process(
                 warn!("Can't rotate automatically if no orbit information is provided");
             }
         },
-        Rotate::No => {}
+        Rotate::No => {},
     }
 
     Ok(img)
@@ -236,7 +236,7 @@ mod tests {
             -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.];
 
         // Shift values somewhere
-        let shifted_values: Signal = 
+        let shifted_values: Signal =
             test_values.iter().map(|x| x * 123.123 - 234.234).collect();
 
         // See where 0 and 255 end up after that
