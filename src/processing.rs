@@ -101,7 +101,7 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 /// Attempts to produce a colored image from grayscale channel and IR data.
 /// Works best when contrast is set to "telemetry".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
-/// and water detection, from the UI or command line.
+/// and dirt detection, from the UI or command line.
 pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     info!("Colorize image (false color)");
     
