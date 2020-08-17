@@ -402,6 +402,21 @@
                                                 <property name="position">1</property>
                                               </packing>
                                             </child>
+                                            <child>
+                                              <object class="GtkCheckButton" id="p_false_color_check">
+                                                <property name="label" translatable="yes">False color (experimental)</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="tooltip_text" translatable="yes">Attempt to produce a color image from grayscale data. Experimental. Works best with telemetry based contrast adjustment.</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
                                           </object>
                                         </child>
                                         <child type="label_item">

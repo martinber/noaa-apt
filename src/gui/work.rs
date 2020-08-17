@@ -242,6 +242,8 @@ pub fn process() {
 
         let resample_step = widgets.dec_resample_step_check.get_active();
 
+        let false_color = widgets.p_false_color_check.get_active();
+
         let contrast_adjustment: Contrast = match widgets.p_contrast_combo
             .get_active_id()
             .as_ref()
@@ -449,6 +451,7 @@ pub fn process() {
                 &signal,
                 contrast_adjustment,
                 rotate,
+                false_color,
                 Some(orbit),
             ));
         });

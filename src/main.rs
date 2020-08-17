@@ -80,6 +80,7 @@ fn inner_main() -> err::Result<()> {
             sync,
             contrast_adjustment,
             rotate,
+            false_color,
             orbit_settings,
         } => {
 
@@ -116,6 +117,7 @@ fn inner_main() -> err::Result<()> {
                 &raw_data,
                 contrast_adjustment,
                 rotate,
+                false_color,
                 orbit_settings,
             )?;
 

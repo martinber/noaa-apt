@@ -1,9 +1,9 @@
 //! Image processing functions.
 
-use image::{GenericImageView, GenericImage, GrayImage};
+use image::{GenericImageView, GenericImage, GrayImage, ImageBuffer, Rgba};
 use log::info;
 
-use crate::decode::PX_PER_CHANNEL;
+use crate::decode::{PX_PER_CHANNEL, PX_PER_SYNC, PX_PER_SPACE_DATA, PX_PER_CHANNEL_IMAGE_DATA};
 use crate::err;
 use crate::geo;
 use crate::misc;
@@ -96,4 +96,75 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
     output.copy_from(&channel_b, PX_PER_CHANNEL, 0)?;
 
     Ok(output)
+}
+
+/// Attempts to produce a colored image from grayscale channel and IR data.
+/// Works best when contrast is set to "telemetry".
+/// Needs a way to allow tweaking hardcoded values for water, land, ice
+/// and water detection, from the UI or command line.
+pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    // hack to access IR channel at the same time
+    // find a way to process each channel separately
+    let mut img_clone = img.clone(); 
+
+    const CHANNEL_IMAGE_START_OFFSET: u32 = PX_PER_SYNC + PX_PER_SPACE_DATA;
+    const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET + 
+        PX_PER_CHANNEL_IMAGE_DATA;
+
+    // colorize
+    for x in 0..PX_PER_CHANNEL {
+        for y in 0..img.height() {
+            let val_pixel = img.get_pixel_mut(x, y);
+            let irval_pixel = img_clone.get_pixel_mut(x + PX_PER_CHANNEL, y);
+
+            let val = val_pixel[0];
+            let irval = irval_pixel[0];
+
+            let r;
+            let g;
+            let b;
+
+            if x < CHANNEL_IMAGE_START_OFFSET || x >= CHANNEL_IMAGE_END_OFFSET {
+                r = val;
+                g = val;
+                b = val;
+            } else if val < (13000 * 256 / 65536) as u8 {
+                // Water identification
+                r = (8.0 + val as f32 * 0.2) as u8;
+                g = (20.0 + val as f32 * 1.0) as u8;
+                b = (50.0 + val as f32 * 0.75) as u8;
+            }
+            else if irval > (35000 * 256 / 65536) as u8 {
+                // Cloud/snow/ice identification
+                // IR channel helps distinguish clouds and water, particularly in arctic areas
+                r = (irval as f32 * 0.5 + val as f32) as u8; // Average the two for a little better cloud distinction
+                g = r;
+                b = r;
+            }            
+            else if val < (27000 * 256 / 65536) as u8 {
+                // Vegetation identification
+                // green
+                r = (val as f32 * 0.8) as u8;
+                g = (val as f32 * 0.9) as u8;
+                b = (val as f32 * 0.6) as u8;
+            }
+            else if val <= (35000 * 256 / 65536) as u8 {
+                // Desert/dirt identification
+                // brown
+                r = (val as f32 * 1.0) as u8;
+                g = (val as f32 * 0.9) as u8;
+                b = (val as f32 * 0.7) as u8;
+            }
+            // Everything else, but this was probably captured by the IR channel above
+            else {
+                // Clouds, snow, and really dry desert
+                r = val;
+                g = val;
+                b = val;
+            }
+            
+            *val_pixel = image::Rgba([r, g, b, 255]);
+            *irval_pixel = image::Rgba([r, g, b, 255]);
+        }
+    }
 }
