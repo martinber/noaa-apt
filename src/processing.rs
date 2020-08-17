@@ -103,9 +103,10 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
 /// and water detection, from the UI or command line.
 pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    info!("Colorize image (false color)");
+    
     // hack to access IR channel at the same time
-    // find a way to process each channel separately
-    let mut img_clone = img.clone(); 
+    let img_clone = img.clone(); 
 
     const CHANNEL_IMAGE_START_OFFSET: u32 = PX_PER_SYNC + PX_PER_SPACE_DATA;
     const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET + 
@@ -115,7 +116,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     for x in 0..PX_PER_CHANNEL {
         for y in 0..img.height() {
             let val_pixel = img.get_pixel_mut(x, y);
-            let irval_pixel = img_clone.get_pixel_mut(x + PX_PER_CHANNEL, y);
+            let irval_pixel = img_clone.get_pixel(x + PX_PER_CHANNEL, y);
 
             let val = val_pixel[0];
             let irval = irval_pixel[0];
@@ -164,7 +165,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             }
             
             *val_pixel = image::Rgba([r, g, b, 255]);
-            *irval_pixel = image::Rgba([r, g, b, 255]);
+            // *irval_pixel = image::Rgba([r, g, b, 255]);
         }
     }
 }
