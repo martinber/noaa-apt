@@ -156,8 +156,8 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 g = (val as f32 * 0.9) as u8;
                 b = (val as f32 * 0.7) as u8;
             }
-            // Everything else, but this was probably captured by the IR channel above
             else {
+                // Everything else, but this was probably captured by the IR channel above
                 // Clouds, snow, and really dry desert
                 r = val;
                 g = val;
