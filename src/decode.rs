@@ -14,25 +14,25 @@ use crate::filters;
 /// This signal has one sample per pixel.
 pub const FINAL_RATE: u32 = 4160;
 
-/// Channel sync frame.
-pub const PX_PER_SYNC: u32 = 39;
+/// Channel sync frame, in pixels.
+pub const PX_SYNC_FRAME: u32 = 39;
 
 /// Deep space data and minute markers.
-pub const PX_PER_SPACE_DATA: u32 = 47;
+pub const PX_SPACE_DATA: u32 = 47;
 
 /// Channel image data.
-pub const PX_PER_CHANNEL_IMAGE_DATA: u32 = 909;
+pub const PX_CHANNEL_IMAGE_DATA: u32 = 909;
 
 /// Telemetry data.
-pub const PX_PER_TELEMETRY_DATA: u32 = 45;
+pub const PX_TELEMETRY_DATA: u32 = 45;
 
 // Source: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)#Structure
 /// Pixels per channel.
 pub const PX_PER_CHANNEL: u32 = 
-    PX_PER_SYNC + 
-    PX_PER_SPACE_DATA + 
-    PX_PER_CHANNEL_IMAGE_DATA +
-    PX_PER_TELEMETRY_DATA;
+    PX_SYNC_FRAME + 
+    PX_SPACE_DATA + 
+    PX_CHANNEL_IMAGE_DATA +
+    PX_TELEMETRY_DATA;
 
 /// Pixels per image row, 1040 * 2 = 2080.
 pub const PX_PER_ROW: u32 = PX_PER_CHANNEL * 2;

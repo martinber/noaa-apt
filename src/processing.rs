@@ -3,7 +3,7 @@
 use image::{GenericImageView, GenericImage, GrayImage, ImageBuffer, Rgba};
 use log::info;
 
-use crate::decode::{PX_PER_CHANNEL, PX_PER_SYNC, PX_PER_SPACE_DATA, PX_PER_CHANNEL_IMAGE_DATA};
+use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
 use crate::err;
 use crate::geo;
 use crate::misc;
@@ -108,9 +108,9 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     // hack to access IR channel at the same time
     let img_clone = img.clone(); 
 
-    const CHANNEL_IMAGE_START_OFFSET: u32 = PX_PER_SYNC + PX_PER_SPACE_DATA;
+    const CHANNEL_IMAGE_START_OFFSET: u32 = PX_SYNC_FRAME + PX_SPACE_DATA;
     const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET + 
-        PX_PER_CHANNEL_IMAGE_DATA;
+        PX_CHANNEL_IMAGE_DATA;
 
     // colorize
     for x in 0..PX_PER_CHANNEL {
