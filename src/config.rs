@@ -58,6 +58,7 @@ pub enum Mode {
         contrast_adjustment: Contrast,
         rotate: Rotate,
         orbit_settings: Option<OrbitSettings>,
+        false_color: bool,
     },
 
     /// Resample image from commandline.
@@ -280,6 +281,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let mut arg_vscale: Option<f64> = None;
     let mut arg_rotate: Option<String> = None;
     let mut arg_rotate_deprecated = false;
+    let mut arg_false_color = false;
     {
         let mut parser = argparse::ArgumentParser::new();
         parser.set_description("Decode NOAA APT images from WAV files. Run \
@@ -345,6 +347,10 @@ pub fn get_config() -> (bool, log::Level, Mode) {
             calculations and reception time to determine if the pass was South \
             to North.")
             .metavar("METHOD");
+        parser.refer(&mut arg_false_color)
+            .add_option(&["-F", "--false-color"], argparse::StoreFalse,
+            "Attempt to produce a colored image, from the grayscale channel \
+            and IR values. Experimental. Works best with \"--contrast telemetry\".");
         parser.refer(&mut arg_start_time)
             .add_option(&["-t", "--start-time"], argparse::StoreOption,
             "Provide recording start time, used for orbit calculations. Use \
@@ -577,6 +583,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 sync: arg_sync,
                 contrast_adjustment,
                 rotate,
+                false_color: arg_false_color,
                 orbit_settings,
             });
         }

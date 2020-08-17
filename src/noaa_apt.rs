@@ -111,6 +111,7 @@ pub fn process(
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
+    false_color: bool,
     orbit: Option<OrbitSettings>,
 ) -> err::Result<Image> {
     let (low, high) = match contrast_adjustment {
@@ -158,68 +159,10 @@ pub fn process(
     }
 
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
-    let mut img_clone = img.clone();
-    // --------------------
 
-    // colorize
-    for x in 0..PX_PER_CHANNEL {
-        for y in 0..height {
-            let val_pixel = img.get_pixel_mut(x, y);
-            let irval_pixel = img_clone.get_pixel_mut(x + PX_PER_CHANNEL, y);
-
-            let val = val_pixel[0];
-            let irval = irval_pixel[0];
-
-            let r;
-            let g;
-            let b;
-
-            // Water identification
-            if val < (13000 * 256 / 65536) as u8 {
-                r = (8.0 + val as f32 * 0.2) as u8;
-                g = (20.0 + val as f32 * 1.0) as u8;
-                b = (50.0 + val as f32 * 0.75) as u8;
-            }
-            // Cloud/snow/ice identification
-            // IR channel helps distinguish clouds and water, particularly in arctic areas
-            else if irval > (35000 * 256 / 65536) as u8 {
-                r = (irval as f32 * 0.5 + val as f32) as u8; // Average the two for a little better cloud distinction
-                g = r;
-                b = r;
-            }
-            // Vegetation identification
-            else if val < (27000 * 256 / 65536) as u8 {
-                // green
-                r = (val as f32 * 0.8) as u8;
-                g = (val as f32 * 0.9) as u8;
-                b = (val as f32 * 0.6) as u8;
-            }
-            // Desert/dirt identification
-            else if val <= (35000 * 256 / 65536) as u8 {
-                // brown
-                r = (val as f32 * 1.0) as u8;
-                g = (val as f32 * 0.9) as u8;
-                b = (val as f32 * 0.7) as u8;
-            }
-            // Everything else, but this was probably captured by the IR channel above
-            else {
-                // Clouds, snow, and really dry desert
-                r = val;
-                g = val;
-                b = val;
-            }
-
-            // if (j < SPACE_WORDS || j >= SPACE_WORDS + CHANNEL_DATA_WORDS) {
-            //     r = 0;
-            //     g = 0;
-            //     b = 0;
-            //   }
-            
-            *val_pixel = image::Rgba([r, g, b, 255]);
-            *irval_pixel = image::Rgba([r, g, b, 255]);
-        }
+    if false_color {
+        processing::false_color(&mut img);
     }
-
     // --------------------
 
     if let Some(orbit_settings) = orbit.clone() {
