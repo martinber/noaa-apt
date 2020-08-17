@@ -138,7 +138,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             else if irval > 35000. * 256. / 65536. {
                 // Cloud/snow/ice identification
                 // IR channel helps distinguish clouds and water, particularly in arctic areas
-                r = irval * 0.5 + val; // Average the two for a little better cloud distinction
+                r = (irval + val) * 0.5; // Average the two for a little better cloud distinction
                 g = r;
                 b = r;
             }            
