@@ -197,7 +197,7 @@ GNU/Linux:
 
 ### Contrast adjustment
 
-You can choose between three contrast adjustment methods:
+You can choose between four contrast adjustment methods:
 
 - MinMax: It doesn't do anything, just maps the darkest pixel to black and the
     brightest pixel to white.
@@ -209,6 +209,11 @@ You can choose between three contrast adjustment methods:
 - From telemetry: Checks the wedges from telemetry bands, those wedges have
     shades of grey that go from black to white. This method is better than "98
     percent" but can fail on noisy images.
+
+- Histogram equalization: Applies this (non-linear)
+    [adjustment](https://en.wikipedia.org/wiki/Histogram_equalization) over both
+    channels independently. It is the method that produces the **best looking
+    images**, but it can look bad if there is a day/night channel switch.
 
 ### Rotate image
 

@@ -82,8 +82,6 @@ Notes:
     - Look for defaults for yaw and scales?. See if yaw problems are caused by
         az_ref?. Ask someone.
 
-    - Histogram equalization, independent for each channel.
-
     - Allow different timezones per filename.
 
     - The program eats RAM when opening bad custom TLE files.
@@ -94,13 +92,16 @@ Notes:
 
 - Someday:
 
+    - Implement histogram equalization on floats, before converting pixel values
+        to integers.
+
     - Show user position on map. Add support for
         [gpsd](https://gpsd.gitlab.io/gpsd/index.html). Maybe using
-        [gpsd_proto](https://crates.io/crates/gpsd_proto)
+        [gpsd_proto](https://crates.io/crates/gpsd_proto).
 
     - Draw image over mercator (or at least equirectangular) projection.
 
-    - Make seconds spinner add a minute when wrapping
+    - Make seconds spinner add a minute when wrapping.
 
     - Check things that can panic/can fail:
 
