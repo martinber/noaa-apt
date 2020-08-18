@@ -22,11 +22,16 @@ pub fn rotate(img: &mut Image) {
     info!("Rotating image");
 
     // where the actual image data starts, past the sync frames and deep space band
-    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA - 1;
+    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA - 1; // !
 
-    // Note: not sure why the (-1) offsets were needed (lines marked with // !), 
-    // maybe some off by one errors, but otherwise the rotated images would not align 
-    // in the original positions. TODO: investigate & fix
+    // Note: the (-1) offsets are here (lines marked with // !) because it looks like
+    // the image shifts ~2 px to the left during the sync phase.
+    // So 2px that should be at the left edge turn out to be at the right edge.
+    // This causes some artifacts when the channels are rotated, since the offsets
+    // "bite into" the telemetry bands, that turn out on the left after rotation.
+    // This seems to fix it, but try to find if it's possible to do it during the 
+    // sync phase, and get rid of these here.
+    // Details here: https://github.com/martinber/noaa-apt/issues/26
 
     let mut channel_a = img.sub_image(
         x_offset, 0, PX_CHANNEL_IMAGE_DATA - 1, img.height() // !
