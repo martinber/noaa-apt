@@ -22,7 +22,7 @@ pub fn rotate(img: &mut Image) {
     info!("Rotating image");
 
     // where the actual image data starts, past the sync frames and deep space band
-    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA - 1; // !
+    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA - 1;
 
     // Note: not sure why the (-1) offsets were needed (lines marked with // !), 
     // maybe some off by one errors, but otherwise the rotated images would not align 
@@ -110,18 +110,15 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
     info!("Colorize image (false color)");
 
-    // hack to access IR channel at the same time
-    let img_clone = img.clone();
-
-    const CHANNEL_IMAGE_START_OFFSET: u32 = PX_SYNC_FRAME + PX_SPACE_DATA;
-    const CHANNEL_IMAGE_END_OFFSET: u32 = CHANNEL_IMAGE_START_OFFSET +
-        PX_CHANNEL_IMAGE_DATA - 1;
+    let x_start = PX_SYNC_FRAME + PX_SPACE_DATA;
+    let x_end = x_start + PX_CHANNEL_IMAGE_DATA;
+    let image_height = img.height();
 
     // colorize
-    for x in 0..PX_PER_CHANNEL {
-        for y in 0..img.height() {
-            let val_pixel = img.get_pixel_mut(x, y);
-            let irval_pixel = img_clone.get_pixel(x + PX_PER_CHANNEL, y);
+    for x in x_start..x_end {
+        for y in 0..image_height {
+            let val_pixel = img.get_pixel(x, y);
+            let irval_pixel = img.get_pixel(x + PX_PER_CHANNEL, y);
 
             let val = val_pixel[0] as f32;
             let irval = irval_pixel[0] as f32;
@@ -130,11 +127,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             let g: f32;
             let b: f32;
 
-            if x < CHANNEL_IMAGE_START_OFFSET || x >= CHANNEL_IMAGE_END_OFFSET {
-                r = val;
-                g = val;
-                b = val;
-            } else if val < 13000. * 256. / 65536. {
+            if val < 13000. * 256. / 65536. {
                 // Water identification
                 r = 8.0 + val * 0.2;
                 g = 20.0 + val * 1.0;
@@ -169,7 +162,7 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 b = val;
             }
 
-            *val_pixel = image::Rgba([r as u8, g as u8, b as u8, 255]);
+            img.put_pixel(x, y, Rgba([r as u8, g as u8, b as u8, 255]));
         }
     }
 }
