@@ -17,7 +17,7 @@ use crate::map;
 use crate::misc;
 use crate::processing;
 use crate::telemetry;
-use crate::wav;
+use crate::{config, wav};
 
 pub type Image = image::RgbaImage;
 
@@ -108,6 +108,7 @@ pub fn load(input_filename: &Path) -> err::Result<(Signal, Rate)> {
 
 pub fn process(
     context: &mut Context,
+    settings: &config::Settings,
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
@@ -161,7 +162,7 @@ pub fn process(
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
 
     if false_color {
-        processing::false_color(&mut img);
+        processing::false_color(&mut img, settings.default_false_color_values);
     }
     // --------------------
 

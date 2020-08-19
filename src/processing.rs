@@ -112,8 +112,11 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 /// Works best when contrast is set to "telemetry".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
 /// and dirt detection, from the UI or command line.
-pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
-    info!("Colorize image (false color)");
+pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, values: (u8, u8, u8)) {
+    let (water, vegetation, clouds) = values;
+    info!("Colorize image (false color), water={}, vegetation={}, clouds={}",
+        water, vegetation, clouds
+    );
 
     let x_start = PX_SYNC_FRAME + PX_SPACE_DATA;
     let x_end = x_start + PX_CHANNEL_IMAGE_DATA;
@@ -132,27 +135,27 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>) {
             let g: f32;
             let b: f32;
 
-            if val < 13000. * 256. / 65536. {
+            if val < water as f32 {
                 // Water identification
-                r = 8.0 + val * 0.2;
-                g = 20.0 + val * 1.0;
-                b = 50.0 + val * 0.75;
+                r = (8.0 + val * 0.2).min(255.);
+                g = (20.0 + val * 1.0).min(255.);
+                b = (50.0 + val * 0.75).min(255.); // avoid overflow
             }
-            else if irval > 35000. * 256. / 65536. {
+            else if irval > clouds as f32 {
                 // Cloud/snow/ice identification
                 // IR channel helps distinguish clouds and water, particularly in arctic areas
                 r = (irval + val) * 0.5; // Average the two for a little better cloud distinction
                 g = r;
                 b = r;
             }
-            else if val < 27000. * 256. / 65536. {
+            else if val < vegetation as f32 {
                 // Vegetation identification
                 // green
                 r = val * 0.8;
                 g = val * 0.9;
                 b = val * 0.6;
             }
-            else if val <= 35000. * 256. / 65536. {
+            else if val <= clouds as f32 {
                 // Desert/dirt identification
                 // brown
                 r = val * 1.0;

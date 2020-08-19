@@ -124,6 +124,9 @@ pub struct Settings {
 
     /// Default lakes color as RGBA.
     pub default_lakes_color: (u8, u8, u8, u8),
+
+    /// Default thresholds for false color (water, vegetation, clouds)
+    pub default_false_color_values: (u8, u8, u8),
 }
 
 /// Holds the deserialized raw parsed settings file.
@@ -134,6 +137,7 @@ struct DeSettings {
     timestamps: DeTimestamps,
     profiles: DeProfiles,
     map_overlay: DeMapOverlay,
+    false_color: DeFalseColor,
 }
 
 /// Holds the deserialized raw parsed timestamps table
@@ -150,6 +154,12 @@ struct DeMapOverlay {
     default_countries_color: (u8, u8, u8, u8),
     default_states_color: (u8, u8, u8, u8),
     default_lakes_color: (u8, u8, u8, u8),
+}
+
+/// Holds the deserialized raw parsed false color thresholds
+#[derive(Deserialize)]
+struct DeFalseColor {
+    default_false_color_values: (u8, u8, u8),
 }
 
 /// Holds the deserialized raw parsed profiles table
@@ -435,6 +445,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         default_countries_color: de_settings.map_overlay.default_countries_color,
         default_states_color: de_settings.map_overlay.default_states_color,
         default_lakes_color: de_settings.map_overlay.default_lakes_color,
+        default_false_color_values: de_settings.false_color.default_false_color_values,
     };
 
     // If set, then the program will be used as a command-line one, otherwise we
