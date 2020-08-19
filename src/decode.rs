@@ -33,7 +33,7 @@ pub const PX_TELEMETRY_DATA: u32 = 45;
 pub const PX_PER_CHANNEL: u32 = 1040;
 
 /// Pixels per image row. A row contains 2 channels.
-pub const PX_PER_ROW: u32 = PX_PER_CHANNEL * 2;
+pub const PX_PER_ROW: u32 = 2080;
 
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
