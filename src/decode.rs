@@ -24,17 +24,15 @@ pub const PX_SPACE_DATA: u32 = 47;
 pub const PX_CHANNEL_IMAGE_DATA: u32 = 909;
 
 /// Telemetry data.
+#[allow(dead_code)]
 pub const PX_TELEMETRY_DATA: u32 = 45;
 
 // Source: https://www.sigidwiki.com/wiki/Automatic_Picture_Transmission_(APT)#Structure
-/// Pixels per channel.
-pub const PX_PER_CHANNEL: u32 = 
-    PX_SYNC_FRAME + 
-    PX_SPACE_DATA + 
-    PX_CHANNEL_IMAGE_DATA +
-    PX_TELEMETRY_DATA;
+/// Pixels per channel. A channel contains:
+/// PX_SYNC_FRAME | PX_SPACE_DATA | PX_CHANNEL_IMAGE_DATA | PX_TELEMETRY_DATA
+pub const PX_PER_CHANNEL: u32 = 1040;
 
-/// Pixels per image row, 1040 * 2 = 2080.
+/// Pixels per image row. A row contains 2 channels.
 pub const PX_PER_ROW: u32 = PX_PER_CHANNEL * 2;
 
 /// AM carrier frequency in Hz.
