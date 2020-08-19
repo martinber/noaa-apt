@@ -69,6 +69,14 @@ default_countries_color = [255, 255, 0, 255]
 default_states_color = [255, 255, 0, 150]
 default_lakes_color = [50, 200, 200, 255]
 
+[false_color]
+
+# Values used as thresholds for false color algorithm:
+# [water, vegetation, clouds]
+# Valid values: 0..255 with water < vegetation < clouds
+default_false_color_values = [50, 105, 137]
+
+
 [profiles]
 
 default_profile = "standard"
@@ -118,7 +126,7 @@ default_profile = "standard"
     wav_resample_atten = 30
     wav_resample_delta_freq = 0.2
 
-    # Should be used temporairly if there is a problem with the "standard"
+    # Should be used temporarily if there is a problem with the "standard"
     # profile in some images. But leave a bug report in that case.
     [profiles.slow]
 

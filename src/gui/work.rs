@@ -448,6 +448,7 @@ pub fn process() {
             );
             callback(noaa_apt::process(
                 &mut context,
+                &settings,
                 &signal,
                 contrast_adjustment,
                 rotate,

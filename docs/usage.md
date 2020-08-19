@@ -279,9 +279,11 @@ slant. See also [Troubleshooting](./usage.html#troubleshooting).
 ### Configuration file
 
 The first time you open noaa-apt, a default configuration file will be created
-on `~/.config/noaa-apt/settings.toml` or
-`C:\Users\[USER]\AppData\Roaming\noaa-apt\settings.toml` depending on your
-operating system.
+depending on your operating system:
+
+- Linux: `~/.config/noaa-apt/settings.toml`
+- Windows: `C:\Users\[USER]\AppData\Roaming\noaa-apt\settings.toml`
+- MacOS: `~/Library/Preferences/ar.com.mbernardi.noaa-apt/settings.toml`
 
 There you can change some advanced settings, be sure to check it if you plan to
 use noaa-apt for automatic image reception. [Here you can see the default
