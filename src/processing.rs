@@ -1,7 +1,7 @@
 //! Image processing functions.
 
 use image::{GenericImageView, GenericImage, GrayImage, ImageBuffer, Rgba};
-use log::info;
+use log::{warn, info};
 
 use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
 use crate::err;
@@ -29,7 +29,7 @@ pub fn rotate(img: &mut Image) {
     // So 2px that should be at the left edge turn out to be at the right edge.
     // This causes some artifacts when the channels are rotated, since the offsets
     // "bite into" the telemetry bands, that turn out on the left after rotation.
-    // This seems to fix it, but try to find if it's possible to do it during the 
+    // This seems to fix it, but try to find if it's possible to do it during the
     // sync phase, and get rid of these here.
     // Details here: https://github.com/martinber/noaa-apt/issues/26
 
@@ -37,7 +37,7 @@ pub fn rotate(img: &mut Image) {
         x_offset, 0, PX_CHANNEL_IMAGE_DATA - 1, img.height() // !
     );
     image::imageops::rotate180_in_place(&mut channel_a);
-    
+
     let mut channel_b = img.sub_image(
         x_offset + PX_PER_CHANNEL, 0, PX_CHANNEL_IMAGE_DATA - 1, img.height() // !
     );
@@ -118,6 +118,10 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, values: (u8, u8, u8
         water, vegetation, clouds
     );
 
+    if water > vegetation || vegetation > clouds {
+        warn!("Condition not satisfied: 'water < vegetation < clouds'. Expect wrong results");
+    }
+
     let x_start = PX_SYNC_FRAME + PX_SPACE_DATA;
     let x_end = x_start + PX_CHANNEL_IMAGE_DATA;
     let image_height = img.height();
@@ -138,8 +142,8 @@ pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, values: (u8, u8, u8
             if val < water as f32 {
                 // Water identification
                 r = (8.0 + val * 0.2).min(255.);
-                g = (20.0 + val * 1.0).min(255.);
-                b = (50.0 + val * 0.75).min(255.); // avoid overflow
+                g = (20.0 + val * 1.0).min(255.);  // avoid overflow
+                b = (50.0 + val * 0.75).min(255.);
             }
             else if irval > clouds as f32 {
                 // Cloud/snow/ice identification
