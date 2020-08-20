@@ -190,7 +190,7 @@ fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
     use std::iter::repeat;
 
     Ok(
-        (
+        repeat(-1).take(sync_pulse_width).chain(
             repeat(-1).take(sync_pulse_width).chain(
             repeat(1).take(sync_pulse_width))
             .cycle().take(7 * 2 * sync_pulse_width)
@@ -279,6 +279,7 @@ mod tests {
 
         assert_eq!(
             vec![-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
                  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -301,6 +302,7 @@ mod tests {
 
         assert_eq!(
             vec![-1, -1, -1, -1,
+                 -1, -1, -1, -1,
                   1,  1,  1,  1,
                  -1, -1, -1, -1,
                   1,  1,  1,  1,
