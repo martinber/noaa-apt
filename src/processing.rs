@@ -7,7 +7,7 @@ use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMA
 use crate::err;
 use crate::geo;
 use crate::misc;
-use crate::noaa_apt::{Image, OrbitSettings, RefTime};
+use crate::noaa_apt::{Image, ColorSettings, OrbitSettings, RefTime};
 
 
 /// Rotates the channels in place, keeping the sync bands and telemetry intact.
@@ -112,8 +112,11 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
 /// Works best when contrast is set to "telemetry".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
 /// and dirt detection, from the UI or command line.
-pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, values: (u8, u8, u8)) {
-    let (water, vegetation, clouds) = values;
+pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, color_settings: ColorSettings) {
+    let water = color_settings.water_threshold;
+    let vegetation = color_settings.vegetation_threshold;
+    let clouds = color_settings.clouds_threshold;
+
     info!("Colorize image (false color), water={}, vegetation={}, clouds={}",
         water, vegetation, clouds
     );

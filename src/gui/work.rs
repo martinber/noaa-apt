@@ -16,7 +16,10 @@ use log::error;
 use crate::context::Context;
 use crate::dsp::{Signal, Rate};
 use crate::err;
-use crate::noaa_apt::{self, Image, Contrast, Rotate, RefTime, SatName, OrbitSettings, MapSettings};
+use crate::noaa_apt::{
+    self, Image, Contrast, Rotate, RefTime, SatName,
+    ColorSettings, OrbitSettings, MapSettings
+};
 use super::misc;
 use super::state::{borrow_state, borrow_state_mut, borrow_widgets};
 
@@ -242,8 +245,6 @@ pub fn process() {
 
         let resample_step = widgets.dec_resample_step_check.get_active();
 
-        let false_color = widgets.p_false_color_check.get_active();
-
         let contrast_adjustment: Contrast = match widgets.p_contrast_combo
             .get_active_id()
             .as_ref()
@@ -288,6 +289,16 @@ pub fn process() {
                     return;
                 },
             };
+
+        let color = if widgets.p_false_color_check.get_active() {
+            Some(ColorSettings {
+                water_threshold: widgets.p_color_water_scale.get_value() as u8,
+                vegetation_threshold: widgets.p_color_vegetation_scale.get_value() as u8,
+                clouds_threshold: widgets.p_color_clouds_scale.get_value() as u8,
+            })
+        } else {
+            None
+        };
 
         let sat_name: SatName = match widgets.p_satellite_combo
             .get_active_id()
@@ -452,7 +463,7 @@ pub fn process() {
                 &signal,
                 contrast_adjustment,
                 rotate,
-                false_color,
+                color,
                 Some(orbit),
             ));
         });

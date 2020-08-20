@@ -310,6 +310,11 @@ I use Clippy too:
 
 - Increment version number on `/src/program.rc`.
 
+- Increment version number of `/src/default_settings.toml` if necessary.
+
+- Copy `/src/default_settings.toml` to `/docs/default_settings.toml` if
+    necessary.
+
 - Write changelog on `/debian/changelog`.
 
 - Edit the Downloads page on the website, point to the new packages that are

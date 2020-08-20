@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::err;
 use crate::misc;
-use crate::noaa_apt::{OrbitSettings, MapSettings, Rotate, Contrast, SatName, RefTime};
+use crate::noaa_apt::{ColorSettings, OrbitSettings, MapSettings, Rotate, Contrast, SatName, RefTime};
 
 // Expected configuration file version.
 const SETTINGS_VERSION: u32 = 2;
@@ -57,8 +57,8 @@ pub enum Mode {
         sync: bool,
         contrast_adjustment: Contrast,
         rotate: Rotate,
+        color_settings: Option<ColorSettings>,
         orbit_settings: Option<OrbitSettings>,
-        false_color: bool,
     },
 
     /// Resample image from commandline.
@@ -126,7 +126,9 @@ pub struct Settings {
     pub default_lakes_color: (u8, u8, u8, u8),
 
     /// Default thresholds for false color (water, vegetation, clouds)
-    pub default_false_color_values: (u8, u8, u8),
+    pub default_color_water_threshold: u8,
+    pub default_color_vegetation_threshold: u8,
+    pub default_color_clouds_threshold: u8,
 }
 
 /// Holds the deserialized raw parsed settings file.
@@ -445,7 +447,9 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         default_countries_color: de_settings.map_overlay.default_countries_color,
         default_states_color: de_settings.map_overlay.default_states_color,
         default_lakes_color: de_settings.map_overlay.default_lakes_color,
-        default_false_color_values: de_settings.false_color.default_false_color_values,
+        default_color_water_threshold: de_settings.false_color.default_false_color_values.0,
+        default_color_vegetation_threshold: de_settings.false_color.default_false_color_values.1,
+        default_color_clouds_threshold: de_settings.false_color.default_false_color_values.2,
     };
 
     // If set, then the program will be used as a command-line one, otherwise we
@@ -491,6 +495,16 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                         None => Rotate::No,
                     }
                 };
+
+            let color_settings = if arg_false_color {
+                Some(ColorSettings {
+                    water_threshold: settings.default_color_water_threshold,
+                    vegetation_threshold: settings.default_color_vegetation_threshold,
+                    clouds_threshold: settings.default_color_clouds_threshold,
+                })
+            } else {
+                None
+            };
 
             let mut sat_name: Option<SatName> = None;
             let mut ref_time: Option<RefTime> = None;
@@ -594,7 +608,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 sync: arg_sync,
                 contrast_adjustment,
                 rotate,
-                false_color: arg_false_color,
+                color_settings,
                 orbit_settings,
             });
         }

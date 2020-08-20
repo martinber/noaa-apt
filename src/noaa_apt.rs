@@ -59,6 +59,14 @@ pub enum RefTime {
     End(chrono::DateTime<chrono::Utc>),
 }
 
+/// Settings related to false colors
+#[derive(Clone, Debug)]
+pub struct ColorSettings {
+    pub water_threshold: u8,
+    pub vegetation_threshold: u8,
+    pub clouds_threshold: u8,
+}
+
 /// Settings that need orbit calculations.
 #[derive(Clone, Debug)]
 pub struct OrbitSettings {
@@ -112,7 +120,7 @@ pub fn process(
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
-    false_color: bool,
+    color: Option<ColorSettings>,
     orbit: Option<OrbitSettings>,
 ) -> err::Result<Image> {
     let (low, high) = match contrast_adjustment {
@@ -161,8 +169,8 @@ pub fn process(
 
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
 
-    if false_color {
-        processing::false_color(&mut img, settings.default_false_color_values);
+    if let Some(color_settings) = color {
+        processing::false_color(&mut img, color_settings);
     }
     // --------------------
 
