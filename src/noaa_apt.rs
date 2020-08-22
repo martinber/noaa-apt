@@ -18,6 +18,7 @@ use crate::misc;
 use crate::processing;
 use crate::telemetry;
 use crate::{config, wav};
+use image::GrayImage;
 
 pub type Image = image::RgbaImage;
 
@@ -116,14 +117,14 @@ pub fn load(input_filename: &Path) -> err::Result<(Signal, Rate)> {
 
 pub fn process(
     context: &mut Context,
-    settings: &config::Settings,
+    _settings: &config::Settings,
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
     color: Option<ColorSettings>,
     orbit: Option<OrbitSettings>,
 ) -> err::Result<Image> {
-    let (low, high) = match contrast_adjustment {
+    let (mut low, mut high) = match contrast_adjustment {
         Contrast::Telemetry => {
             context.status(0.1, "Adjusting contrast from telemetry".to_string());
 
@@ -150,28 +151,45 @@ pub fn process(
         }
     };
 
+    // for colorization & histogram equalization,
+    // always do 98% contrast adjust first, then colorize,
+    // then equalize histogram of color image if needed
+    if color.is_some() {
+        match contrast_adjustment {
+            Contrast::Histogram => {
+                let (l, h) = misc::percent(&signal, 0.98)?;
+                low = l;
+                high = h;
+            },
+            _ => { } // keep contrast adjustment selected by the user
+        }
+
+    }
+
     // --------------------
 
     context.status(0.3, "Generating image".to_string());
 
     let height = signal.len() as u32 / PX_PER_ROW;
 
-    use image::GrayImage;
-
-    let mut img: GrayImage = GrayImage::from_vec(PX_PER_ROW, height, map(&signal, low, high))
-        .ok_or_else(|| {
-            err::Error::Internal("Could not create image, wrong buffer length".to_string())
-        })?;
-
-    if let Contrast::Histogram = contrast_adjustment {
-        img = processing::histogram_equalization(&img)?;
-    }
+    // grayscale image obtained by mapping signal values to 0..255
+    // based on the selected contrast adjustment
+    let img: GrayImage = GrayImage::from_vec(
+        PX_PER_ROW, height, map_signal_u8(&signal, low, high)
+    ).ok_or_else(|| {
+        err::Error::Internal("Could not create image, wrong buffer length".to_string())
+    })?;
 
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
 
-    if let Some(color_settings) = color {
+    if let Some(color_settings) = &color {
         processing::false_color(&mut img, color_settings);
     }
+
+    if let Contrast::Histogram = contrast_adjustment {
+        img = processing::histogram_equalization(&mut img, color.is_some())?;
+    }
+
     // --------------------
 
     if let Some(orbit_settings) = orbit.clone() {
@@ -220,7 +238,7 @@ pub fn process(
 ///
 /// `low` becomes 0 and `high` becomes 255. Values are clamped to prevent `u8`
 /// overflow.
-fn map(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
+fn map_signal_u8(signal: &Signal, low: f32, high: f32) -> Vec<u8> {
     let range = high - low;
     let raw_data: Vec<u8> = signal
         .iter()
@@ -252,6 +270,6 @@ mod tests {
         let low = 0. * 123.123 - 234.234;
         let high = 255. * 123.123 - 234.234;
 
-        assert_eq!(expected, map(&shifted_values, low, high));
+        assert_eq!(expected, map_signal_u8(&shifted_values, low, high));
     }
 }
