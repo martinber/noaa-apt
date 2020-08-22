@@ -801,6 +801,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "lab"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -958,6 +963,7 @@ dependencies = [
  "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.23.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "imageproc 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lab 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "line_drawing 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.10.29 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1910,6 +1916,7 @@ dependencies = [
 "checksum jpeg-decoder 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)" = "5b47b4c4e017b01abdc5bcc126d2d1002e5a75bbe3ce73f9f4f311a916363704"
 "checksum js-sys 0.3.39 (registry+https://github.com/rust-lang/crates.io-index)" = "fa5a448de267e7358beaf4a5d849518fe9a0c13fce7afd44b06e68550e5562a7"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
+"checksum lab 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "25f435d0dc44d7fcfbd5b10a4f34b9cebff86e4d85a5efbbc1b58cc8e35e56fb"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.69 (registry+https://github.com/rust-lang/crates.io-index)" = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 "checksum line_drawing 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f81902e542483002b103c6424d23e765c2e5a65f732923299053a601bce50ab2"

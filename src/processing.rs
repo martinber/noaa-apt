@@ -1,13 +1,15 @@
 //! Image processing functions.
 
-use image::{GenericImageView, GenericImage, GrayImage, ImageBuffer, Rgba};
+use image::{GenericImage, Rgba, RgbaImage, Pixel};
+use imageproc::definitions::Image;
 use log::{warn, info};
+use lab::Lab;
 
 use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
 use crate::err;
 use crate::geo;
 use crate::misc;
-use crate::noaa_apt::{Image, ColorSettings, OrbitSettings, RefTime};
+use crate::noaa_apt::{ColorSettings, OrbitSettings, RefTime};
 
 
 /// Rotates the channels in place, keeping the sync bands and telemetry intact.
@@ -18,7 +20,7 @@ use crate::noaa_apt::{Image, ColorSettings, OrbitSettings, RefTime};
 /// Care is taken to leave lines from the A channel at the same height as the B
 /// channel. Otherwise there can be a vertical offset of one pixel between each
 /// channel.
-pub fn rotate(img: &mut Image) {
+pub fn rotate(img: &mut RgbaImage) {
     info!("Rotating image");
 
     // where the actual image data starts, past the sync frames and deep space band
@@ -81,17 +83,22 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 /// Histogram equalization, for each channel separately.
 /// Works only on the grayscale image,
 /// needs to be done before the RGBA conversion.
-pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
-    info!("Performing histogram equalization");
+pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Result<RgbaImage> {
+    info!("Performing histogram equalization, has color: {}", has_color);
 
-    let mut output = GrayImage::new(img.width(), img.height());
-    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, img.height()).to_image();
+    let mut output = RgbaImage::new(img.width(), img.height());
+    let mut channel_a = img.sub_image(0, 0, PX_PER_CHANNEL, img.height()).to_image();
     let mut channel_b = img
-        .view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height())
+        .sub_image(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height())
         .to_image();
 
-    imageproc::contrast::equalize_histogram_mut(&mut channel_a);
-    imageproc::contrast::equalize_histogram_mut(&mut channel_b);
+    if has_color {
+        equalize_histogram_color(&mut channel_a);
+        equalize_histogram_color(&mut channel_b);
+    } else {
+        equalize_histogram_grayscale(&mut channel_a);
+        equalize_histogram_grayscale(&mut channel_b);
+    }
 
     output.copy_from(&channel_a, 0, 0)?;
     output.copy_from(&channel_b, PX_PER_CHANNEL, 0)?;
@@ -99,11 +106,88 @@ pub fn histogram_equalization(img: &GrayImage) -> err::Result<GrayImage> {
     Ok(output)
 }
 
+fn equalize_histogram_grayscale<P>(image: &mut Image<P>)
+where
+    P: Pixel<Subpixel = u8> + 'static,
+{
+    // since image is grayscale (R = G = B, A = 255), use R channel for histogram:
+    let hist = imageproc::stats::cumulative_histogram(image).channels[0];
+    let total = hist[255] as f32;
+
+    image.pixels_mut().for_each(|p| {
+        // Each channel of CumulativeChannelHistogram has length 256, and Image has 8 bits per pixel
+        let fraction = unsafe { *hist.get_unchecked(p.channels()[0] as usize) as f32 / total };
+        // apply f to each channel and g to alpha
+        p.apply_with_alpha(
+            // for R, G, B, use equalized values:
+            |_| (f32::min(255f32, 255f32 * fraction)) as u8,
+            // for A, leave unmodified
+            |alpha| alpha
+        );
+    });
+}
+
+
+fn equalize_histogram_color<P>(image: &mut Image<P>)
+where
+    P: Pixel<Subpixel = u8> + 'static,
+{
+    let mut lab_pixels: Vec<Lab> = rgb_to_lab(&image);
+    
+    let lab_hist = cumulative_lab_histogram(&lab_pixels);
+    let total = lab_hist[100] as f32;
+
+    lab_pixels.iter_mut().for_each(|p: &mut Lab| {
+        let fraction = unsafe { *lab_hist.get_unchecked(p.l as usize) as f32 / total };
+        p.l = f32::min(100f32, 100f32 * fraction);
+    });
+    lab_to_rgb_mut(&lab_pixels, image);
+}
+
+fn rgb_to_lab<P>(image: &Image<P>) -> Vec<Lab>
+where
+    P: Pixel<Subpixel = u8> + 'static,
+{
+    image.pixels().map(|p| {
+        let (r, g, b, _) = p.channels4();
+        Lab::from_rgb(&[r, g, b])
+    }).collect()
+}
+
+fn lab_to_rgb_mut<P>(lab_pixels: &Vec<Lab>, image: &mut Image<P>)
+where P: Pixel<Subpixel = u8> + 'static
+{
+    let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter().map(|x: &Lab| x.to_rgb()).collect();
+
+    image.pixels_mut().enumerate().for_each(|(i, p)| {
+        let [r, g, b] = rgb_pixels[i];
+        let (_, _, _, a) = p.channels4(); // alpha channel
+        *p = Pixel::from_channels(r, g, b, a);
+    })
+}
+
+fn cumulative_lab_histogram(lab_pixels: &Vec<Lab>) -> [u32; 101] {
+    let mut hist = lab_histogram(lab_pixels);
+    for i in 1..hist.len() {
+        hist[i] += hist[i - 1];
+    }
+    hist
+}
+
+fn lab_histogram(lab_pixels: &Vec<Lab>) -> [u32; 101] {
+    let mut hist = [0u32; 101];
+    for p in lab_pixels {
+        hist[p.l as usize] += 1;
+    }
+    hist
+}
+
+
 /// Attempts to produce a colored image from grayscale channel and IR data.
 /// Works best when contrast is set to "telemetry".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
 /// and dirt detection, from the UI or command line.
-pub fn false_color(img: &mut ImageBuffer<Rgba<u8>, Vec<u8>>, color_settings: ColorSettings) {
+pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) {
     let water = color_settings.water_threshold;
     let vegetation = color_settings.vegetation_threshold;
     let clouds = color_settings.clouds_threshold;

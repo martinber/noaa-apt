@@ -27,6 +27,7 @@ directories = "2.0.2"
 filetime = "0.2.10"
 gcd = "2.0.1"
 hound = "3.4.0"
+lab = "0.8.1"
 line_drawing = "0.8.0"
 log = "0.4.8"
 image = { version = "0.23.4", features = ["png"] }
