@@ -94,11 +94,10 @@ pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Resu
 
     if has_color {
         equalize_histogram_color(&mut channel_a);
-        equalize_histogram_color(&mut channel_b);
     } else {
         equalize_histogram_grayscale(&mut channel_a);
-        equalize_histogram_grayscale(&mut channel_b);
     }
+    equalize_histogram_grayscale(&mut channel_b);
 
     output.copy_from(&channel_a, 0, 0)?;
     output.copy_from(&channel_b, PX_PER_CHANNEL, 0)?;
