@@ -85,10 +85,10 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Result<RgbaImage> {
     info!("Performing histogram equalization, has color: {}", has_color);
 
-    let mut output = RgbaImage::new(img.width(), img.height());
-    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, img.height()).to_image();
-    let mut channel_b = img
-        .view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height()).to_image();
+    let height = img.height();
+    let mut output = RgbaImage::new(img.width(), height);
+    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, height).to_image();
+    let mut channel_b = img.view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, height).to_image();
 
     if has_color {
         equalize_histogram_color(&mut channel_a);
@@ -109,8 +109,11 @@ fn equalize_histogram_grayscale(image: &mut RgbaImage) {
     let total = hist[255] as f32;
 
     image.pixels_mut().for_each(|p| {
-        // Each channel of CumulativeChannelHistogram has length 256, and Image has 8 bits per pixel
-        let fraction = unsafe { *hist.get_unchecked(p.channels()[0] as usize) as f32 / total };
+        // Each channel of CumulativeChannelHistogram has length 256,
+        // and Image has 8 bits per pixel
+        let fraction = unsafe {
+            *hist.get_unchecked(p.channels()[0] as usize) as f32 / total
+        };
         // apply f to each channel and g to alpha
         p.apply_with_alpha(
             // for R, G, B, use equalized values:
@@ -124,12 +127,15 @@ fn equalize_histogram_grayscale(image: &mut RgbaImage) {
 
 fn equalize_histogram_color(image: &mut RgbaImage) {
     let mut lab_pixels: Vec<Lab> = rgb_to_lab(&image);
-    
+
     let lab_hist = cumulative_lab_histogram(&lab_pixels);
     let total = lab_hist[100] as f32;
 
     lab_pixels.iter_mut().for_each(|p: &mut Lab| {
-        let fraction = unsafe { *lab_hist.get_unchecked(p.l as usize) as f32 / total };
+        let fraction = unsafe {
+            // casting p.l from f32 to usize rounds towards 0
+            *lab_hist.get_unchecked(p.l as usize) as f32 / total
+        };
         p.l = f32::min(100f32, 100f32 * fraction);
     });
     lab_to_rgb_mut(&lab_pixels, image);
