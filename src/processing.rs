@@ -1,9 +1,8 @@
 //! Image processing functions.
 
-use image::{GenericImage, Rgba, RgbaImage, Pixel};
-use imageproc::definitions::Image;
-use log::{warn, info};
+use image::{GenericImage, Rgba, RgbaImage, Pixel, GenericImageView};
 use lab::Lab;
+use log::{warn, info};
 
 use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
 use crate::err;
@@ -87,10 +86,9 @@ pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Resu
     info!("Performing histogram equalization, has color: {}", has_color);
 
     let mut output = RgbaImage::new(img.width(), img.height());
-    let mut channel_a = img.sub_image(0, 0, PX_PER_CHANNEL, img.height()).to_image();
+    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, img.height()).to_image();
     let mut channel_b = img
-        .sub_image(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height())
-        .to_image();
+        .view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, img.height()).to_image();
 
     if has_color {
         equalize_histogram_color(&mut channel_a);
@@ -105,10 +103,7 @@ pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Resu
     Ok(output)
 }
 
-fn equalize_histogram_grayscale<P>(image: &mut Image<P>)
-where
-    P: Pixel<Subpixel = u8> + 'static,
-{
+fn equalize_histogram_grayscale(image: &mut RgbaImage) {
     // since image is grayscale (R = G = B, A = 255), use R channel for histogram:
     let hist = imageproc::stats::cumulative_histogram(image).channels[0];
     let total = hist[255] as f32;
@@ -127,10 +122,7 @@ where
 }
 
 
-fn equalize_histogram_color<P>(image: &mut Image<P>)
-where
-    P: Pixel<Subpixel = u8> + 'static,
-{
+fn equalize_histogram_color(image: &mut RgbaImage) {
     let mut lab_pixels: Vec<Lab> = rgb_to_lab(&image);
     
     let lab_hist = cumulative_lab_histogram(&lab_pixels);
@@ -143,19 +135,14 @@ where
     lab_to_rgb_mut(&lab_pixels, image);
 }
 
-fn rgb_to_lab<P>(image: &Image<P>) -> Vec<Lab>
-where
-    P: Pixel<Subpixel = u8> + 'static,
-{
+fn rgb_to_lab(image: &RgbaImage) -> Vec<Lab> {
     image.pixels().map(|p| {
         let (r, g, b, _) = p.channels4();
         Lab::from_rgb(&[r, g, b])
     }).collect()
 }
 
-fn lab_to_rgb_mut<P>(lab_pixels: &Vec<Lab>, image: &mut Image<P>)
-where P: Pixel<Subpixel = u8> + 'static
-{
+fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, image: &mut RgbaImage) {
     let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter().map(|x: &Lab| x.to_rgb()).collect();
 
     image.pixels_mut().enumerate().for_each(|(i, p)| {

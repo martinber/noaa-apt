@@ -155,15 +155,11 @@ pub fn process(
     // always do 98% contrast adjust first, then colorize,
     // then equalize histogram of color image if needed
     if color.is_some() {
-        match contrast_adjustment {
-            Contrast::Histogram => {
-                let (l, h) = misc::percent(&signal, 0.98)?;
-                low = l;
-                high = h;
-            },
-            _ => { } // keep contrast adjustment selected by the user
+        if let Contrast::Histogram = contrast_adjustment {
+            let (l, h) = misc::percent(&signal, 0.98)?;
+            low = l;
+            high = h;
         }
-
     }
 
     // --------------------
