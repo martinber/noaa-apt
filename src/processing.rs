@@ -80,8 +80,9 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 }
 
 /// Histogram equalization, for each channel separately.
-/// Works only on the grayscale image,
-/// needs to be done before the RGBA conversion.
+/// If `has_color=false`, it will treat the image as grayscale.
+/// If `has_color=true`, it will convert image from Rgba to Lab, equalize the histogram
+/// for L (lightness) channel, and convert back to Rgba.
 pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Result<RgbaImage> {
     info!("Performing histogram equalization, has color: {}", has_color);
 
@@ -176,7 +177,7 @@ fn lab_histogram(lab_pixels: &Vec<Lab>) -> [u32; 101] {
 
 
 /// Attempts to produce a colored image from grayscale channel and IR data.
-/// Works best when contrast is set to "telemetry".
+/// Works best when contrast is set to "telemetry" or "98 percent".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
 /// and dirt detection, from the UI or command line.
 pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) {
