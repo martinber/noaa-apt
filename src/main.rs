@@ -89,7 +89,7 @@ fn inner_main() -> err::Result<()> {
 
             if !sync {
                 match contrast_adjustment {
-                    noaa_apt::Contrast::Telemetry | noaa_apt::Contrast::Histogram => 
+                    noaa_apt::Contrast::Telemetry | noaa_apt::Contrast::Histogram =>
                         warn!("Adjusting contrast without syncing, expect horrible results!"),
                     _ => ()
                 }

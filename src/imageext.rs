@@ -8,15 +8,15 @@ use lab::Lab;
 /// Equalize the histogram of the grayscale (but still Rgba image with
 /// R = G = B, A = 255), by equalizing the histogram of one of channels (R),
 /// and using that for all the other (G, B). Alpha channel is not modified.
-pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {    
+pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
     // since it's a grayscale image (R = G = B, A = 255), use R channel histogram:
-    let hist = cumulative_histogram_rgba(sub_image).channels[0]; 
+    let hist = cumulative_histogram_rgba(sub_image).channels[0];
     let total = hist[255] as f32;
 
     for y in 0..sub_image.height() {
         for x in 0..sub_image.width() {
             let p = sub_image.get_pixel_mut(x, y);
-            
+
             // Each histogram has length 256 and RgbaImage has 8 bits per pixel
             let fraction = unsafe {
                 *hist.get_unchecked(p.channels()[0] as usize) as f32 / total
@@ -34,7 +34,7 @@ pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
 
 /// Equalize the histogram of the color subimage by converting Rgb -> Lab,
 /// equalizing the L (lightness) histogram, and converting back Lab -> Rgb.
-pub fn equalize_histogram_color(sub_image: &mut SubImage<&mut RgbaImage>) {    
+pub fn equalize_histogram_color(sub_image: &mut SubImage<&mut RgbaImage>) {
     let mut lab_pixels: Vec<Lab> = rgb_to_lab(sub_image);
 
     let lab_hist = cumulative_histogram_lab(&lab_pixels);
@@ -64,17 +64,17 @@ fn rgb_to_lab(sub_image: &mut SubImage<&mut RgbaImage>) -> Vec<Lab> {
 fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, sub_image: &mut SubImage<&mut RgbaImage>) {
     let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter()
         .map(|x: &Lab| x.to_rgb()).collect();
-    
+
     let height = sub_image.height();
     let width = sub_image.width();
-    
+
     for y in 0..height {
         for x in 0..width {
             let p = sub_image.get_pixel_mut(x, y);
             let [r, g, b] = rgb_pixels[(y * width + x) as usize];
             let (_, _, _, a) = p.channels4(); // get original alpha channel
             *p = Pixel::from_channels(r, g, b, a);
-        } 
+        }
     }
 }
 
