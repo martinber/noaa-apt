@@ -86,14 +86,14 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
     info!("Performing histogram equalization, has color: {}", has_color);
     let height = img.height();
-    
+
     let mut channel_a = img.sub_image(0, 0, PX_PER_CHANNEL, height);
     if has_color {
         imageext::equalize_histogram_color(&mut channel_a);
     } else {
         imageext::equalize_histogram_grayscale(&mut channel_a);
     }
-    
+
     let mut channel_b = img.sub_image(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, height);
     imageext::equalize_histogram_grayscale(&mut channel_b);
 }
