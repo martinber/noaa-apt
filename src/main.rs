@@ -19,6 +19,7 @@ mod context;
 mod decode;
 mod dsp;
 mod err;
+mod imageext;
 mod filters;
 mod frequency;
 mod geo;

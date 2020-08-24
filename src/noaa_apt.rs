@@ -183,7 +183,7 @@ pub fn process(
     }
 
     if let Contrast::Histogram = contrast_adjustment {
-        img = processing::histogram_equalization(&mut img, color.is_some())?;
+        processing::histogram_equalization(&mut img, color.is_some());
     }
 
     // --------------------
