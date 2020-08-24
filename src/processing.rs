@@ -23,20 +23,20 @@ pub fn rotate(img: &mut RgbaImage) {
     info!("Rotating image");
 
     // where the actual image data starts, past the sync frames and deep space band
-    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA; // !
+    let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA;
 
     let mut channel_a = img.sub_image(
-        x_offset, 0, PX_CHANNEL_IMAGE_DATA, img.height() // !
+        x_offset, 0, PX_CHANNEL_IMAGE_DATA, img.height()
     );
     image::imageops::rotate180_in_place(&mut channel_a);
 
     let mut channel_b = img.sub_image(
-        x_offset + PX_PER_CHANNEL, 0, PX_CHANNEL_IMAGE_DATA, img.height() // !
+        x_offset + PX_PER_CHANNEL, 0, PX_CHANNEL_IMAGE_DATA, img.height()
     );
     image::imageops::rotate180_in_place(&mut channel_b);
 }
 
-/// Rotate image if the pass was south to north.
+/// Returns true if this was a south to north pass, and the image needs to be rotated.
 pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> {
 
     let tle = match &orbit_settings.custom_tle {
@@ -79,10 +79,10 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
     return Ok(azimuth < PI / 4. || azimuth > 3. * PI / 4.);
 }
 
-/// Histogram equalization, for each channel separately.
+/// Histogram equalization, in place, for each channel (A, B) separately.
 /// If `has_color=false`, it will treat the image as grayscale (R = G = B, A = 255).
 /// If `has_color=true`, it will convert image from Rgba to Lab, equalize the histogram
-/// for L (lightness) channel, and convert back to Rgba.
+/// for L (lightness) channel, convert back to Rgb and adjust image values accordingly.
 pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
     info!("Performing histogram equalization, has color: {}", has_color);
     let height = img.height();
