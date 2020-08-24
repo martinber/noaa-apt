@@ -1,11 +1,11 @@
 //! Image processing functions.
 
-use image::{GenericImage, Rgba, RgbaImage, Pixel, GenericImageView};
-use lab::Lab;
+use image::{GenericImage, Rgba, RgbaImage};
 use log::{warn, info};
 
 use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
 use crate::err;
+use crate::imageext;
 use crate::geo;
 use crate::misc;
 use crate::noaa_apt::{ColorSettings, OrbitSettings, RefTime};
@@ -80,99 +80,22 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 }
 
 /// Histogram equalization, for each channel separately.
-/// If `has_color=false`, it will treat the image as grayscale.
+/// If `has_color=false`, it will treat the image as grayscale (R = G = B, A = 255).
 /// If `has_color=true`, it will convert image from Rgba to Lab, equalize the histogram
 /// for L (lightness) channel, and convert back to Rgba.
-pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) -> err::Result<RgbaImage> {
+pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
     info!("Performing histogram equalization, has color: {}", has_color);
-
     let height = img.height();
-    let mut output = RgbaImage::new(img.width(), height);
-    let mut channel_a = img.view(0, 0, PX_PER_CHANNEL, height).to_image();
-    let mut channel_b = img.view(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, height).to_image();
-
+    
+    let mut channel_a = img.sub_image(0, 0, PX_PER_CHANNEL, height);
     if has_color {
-        equalize_histogram_color(&mut channel_a);
+        imageext::equalize_histogram_color(&mut channel_a);
     } else {
-        equalize_histogram_grayscale(&mut channel_a);
+        imageext::equalize_histogram_grayscale(&mut channel_a);
     }
-    equalize_histogram_grayscale(&mut channel_b);
-
-    output.copy_from(&channel_a, 0, 0)?;
-    output.copy_from(&channel_b, PX_PER_CHANNEL, 0)?;
-
-    Ok(output)
-}
-
-fn equalize_histogram_grayscale(image: &mut RgbaImage) {
-    // since image is grayscale (R = G = B, A = 255), use R channel for histogram:
-    let hist = imageproc::stats::cumulative_histogram(image).channels[0];
-    let total = hist[255] as f32;
-
-    image.pixels_mut().for_each(|p| {
-        // Each channel of CumulativeChannelHistogram has length 256,
-        // and Image has 8 bits per pixel
-        let fraction = unsafe {
-            *hist.get_unchecked(p.channels()[0] as usize) as f32 / total
-        };
-        // apply f to each channel and g to alpha
-        p.apply_with_alpha(
-            // for R, G, B, use equalized values:
-            |_| (f32::min(255f32, 255f32 * fraction)) as u8,
-            // for A, leave unmodified
-            |alpha| alpha
-        );
-    });
-}
-
-
-fn equalize_histogram_color(image: &mut RgbaImage) {
-    let mut lab_pixels: Vec<Lab> = rgb_to_lab(&image);
-
-    let lab_hist = cumulative_lab_histogram(&lab_pixels);
-    let total = lab_hist[100] as f32;
-
-    lab_pixels.iter_mut().for_each(|p: &mut Lab| {
-        let fraction = unsafe {
-            // casting p.l from f32 to usize rounds towards 0
-            *lab_hist.get_unchecked(p.l as usize) as f32 / total
-        };
-        p.l = f32::min(100f32, 100f32 * fraction);
-    });
-    lab_to_rgb_mut(&lab_pixels, image);
-}
-
-fn rgb_to_lab(image: &RgbaImage) -> Vec<Lab> {
-    image.pixels().map(|p| {
-        let (r, g, b, _) = p.channels4();
-        Lab::from_rgb(&[r, g, b])
-    }).collect()
-}
-
-fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, image: &mut RgbaImage) {
-    let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter().map(|x: &Lab| x.to_rgb()).collect();
-
-    image.pixels_mut().enumerate().for_each(|(i, p)| {
-        let [r, g, b] = rgb_pixels[i];
-        let (_, _, _, a) = p.channels4(); // alpha channel
-        *p = Pixel::from_channels(r, g, b, a);
-    })
-}
-
-fn cumulative_lab_histogram(lab_pixels: &Vec<Lab>) -> [u32; 101] {
-    let mut hist = lab_histogram(lab_pixels);
-    for i in 1..hist.len() {
-        hist[i] += hist[i - 1];
-    }
-    hist
-}
-
-fn lab_histogram(lab_pixels: &Vec<Lab>) -> [u32; 101] {
-    let mut hist = [0u32; 101];
-    for p in lab_pixels {
-        hist[p.l as usize] += 1;
-    }
-    hist
+    
+    let mut channel_b = img.sub_image(PX_PER_CHANNEL, 0, PX_PER_CHANNEL, height);
+    imageext::equalize_histogram_grayscale(&mut channel_b);
 }
 
 
