@@ -1,9 +1,20 @@
 /// Some extra utilities for working with images, that use or complement
-/// available functions from crates `image` and `imageproc`
+/// available functions from `image` crate
 
 use image::{RgbaImage, SubImage, Pixel, GenericImage, GenericImageView};
-use imageproc::stats::{ChannelHistogram, CumulativeChannelHistogram};
 use lab::Lab;
+
+/// A set of per-channel histograms from an image with 8 bits per channel.
+pub struct ChannelHistogram {
+    /// Per-channel histograms.
+    pub channels: Vec<[u32; 256]>,
+}
+
+/// A set of per-channel cumulative histograms from an image with 8 bits per channel.
+pub struct CumulativeChannelHistogram {
+    /// Per-channel cumulative histograms.
+    pub channels: Vec<[u32; 256]>,
+}
 
 /// Equalize the histogram of the grayscale (but still Rgba image with
 /// R = G = B, A = 255), by equalizing the histogram of one of channels (R),
@@ -120,7 +131,7 @@ fn cumulative_histogram_lab(lab_pixels: &Vec<Lab>) -> [u32; 101] {
 /// L values are in range [0..100] inclusive, so the resulting array
 /// has 101 elements: `[u32; 101]`.
 /// If the histogram for the other channels in needed in the future,
-/// consider defining a struct similar to `imageproc::stats::ChannelHistogram`.
+/// consider defining a struct similar to `ChannelHistogram`.
 fn histogram_lab(lab_pixels: &Vec<Lab>) -> [u32; 101] {
     let mut hist = [0u32; 101];
     for p in lab_pixels {
