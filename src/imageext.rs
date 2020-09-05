@@ -3,6 +3,7 @@
 
 use image::{RgbaImage, SubImage, Pixel, GenericImage, GenericImageView};
 use lab::Lab;
+use std::convert::TryInto;
 
 /// A set of per-channel histograms from an image with 8 bits per channel.
 pub struct ChannelHistogram {
@@ -29,13 +30,12 @@ pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
             let p = sub_image.get_pixel_mut(x, y);
 
             // Each histogram has length 256 and RgbaImage has 8 bits per pixel
-            let fraction = unsafe {
-                *hist.get_unchecked(p.channels()[0] as usize) as f32 / total
-            };
+            let fraction = hist[p.channels()[0] as usize] as f32 / total;
+
             // apply f to channels r, g, b and apply g to alpha channel
             p.apply_with_alpha(
                 // for R, G, B, use equalized values:
-                |_| (f32::min(255f32, 255f32 * fraction)) as u8,
+                |_| (255. * fraction) as u8,
                 // for A, leave unmodified
                 |alpha| alpha
             );
@@ -52,12 +52,10 @@ pub fn equalize_histogram_color(sub_image: &mut SubImage<&mut RgbaImage>) {
     let total = lab_hist[100] as f32;
 
     lab_pixels.iter_mut().for_each(|p: &mut Lab| {
-        let fraction = unsafe {
-            // casting p.l from f32 to usize rounds towards 0
-            // l is in range [0..100] inclusive, lab_hist has lenght 101
-            *lab_hist.get_unchecked(p.l as usize) as f32 / total
-        };
-        p.l = f32::min(100f32, 100f32 * fraction);
+        // casting p.l from f32 to usize rounds towards 0
+        // l is in range [0..100] inclusive, lab_hist has lenght 101
+        let fraction = lab_hist[p.l as usize] as f32 / total;
+        p.l = 100. * fraction;
     });
     lab_to_rgb_mut(&lab_pixels, sub_image);
 }
@@ -65,8 +63,8 @@ pub fn equalize_histogram_color(sub_image: &mut SubImage<&mut RgbaImage>) {
 /// Returns a vector of Lab pixel values, alpha channel value is not used.
 fn rgb_to_lab(sub_image: &mut SubImage<&mut RgbaImage>) -> Vec<Lab> {
     sub_image.pixels().map(|(_x, _y, p)| {
-        let (r, g, b, _) = p.channels4();
-        Lab::from_rgb(&[r, g, b])
+        let rgb: [u8; 3] = p.channels()[..3].try_into().unwrap();
+        Lab::from_rgb(&rgb)
     }).collect()
 }
 
@@ -83,7 +81,7 @@ fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, sub_image: &mut SubImage<&mut RgbaImage
         for x in 0..width {
             let p = sub_image.get_pixel_mut(x, y);
             let [r, g, b] = rgb_pixels[(y * width + x) as usize];
-            let (_, _, _, a) = p.channels4(); // get original alpha channel
+            let a = p.channels()[3]; // get original alpha channel
             *p = Pixel::from_channels(r, g, b, a);
         }
     }
@@ -130,7 +128,7 @@ fn cumulative_histogram_lab(lab_pixels: &Vec<Lab>) -> [u32; 101] {
 /// Calculates the histogram using the L (lightness) channel.
 /// L values are in range [0..100] inclusive, so the resulting array
 /// has 101 elements: `[u32; 101]`.
-/// If the histogram for the other channels in needed in the future,
+/// If the histogram for the other channels is needed in the future,
 /// consider defining a struct similar to `ChannelHistogram`.
 fn histogram_lab(lab_pixels: &Vec<Lab>) -> [u32; 101] {
     let mut hist = [0u32; 101];
