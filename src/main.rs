@@ -115,7 +115,6 @@ fn inner_main() -> err::Result<()> {
 
             let img = noaa_apt::process(
                 &mut context,
-                &settings,
                 &raw_data,
                 contrast_adjustment,
                 rotate,

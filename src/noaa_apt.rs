@@ -17,7 +17,7 @@ use crate::map;
 use crate::misc;
 use crate::processing;
 use crate::telemetry;
-use crate::{config, wav};
+use crate::wav;
 use image::GrayImage;
 
 pub type Image = image::RgbaImage;
@@ -117,7 +117,6 @@ pub fn load(input_filename: &Path) -> err::Result<(Signal, Rate)> {
 
 pub fn process(
     context: &mut Context,
-    _settings: &config::Settings,
     signal: &Signal,
     contrast_adjustment: Contrast,
     rotate: Rotate,
