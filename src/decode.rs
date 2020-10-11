@@ -4,10 +4,9 @@ use log::info;
 
 use crate::config;
 use crate::context::{Context, Step};
-use crate::dsp::{self, Signal, Rate, Freq};
+use crate::dsp::{self, Freq, Rate, Signal};
 use crate::err;
 use crate::filters;
-
 
 /// Final signal sample rate.
 ///
@@ -38,7 +37,6 @@ pub const PX_PER_ROW: u32 = 2080;
 /// AM carrier frequency in Hz.
 pub const CARRIER_FREQ: u32 = 2400;
 
-
 /// Decode APT image.
 ///
 /// Returns raw image data, line by line.
@@ -48,8 +46,7 @@ pub fn decode(
     signal: &Signal,
     input_rate: Rate,
     sync: bool,
-) -> err::Result<Signal>{
-
+) -> err::Result<Signal> {
     // --------------------
 
     let final_rate = Rate::hz(FINAL_RATE);
@@ -77,20 +74,19 @@ pub fn decode(
         // nothing below 500Hz.
         delta_w: Freq::hz(settings.resample_delta_freq, input_rate),
     };
-    let signal = dsp::resample_with_filter(
-        context, &signal, input_rate, work_rate, filter)?;
+    let signal = dsp::resample_with_filter(context, &signal, input_rate, work_rate, filter)?;
 
     if signal.len() < 10 * samples_per_work_row as usize {
         return Err(err::Error::Internal(
-            "Got less than 10 rows of samples, audio file is too short".to_string()));
+            "Got less than 10 rows of samples, audio file is too short".to_string(),
+        ));
     }
 
     // --------------------
 
     context.status(0.4, "Demodulating".to_string());
 
-    let signal = dsp::demodulate(
-        context, &signal, Freq::hz(CARRIER_FREQ as f32, work_rate))?;
+    let signal = dsp::demodulate(context, &signal, Freq::hz(CARRIER_FREQ as f32, work_rate))?;
 
     // --------------------
 
@@ -100,7 +96,7 @@ pub fn decode(
     let filter = filters::Lowpass {
         cutout,
         atten: settings.demodulation_atten,
-        delta_w: cutout / 5.
+        delta_w: cutout / 5.,
     };
     // mut because on sync the signal is going to be modified
     let mut signal = dsp::filter(context, &signal, filter)?;
@@ -116,8 +112,9 @@ pub fn decode(
         if sync_pos.len() < 5 {
             return Err(err::Error::Internal(
                 "Found less than 5 sync frames, audio file is too short or too \
-                noisy".to_string())
-            );
+                noisy"
+                    .to_string(),
+            ));
         }
 
         // Create new "aligned" vector to samples_per_work_row. Each row starts on
@@ -125,18 +122,16 @@ pub fn decode(
         let mut aligned: Signal = Vec::new();
 
         // For each sync position
-        for i in 0..sync_pos.len()-1 {
+        for i in 0..sync_pos.len() - 1 {
             // Check if there are enough samples left to fill an image row
             if (sync_pos[i] + samples_per_work_row as usize) < signal.len() {
-
                 aligned.extend_from_slice(
-                    &signal[sync_pos[i] .. sync_pos[i] + samples_per_work_row as usize]
+                    &signal[sync_pos[i]..sync_pos[i] + samples_per_work_row as usize],
                 );
             }
         }
 
         signal = aligned;
-
     } else {
         context.status(0.5, "Skipping Syncing".to_string());
 
@@ -145,9 +140,10 @@ pub fn decode(
 
         // Crop signal to multiple of samples_per_work_row
         let length = signal.len();
-        signal.truncate(length
+        signal.truncate(
+            length
             / samples_per_work_row as usize // Integer division
-            * samples_per_work_row as usize
+            * samples_per_work_row as usize,
         );
     }
 
@@ -159,8 +155,8 @@ pub fn decode(
 
     // Resample without filter because we already filtered the signal before
     // syncing
-    let signal = dsp::resample_with_filter(
-        context, &signal, work_rate, final_rate, filters::NoFilter)?;
+    let signal =
+        dsp::resample_with_filter(context, &signal, work_rate, final_rate, filters::NoFilter)?;
 
     Ok(signal)
 }
@@ -173,10 +169,10 @@ pub fn decode(
 /// Used for cross correlation against the received signal to find the sync
 /// frames positions.
 fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
-
     if work_rate.get_hz() % FINAL_RATE != 0 {
         return Err(err::Error::Internal(
-            "work_rate is not multiple of FINAL_RATE".to_string()));
+            "work_rate is not multiple of FINAL_RATE".to_string(),
+        ));
     }
 
     // Width of pixels at the work_rate.
@@ -189,25 +185,23 @@ fn generate_sync_frame(work_rate: Rate) -> err::Result<Vec<i8>> {
 
     use std::iter::repeat;
 
-    Ok(
-        repeat(-1).take(sync_pulse_width).chain(
-            repeat(-1).take(sync_pulse_width).chain(
-            repeat(1).take(sync_pulse_width))
-            .cycle().take(7 * 2 * sync_pulse_width)
-        ).chain(
-        repeat(-1).take(8 * pixel_width)).collect()
-    )
+    Ok(repeat(-1)
+        .take(sync_pulse_width)
+        .chain(
+            repeat(-1)
+                .take(sync_pulse_width)
+                .chain(repeat(1).take(sync_pulse_width))
+                .cycle()
+                .take(7 * 2 * sync_pulse_width),
+        )
+        .chain(repeat(-1).take(8 * pixel_width))
+        .collect())
 }
 
 /// Find sync frame positions.
 ///
 /// Returns list of found sync frames positions.
-fn find_sync(
-    context: &mut Context,
-    signal: &Signal,
-    work_rate: Rate
-) -> err::Result<Vec<usize>> {
-
+fn find_sync(context: &mut Context, signal: &Signal, work_rate: Rate) -> err::Result<Vec<usize>> {
     let guard = generate_sync_frame(work_rate)?;
 
     // list of maximum correlations found: (index, value)
@@ -219,7 +213,7 @@ fn find_sync(
 
     // Minimum distance between peaks, some arbitrary number smaller but close
     // to the number of samples by line
-    let min_distance: usize = samples_per_work_row as usize * 8/10;
+    let min_distance: usize = samples_per_work_row as usize * 8 / 10;
 
     // Save cross-correlation if exporting steps
     let mut correlation = if context.export_steps {
@@ -228,7 +222,7 @@ fn find_sync(
         Vec::with_capacity(0) // Not going to be used
     };
 
-    for i in 0 .. signal.len() - guard.len() {
+    for i in 0..signal.len() - guard.len() {
         let mut corr: f32 = 0.;
         for j in 0..guard.len() {
             match guard[j] {
@@ -251,7 +245,6 @@ fn find_sync(
                 peaks.push((i, corr));
             }
         }
-
         // Else if this value is bigger than the previous maximum, set this
         // one
         else if corr > peaks.last().unwrap().1 {
@@ -274,6 +267,7 @@ mod tests {
 
     use super::*;
 
+    #[rustfmt::skip]
     #[test]
     fn test_sample_sync_frame() {
 

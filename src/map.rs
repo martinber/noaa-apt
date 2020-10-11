@@ -8,8 +8,7 @@ use log::info;
 
 use crate::err;
 use crate::geo;
-use crate::noaa_apt::{SatName, RefTime, Image, MapSettings};
-
+use crate::noaa_apt::{Image, MapSettings, RefTime, SatName};
 
 /// Draws the map overlay mutating the image.
 #[allow(non_snake_case)]
@@ -21,7 +20,6 @@ pub fn draw_map(
     sat_name: SatName,
     tle: String,
 ) -> err::Result<()> {
-
     info!("Drawing map overlay");
 
     let height = img.height();
@@ -32,11 +30,13 @@ pub fn draw_map(
     let (sats, _errors) = satellite::io::parse_multiple(&tle);
     let sat_string = sat_name.to_string();
 
-    let sat = sats.iter()
+    let sat = sats
+        .iter()
         .find(|&sat| sat.name.as_ref() == Some(&sat_string))
-        .ok_or_else(||
+        .ok_or_else(|| {
             err::Error::Internal(format!("Satellite \"{}\" not found in TLE", sat_string))
-        )?.clone();
+        })?
+        .clone();
 
     // Calculate satellite trajectory
 
@@ -78,7 +78,9 @@ pub fn draw_map(
         // Set maximum, otherwise we get wrapping problems I do not fully
         // understand: opposite parts of the world are mapped to the same
         // position because of the cyclic nature of sin(), cos(), etc.
-        let c = geo::distance(latlon, start_latlon).max(-PI/3.).min(PI/3.);
+        let c = geo::distance(latlon, start_latlon)
+            .max(-PI / 3.)
+            .min(PI / 3.);
 
         let a = (B.cos() * c.tan()).atan();
         let b = (B.sin() * c.sin()).asin();
@@ -94,57 +96,48 @@ pub fn draw_map(
 
     // Draw line function
 
-    let mut draw_line = |
-        latlon1: (f64, f64),
-        latlon2: (f64, f64),
-        (r, g, b, a): (u8, u8, u8, u8)
-    | {
+    let mut draw_line =
+        |latlon1: (f64, f64), latlon2: (f64, f64), (r, g, b, a): (u8, u8, u8, u8)| {
+            // Convert latlon to (x, y)
+            let (mut x1, y1) = latlon_to_rel_px(latlon1);
+            let (mut x2, y2) = latlon_to_rel_px(latlon2);
 
-        // Convert latlon to (x, y)
-        let (mut x1, y1) = latlon_to_rel_px(latlon1);
-        let (mut x2, y2) = latlon_to_rel_px(latlon2);
+            // Offset correction on x
+            let est_y1 = (y1.max(0.) as usize).min(height as usize - 1);
+            let est_y2 = (y2.max(0.) as usize).min(height as usize - 1);
+            let (x1_offset, _) = latlon_to_rel_px(sat_positions[est_y1]);
+            let (x2_offset, _) = latlon_to_rel_px(sat_positions[est_y2]);
+            x1 -= x1_offset;
+            x2 -= x2_offset;
 
-        // Offset correction on x
-        let est_y1 = (y1.max(0.) as usize).min(height as usize - 1);
-        let est_y2 = (y2.max(0.) as usize).min(height as usize - 1);
-        let (x1_offset, _) = latlon_to_rel_px(sat_positions[est_y1]);
-        let (x2_offset, _) = latlon_to_rel_px(sat_positions[est_y2]);
-        x1 -= x1_offset;
-        x2 -= x2_offset;
+            let h = img.height() as i32;
 
-        let h = img.height() as i32;
-
-        // See if at least one point is inside
-        if (x1 > -456. && x1 < 456. && y1 > 0. && y1 < h as f64)
-            || (x1 > -600. && x1 < 600. && y1 > 0. && y1 < h as f64)
-        {
-
-            for ((x, y), value) in XiaolinWu::<f64, i32>::new((x1, y1), (x2, y2)) {
-                // Draw A channel
-                if x > -456 && x < 456 && y > 0 && y < h {
-                    img.get_pixel_mut((x + 539) as u32, y as u32).blend(
-                        //value is between 0 and 1. a is between 0 and 255
-                        &image::Rgba([r, g, b, (value * a as f64) as u8]),
-                    );
-                    img.get_pixel_mut((x + 1579) as u32, y as u32).blend(
-                        &image::Rgba([r, g, b, (value * a as f64) as u8]),
-                    );
+            // See if at least one point is inside
+            if (x1 > -456. && x1 < 456. && y1 > 0. && y1 < h as f64)
+                || (x1 > -600. && x1 < 600. && y1 > 0. && y1 < h as f64)
+            {
+                for ((x, y), value) in XiaolinWu::<f64, i32>::new((x1, y1), (x2, y2)) {
+                    // Draw A channel
+                    if x > -456 && x < 456 && y > 0 && y < h {
+                        img.get_pixel_mut((x + 539) as u32, y as u32).blend(
+                            //value is between 0 and 1. a is between 0 and 255
+                            &image::Rgba([r, g, b, (value * a as f64) as u8]),
+                        );
+                        img.get_pixel_mut((x + 1579) as u32, y as u32)
+                            .blend(&image::Rgba([r, g, b, (value * a as f64) as u8]));
+                    }
                 }
             }
-
-        }
-    };
+        };
 
     // Draw shapefiles
 
     let filename = res_path!("shapefiles", "states.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
-        err::Error::Internal(format!("Could not load {:?}", filename))
-    })?;
+    let reader = shapefile::Reader::from_path(&filename)
+        .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polyline>() {
         let polyline = result?;
         for points in polyline.parts() {
-
             let mut prev_pt = &points[0];
             for pt in points {
                 draw_line(
@@ -158,13 +151,11 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "countries.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
-        err::Error::Internal(format!("Could not load {:?}", filename))
-    })?;
+    let reader = shapefile::Reader::from_path(&filename)
+        .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;
         for ring in polygon.rings() {
-
             use shapefile::record::polygon::PolygonRing;
             let points = match ring {
                 PolygonRing::Outer(p) | PolygonRing::Inner(p) => p,
@@ -183,13 +174,11 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "lakes.shp");
-    let reader = shapefile::Reader::from_path(&filename).map_err(|_| {
-        err::Error::Internal(format!("Could not load {:?}", filename))
-    })?;
+    let reader = shapefile::Reader::from_path(&filename)
+        .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;
         for ring in polygon.rings() {
-
             use shapefile::record::polygon::PolygonRing;
             let points = match ring {
                 PolygonRing::Outer(p) | PolygonRing::Inner(p) => p,

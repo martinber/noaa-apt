@@ -6,11 +6,10 @@ use log::info;
 
 use crate::config;
 use crate::context::{Context, Step};
-use crate::dsp::{self, Rate, Freq};
+use crate::dsp::{self, Freq, Rate};
 use crate::err;
 use crate::misc;
 use crate::wav;
-
 
 /// Load and resample WAV file.
 ///
@@ -22,7 +21,6 @@ pub fn resample(
     output_filename: &Path,
     output_rate: u32,
 ) -> err::Result<()> {
-
     info!("Reading WAV file");
     context.status(0.0, "Reading WAV file".to_string());
 
@@ -47,8 +45,9 @@ pub fn resample(
     if resampled.is_empty() {
         return Err(err::Error::Internal(
             "Got zero samples after resampling, audio file too short or \
-            output sampling frequency too low".to_string())
-        );
+            output sampling frequency too low"
+                .to_string(),
+        ));
     }
 
     let writer_spec = hound::WavSpec {
@@ -59,7 +58,10 @@ pub fn resample(
     };
 
     info!("Writing WAV to '{}'", output_filename.display());
-    context.status(0.8, format!("Writing WAV to '{}'", output_filename.display()));
+    context.status(
+        0.8,
+        format!("Writing WAV to '{}'", output_filename.display()),
+    );
 
     wav::write_wav(&output_filename, &resampled, writer_spec)?;
     misc::write_timestamp(timestamp, &output_filename)?;

@@ -5,10 +5,9 @@ use std::path::PathBuf;
 use log::debug;
 
 use crate::decode::PX_PER_ROW;
-use crate::dsp::{Signal, Rate};
+use crate::dsp::{Rate, Signal};
 use crate::err;
 use crate::wav;
-
 
 /// Different kinds of steps available.
 #[derive(Debug, PartialEq)]
@@ -40,7 +39,6 @@ pub struct Step<'a> {
 }
 
 impl<'a> Step<'a> {
-
     /// Create a signal step.
     pub fn signal(id: &'a str, signal: &'a Signal, rate: Option<Rate>) -> Step<'a> {
         Step {
@@ -125,7 +123,6 @@ pub struct Context {
 }
 
 impl Context {
-
     /// Notify progress
     pub fn status(&mut self, progress: f32, description: String) {
         (self.ui_callback)(progress, description);
@@ -134,7 +131,6 @@ impl Context {
     /// Export step.
     pub fn step(&mut self, step: Step<'_>) -> err::Result<()> {
         if self.export_wav {
-
             debug!("Got step: {}", step.id);
 
             // Metadata about the step we expect to receive
@@ -142,37 +138,41 @@ impl Context {
                 Some(e) => e,
                 None => {
                     debug!("Ignoring step \"{}\", no more steps expected", step.id);
-                    return Ok(())
-                },
+                    return Ok(());
+                }
             };
 
             // We got an unexpected step, we should ignore it because sometimes
             // the step we want comes after
             if step.id != metadata.id {
-                debug!("Ignoring step \"{}\", expecting \"{}\"", step.id, metadata.id);
-                return Ok(())
+                debug!(
+                    "Ignoring step \"{}\", expecting \"{}\"",
+                    step.id, metadata.id
+                );
+                return Ok(());
             } else {
                 self.index += 1;
             }
 
-            if ! self.export_resample_filtered && step.id == "resample_filtered" {
+            if !self.export_resample_filtered && step.id == "resample_filtered" {
                 debug!("Ignoring step \"resample_filtered\", disabled by options");
-                return Ok(())
+                return Ok(());
             }
 
             if step.variant != metadata.variant {
                 return Err(err::Error::Internal(format!(
-                    "Expected variant {:?}, got {:?}", metadata.variant, step.variant)));
+                    "Expected variant {:?}, got {:?}",
+                    metadata.variant, step.variant
+                )));
             }
 
             // Happens if syncing is disabled and the correlation step is sent.
             if step.signal.is_empty() {
-                return Ok(())
+                return Ok(());
             }
 
             match step.variant {
                 Variant::Filter => {
-
                     let writer_spec = hound::WavSpec {
                         channels: 1,
                         sample_rate: 1, // Could be anything
@@ -182,13 +182,16 @@ impl Context {
 
                     let filename = PathBuf::from(metadata.filename).with_extension("wav");
                     wav::write_wav(&filename, &step.signal, writer_spec)?;
-                },
+                }
                 Variant::Signal => {
-
                     let unpacked_rate = match step.rate.or(metadata.rate) {
                         Some(r) => r,
-                        None => return Err(err::Error::Internal(format!(
-                            "Unknown rate for step \"{}\"", step.id))),
+                        None => {
+                            return Err(err::Error::Internal(format!(
+                                "Unknown rate for step \"{}\"",
+                                step.id
+                            )))
+                        }
                     };
 
                     let writer_spec = hound::WavSpec {
@@ -200,7 +203,7 @@ impl Context {
 
                     let filename = PathBuf::from(metadata.filename).with_extension("wav");
                     wav::write_wav(&filename, &step.signal, writer_spec)?;
-                },
+                }
             };
         }
 
@@ -211,9 +214,8 @@ impl Context {
     pub fn resample<F: FnMut(f32, String) + 'static>(
         ui_callback: F,
         export_wav: bool,
-        export_resample_filtered: bool
+        export_resample_filtered: bool,
     ) -> Self {
-
         Self {
             steps_metadata: vec![
                 StepMetadata {
@@ -243,7 +245,7 @@ impl Context {
                     filename: "03_resample_result",
                     variant: Variant::Signal,
                     rate: None,
-                }
+                },
             ],
             export_steps: export_wav,
             export_resample_filtered,
@@ -259,9 +261,8 @@ impl Context {
         work_rate: Rate,
         final_rate: Rate,
         export_wav: bool,
-        export_resample_filtered: bool
+        export_resample_filtered: bool,
     ) -> Self {
-
         Self {
             steps_metadata: vec![
                 StepMetadata {

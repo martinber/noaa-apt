@@ -5,9 +5,9 @@ use gio::prelude::*;
 use gtk::prelude::*;
 use log::error;
 
+use super::state::{borrow_state_mut, borrow_widgets};
 use crate::err;
 use crate::misc;
-use super::state::{borrow_state_mut, borrow_widgets};
 
 /// Set progress of ProgressBar
 pub fn set_progress(fraction: f32, description: &str) {
@@ -21,20 +21,14 @@ pub fn set_progress(fraction: f32, description: &str) {
 pub fn show_info(message_type: gtk::MessageType, text: &str) {
     borrow_widgets(|widgets| {
         match message_type {
-            gtk::MessageType::Info =>
-                widgets.info_label.set_markup(
-                    text
-                ),
-            gtk::MessageType::Warning =>
-                widgets.info_label.set_markup(
-                    format!("<b>Warning: {}</b>", text).as_str()
-                ),
-            gtk::MessageType::Error =>
-                widgets.info_label.set_markup(
-                    format!("<b>Error: {}</b>", text).as_str()
-                ),
-            _ =>
-                unreachable!(),
+            gtk::MessageType::Info => widgets.info_label.set_markup(text),
+            gtk::MessageType::Warning => widgets
+                .info_label
+                .set_markup(format!("<b>Warning: {}</b>", text).as_str()),
+            gtk::MessageType::Error => widgets
+                .info_label
+                .set_markup(format!("<b>Error: {}</b>", text).as_str()),
+            _ => unreachable!(),
         }
 
         widgets.info_bar.set_message_type(message_type);
@@ -54,14 +48,14 @@ pub fn check_updates_and_show(version: &'static str) {
                         gtk::MessageType::Info,
                         format!("Version \"{}\" available for download!", latest).as_str(),
                     );
-                },
-                Some((false, _)) => {}, // Do nothing, already on latest version
+                }
+                Some((false, _)) => {} // Do nothing, already on latest version
                 None => {
                     show_info(
                         gtk::MessageType::Info,
                         "Error checking for updates, do you have an internet connection?",
                     );
-                },
+                }
             }
             Continue(false)
         });
@@ -86,7 +80,8 @@ pub fn check_updates_and_show(version: &'static str) {
 /// - https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
 #[allow(unused_variables)]
 pub fn open_in_browser<W>(window: &W, url: &str) -> err::Result<()>
-where W: glib::object::IsA<gtk::Window>
+where
+    W: glib::object::IsA<gtk::Window>,
 {
     #[cfg(windows)]
     {
@@ -95,12 +90,12 @@ where W: glib::object::IsA<gtk::Window>
 
         unsafe {
             winapi::um::shellapi::ShellExecuteA(
-                ptr::null_mut(), // Window
+                ptr::null_mut(),                        // Window
                 CString::new("open").unwrap().as_ptr(), // Action
-                CString::new(url).unwrap().as_ptr(), // URL
-                ptr::null_mut(), // Parameters
-                ptr::null_mut(), // Working directory
-                winapi::um::winuser::SW_SHOWNORMAL // How to show the window
+                CString::new(url).unwrap().as_ptr(),    // URL
+                ptr::null_mut(),                        // Parameters
+                ptr::null_mut(),                        // Working directory
+                winapi::um::winuser::SW_SHOWNORMAL,     // How to show the window
             );
         }
 
@@ -113,7 +108,8 @@ where W: glib::object::IsA<gtk::Window>
             window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
             url,
             gtk::get_current_event_time(),
-        ).map_err(|_| err::Error::Internal("Could not open browser".to_string()))
+        )
+        .map_err(|_| err::Error::Internal("Could not open browser".to_string()))
     }
 }
 
@@ -132,15 +128,13 @@ pub fn update_image() {
                     &glib::Bytes::from(&flat_image.samples),
                     gdk_pixbuf::Colorspace::Rgb,
                     false, // has_alpha
-                    8, // bits_per_sample
+                    8,     // bits_per_sample
                     flat_image.layout.width as i32,
                     flat_image.layout.height as i32,
                     flat_image.layout.height_stride as i32,
                 )
             }
-            None => {
-                widgets.img_def_pixbuf.clone()
-            }
+            None => widgets.img_def_pixbuf.clone(),
         };
 
         if widgets.img_size_toggle.get_active() {

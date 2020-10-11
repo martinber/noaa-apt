@@ -7,7 +7,6 @@ use crate::decode::PX_PER_ROW;
 use crate::dsp::Signal;
 use crate::err;
 
-
 /// Determines if working channel A or B.
 pub enum Channel {
     A,
@@ -24,20 +23,24 @@ pub struct Telemetry {
 }
 
 impl Telemetry {
-
     /// Read telemetry from received bands.
     ///
     /// Takes two signals containing the horizontal averages of each band (8
     /// values per wedge), also takes the row where to start reading the frame.
     pub fn from_bands(means_a: &Signal, means_b: &Signal, row: usize) -> Self {
-
         // Calculate the mean of contiguous 8 values, starting from the given
         // one until wedge 9 of the next frame
         // As a result we have the average of wedges 1-16 and 1-9
         let means_a: Signal = means_a[row..]
-            .chunks_exact(8).map(|x| x.iter().sum::<f32>() / 8.).take(16 + 9).collect();
+            .chunks_exact(8)
+            .map(|x| x.iter().sum::<f32>() / 8.)
+            .take(16 + 9)
+            .collect();
         let means_b: Signal = means_b[row..]
-            .chunks_exact(8).map(|x| x.iter().sum::<f32>() / 8.).take(16 + 9).collect();
+            .chunks_exact(8)
+            .map(|x| x.iter().sum::<f32>() / 8.)
+            .take(16 + 9)
+            .collect();
 
         let telemetry = Self {
             values_a: (1..=16).map(|wedge|
@@ -59,8 +62,10 @@ impl Telemetry {
             ).collect(),
         };
 
-        debug!("Telemetry wedges_a: {:?}, wedges_b: {:?}",
-            telemetry.values_a, telemetry.values_b);
+        debug!(
+            "Telemetry wedges_a: {:?}, wedges_b: {:?}",
+            telemetry.values_a, telemetry.values_b
+        );
 
         telemetry
     }
@@ -70,7 +75,6 @@ impl Telemetry {
     /// Float values that doesn't mean anything by itself, you should use it for
     /// comparison against another wedge.
     pub fn get_wedge_value(&self, wedge: u32, channel: Option<Channel>) -> f32 {
-
         let wedge = wedge as usize;
         // Substract one to given wedge because indices start at zero and wedges
         // start at one
@@ -85,7 +89,6 @@ impl Telemetry {
 
     /// Get channel name.
     pub fn get_channel_name(&self, channel: Channel) -> &str {
-
         // Find the contrast wedge (1 to 9) closest to the channel
         // identification wedge (16)
 
@@ -95,12 +98,20 @@ impl Telemetry {
 
         let contrast_wedges = (1..=9).map(|i| self.get_wedge_value(i, None));
 
-        let channel_names = ["1", "2", "3a", "4", "5", "3b", "Unknown", "Unknown", "Unknown"];
+        let channel_names = [
+            "1", "2", "3a", "4", "5", "3b", "Unknown", "Unknown", "Unknown",
+        ];
 
-        let (name, _difference) = channel_names.iter().zip(contrast_wedges)
-            .min_by(|a, b|
-                (a.1 - value).abs().partial_cmp(&(b.1 - value).abs()).expect("Can't compare values")
-            ).expect("Empty zip");
+        let (name, _difference) = channel_names
+            .iter()
+            .zip(contrast_wedges)
+            .min_by(|a, b| {
+                (a.1 - value)
+                    .abs()
+                    .partial_cmp(&(b.1 - value).abs())
+                    .expect("Can't compare values")
+            })
+            .expect("Empty zip");
 
         name
     }
@@ -112,15 +123,17 @@ impl Telemetry {
 /// represent the first line of the image, the next `PX_PER_ROW` represent the
 /// next line, etc.
 pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Telemetry> {
-
     // Sample of telemetry band used for correlation. Only contrast wedges
     // (1 to 9) are given. Each value is repeated 8 times because the height of
     // the wedges is 8 pixels
     let telemetry_sample: Signal = [
         31., 63., 95., 127., 159., 191., 224., 255., 0., // For contrast
-        0., 0., 0., 0., 0., 0., 0.,                      // Variable
-        31., 63., 95., 127., 159., 191., 224., 255., 0.  // For contrast
-    ].iter().flat_map(|x| std::iter::repeat(*x).take(8)).collect();
+        0., 0., 0., 0., 0., 0., 0., // Variable
+        31., 63., 95., 127., 159., 191., 224., 255., 0., // For contrast
+    ]
+    .iter()
+    .flat_map(|x| std::iter::repeat(*x).take(8))
+    .collect();
 
     // Reserve vectors, vector length is the height of the image
 
@@ -132,10 +145,9 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
 
     // Iterate a row at a time (each row is one pixel high)
     for line in signal.chunks_exact(PX_PER_ROW as usize) {
-
         // Values on each band
-        let a_values = &line[994..(994+44)];
-        let b_values = &line[2034..(2034+44)];
+        let a_values = &line[994..(994 + 44)];
+        let b_values = &line[2034..(2034 + 44)];
 
         // Horizontal average
         let curr_mean_a: f32 = a_values.iter().sum::<f32>() / 44.;
@@ -145,8 +157,15 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
 
         // Horizontal variance
         variance.push(
-            (a_values.iter().map(|x| (x - curr_mean_a).powi(2)).sum::<f32>() +
-             b_values.iter().map(|x| (x - curr_mean_b).powi(2)).sum::<f32>()) / 88.
+            (a_values
+                .iter()
+                .map(|x| (x - curr_mean_a).powi(2))
+                .sum::<f32>()
+                + b_values
+                    .iter()
+                    .map(|x| (x - curr_mean_b).powi(2))
+                    .sum::<f32>())
+                / 88.,
         );
     }
 
@@ -170,7 +189,8 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     // Check if image is long enough
     if mean_a.len() < telemetry_sample.len() {
         return Err(err::Error::Internal(
-            "Recording too short for telemetry decoding".to_string()));
+            "Recording too short for telemetry decoding".to_string(),
+        ));
     }
 
     if mean_a.len() < 2 * telemetry_sample.len() {
@@ -178,7 +198,7 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     }
 
     // Cross correlation of both telemetry bands with a sample
-    for i in 0 .. mean_a.len() - telemetry_sample.len() {
+    for i in 0..mean_a.len() - telemetry_sample.len() {
         let mut sum: f32 = 0.;
         for j in 0..telemetry_sample.len() {
             sum += telemetry_sample[j] * mean_a[i + j];
@@ -190,8 +210,11 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
         // to the correlation
         // Check standard deviation on the same places where we cross correlate,
         // that's why I use telemetry_sample.len()
-        let q = sum / variance[i..(i + telemetry_sample.len())].iter()
-            .map(|x| x.sqrt()).sum::<f32>();
+        let q = sum
+            / variance[i..(i + telemetry_sample.len())]
+                .iter()
+                .map(|x| x.sqrt())
+                .sum::<f32>();
 
         if q > best.1 {
             best = (i, q);
@@ -204,8 +227,11 @@ pub fn read_telemetry(context: &mut Context, signal: &Signal) -> err::Result<Tel
     }
 
     let telemetry = Telemetry::from_bands(&mean_a, &mean_b, best.0);
-    info!("Channel A: {}, Channel B: {}",
-        telemetry.get_channel_name(Channel::A), telemetry.get_channel_name(Channel::B));
+    info!(
+        "Channel A: {}, Channel B: {}",
+        telemetry.get_channel_name(Channel::A),
+        telemetry.get_channel_name(Channel::B)
+    );
 
     context.step(Step::signal("telemetry_a", &mean_a, None))?;
     context.step(Step::signal("telemetry_b", &mean_b, None))?;
@@ -234,7 +260,9 @@ mod tests {
         let index_row = 8; // Where telemetry starts
 
         // Sample telemetry for channel A
-        let means_a: Signal = sample_wedge.iter().map(|x| x * -5234.) // Should not read this
+        let means_a: Signal = sample_wedge
+            .iter()
+            .map(|x| x * -5234.) // Should not read this
             .chain(sample_wedge.iter().map(|x| x * 1.)) // Wedge 1
             .chain(sample_wedge.iter().map(|x| x * 2.)) // Wedge 2
             .chain(sample_wedge.iter().map(|x| x * 3.)) // Wedge 3
@@ -272,16 +300,13 @@ mod tests {
         for wedge in 1..=16 {
             assert_roughly_equal(
                 telemetry.get_wedge_value(wedge, Some(Channel::A)),
-                wedge as f32
+                wedge as f32,
             );
             assert_roughly_equal(
                 telemetry.get_wedge_value(wedge, Some(Channel::B)),
-                (wedge as f32) + 1.
+                (wedge as f32) + 1.,
             );
-            assert_roughly_equal(
-                telemetry.get_wedge_value(wedge, None),
-                (wedge as f32) + 0.5
-            );
+            assert_roughly_equal(telemetry.get_wedge_value(wedge, None), (wedge as f32) + 0.5);
         }
     }
 
@@ -304,16 +329,15 @@ mod tests {
 
         // (Expected channel A name, Channel A wedge 16 value,
         //  Expected channel B name, Channel B wedge 16 value)
-        let test_cases: [(&str, f32, &str, f32); 8]= [
-            ("1", 1.,       "2", 2.),
-            ("3a", 3.,      "3b", 6.),
-            ("4", 4.,       "5", 5.),
+        let test_cases: [(&str, f32, &str, f32); 8] = [
+            ("1", 1., "2", 2.),
+            ("3a", 3., "3b", 6.),
+            ("4", 4., "5", 5.),
             ("Unknown", 7., "Unknown", 8.),
             ("Unknown", 9., "Unknown", 1000.),
-
-            ("1", 1.4,      "2", 1.6),
-            ("3a", 2.6,     "3a", 3.4),
-            ("1", -1000.,   "5", 5.4),
+            ("1", 1.4, "2", 1.6),
+            ("3a", 2.6, "3a", 3.4),
+            ("1", -1000., "5", 5.4),
         ];
 
         for case in test_cases.iter() {

@@ -1,6 +1,5 @@
 //! Contains my Error type.
 
-
 /// Uses my custom error type.
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -8,7 +7,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Error {
-
     /// Input/output.
     Io(std::io::Error),
 

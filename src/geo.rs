@@ -29,7 +29,6 @@
 
 use std::f64::consts::PI;
 
-
 /// Compute the great-circle distance between two points
 ///
 /// The units of all input and output parameters are radians.
@@ -38,8 +37,7 @@ pub fn distance((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
 
     let delta_lon = lon2 - lon1;
 
-    let mut cos_central_angle = lat1.sin() * lat2.sin()
-                              + lat1.cos() * lat2.cos() * delta_lon.cos();
+    let mut cos_central_angle = lat1.sin() * lat2.sin() + lat1.cos() * lat2.cos() * delta_lon.cos();
 
     cos_central_angle = cos_central_angle.max(-1.).min(1.);
 
@@ -57,7 +55,9 @@ pub fn azimuth((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
 
     let delta_lon = lon2 - lon1;
 
-    delta_lon.sin().atan2(lat1.cos() * lat2.tan() - lat1.sin() * delta_lon.cos())
+    delta_lon
+        .sin()
+        .atan2(lat1.cos() * lat2.tan() - lat1.sin() * delta_lon.cos())
 }
 
 /// Compute the coordinates of the end-point of a displacement on a sphere.
@@ -72,7 +72,6 @@ pub fn azimuth((lat1, lon1): (f64, f64), (lat2, lon2): (f64, f64)) -> f64 {
 /// rotated poles.
 #[allow(dead_code)]
 pub fn reckon((lat, lon): (f64, f64), range: f64, azimuth: f64) -> (f64, f64) {
-
     // Based on reckon from Alexander Barth
     // https://sourceforge.net/p/octave/mapping/ci/3f19801d4b93d3b3923df9fa62d268660e5cb4fa/tree/inst/reckon.m
     // relicenced to LGPL-v3
@@ -82,7 +81,7 @@ pub fn reckon((lat, lon): (f64, f64), range: f64, azimuth: f64) -> (f64, f64) {
     // clip tmp to -1 and 1
     tmp = tmp.max(-1.).min(1.);
 
-    let lato = PI/2. - tmp.acos();
+    let lato = PI / 2. - tmp.acos();
 
     let cos_y = (range.cos() - lato.sin() * lat.sin()) / (lato.cos() * lat.cos());
     let sin_y = azimuth.sin() * range.sin() / lato.cos();
@@ -93,7 +92,7 @@ pub fn reckon((lat, lon): (f64, f64), range: f64, azimuth: f64) -> (f64, f64) {
 
     // bring the lono in the interval [-pi, pi[
 
-    lono = (lono + PI) % (2.*PI) - PI;
+    lono = (lono + PI) % (2. * PI) - PI;
 
     (lato, lono)
 }
@@ -108,6 +107,7 @@ mod tests {
     // Checks for equality allowing a difference of epsilon
     // assert_abs_diff_eq!(a, b, epsilon);
 
+    #[rustfmt::skip]
     #[test]
     fn test_distance() {
         // Test for some easy cases, further testing is done against reckon()
@@ -132,6 +132,7 @@ mod tests {
         assert_abs_diff_eq!(distance((    0.,    0.), (    0., 2.*PI)),     0., epsilon = tolerance);
     }
 
+    #[rustfmt::skip]
     #[test]
     fn test_azimuth() {
         let tolerance = PI/1000.;
@@ -143,6 +144,7 @@ mod tests {
         assert_abs_diff_eq!(azimuth((    0., PI/6.), (    0.,    0.)),-PI/2., epsilon = tolerance);
     }
 
+    #[rustfmt::skip]
     #[test]
     fn test_reckon() {
         // Test against the distance() and azimuth() functions
@@ -193,6 +195,7 @@ mod tests {
     ///
     ///     timestamp day date time alt az orbit_phase lat long range orbit sunlight
     ///
+    #[rustfmt::skip]
     #[test]
     fn test_against_predict() {
 
@@ -254,16 +257,15 @@ NOAA 19
     ///
     /// N2YO.com provides a REST API where you can get the current position of
     /// satellites: https://www.n2yo.com/api/
-    #[test] #[ignore]
+    #[test]
+    #[ignore]
     fn test_against_n2yo() {
-
         use std::env;
 
         /// Return current satellite position from N2YO.com.
         ///
         /// Returns latitude, longitude and Unix timestamp.
         fn get_n2yo_pos(satid: u32) -> (f64, f64, i64) {
-
             let api_key: String = env::var("N2YO_KEY")
                 .expect("Provide an N2YO.com API key with N2YO_KEY=ASDHA... cargo test...");
 
@@ -303,8 +305,7 @@ NOAA 19
                 positions: Vec<Position>,
             }
 
-            let data: Data = serde_json::from_str(json.as_str())
-                .expect("Error parsing JSON");
+            let data: Data = serde_json::from_str(json.as_str()).expect("Error parsing JSON");
 
             (
                 data.positions[0].satlatitude,
@@ -323,8 +324,11 @@ NOAA 19
                 .expect("Error getting response text from celestrak.com");
 
             let (sats, _errors) = satellite::io::parse_multiple(tle.as_str());
-            let mut sat = sats.iter().find(|&sat| sat.name == Some(name.to_string()))
-                .expect(&format!("{} not found in weather.txt TLE file", name)).clone();
+            let mut sat = sats
+                .iter()
+                .find(|&sat| sat.name == Some(name.to_string()))
+                .expect(&format!("{} not found in weather.txt TLE file", name))
+                .clone();
 
             let time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
             let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();

@@ -12,7 +12,6 @@ use crate::dsp::{self, Signal};
 use crate::err;
 use crate::noaa_apt::{RefTime, SatName};
 
-
 /// Lookup table for numbers used in `bessel_i0()`
 ///
 /// 1 / (n! * 2^n)^2
@@ -37,7 +36,7 @@ const BESSEL_TABLE: [f32; 20] = [
     5.318644356635594e-37,
     4.60090342269515e-40,
     3.5500798014623073e-43,
-    2.458504017633177e-46
+    2.458504017633177e-46,
 ];
 
 /// First Kind modified Bessel function of order zero.
@@ -64,20 +63,19 @@ pub fn bessel_i0(x: f32) -> f32 {
 /// `String` with the latest version. Wrapped in `Option`, returns `None` if
 /// there was a problem retrieving new versions and logs the error.
 pub fn check_updates(current: &str) -> Option<(bool, String)> {
-    let addr = format!("https://noaa-apt.mbernardi.com.ar/version_check?{}", current);
+    let addr = format!(
+        "https://noaa-apt.mbernardi.com.ar/version_check?{}",
+        current
+    );
 
     let latest: Option<String> = match reqwest::blocking::get(addr.as_str()) {
-        Ok(response) => {
-            match response.text() {
-                Ok(text) => {
-                    Some(text.trim().to_string())
-                }
-                Err(e) => {
-                    warn!("Error checking for updates: {}", e);
-                    None
-                }
+        Ok(response) => match response.text() {
+            Ok(text) => Some(text.trim().to_string()),
+            Err(e) => {
+                warn!("Error checking for updates: {}", e);
+                None
             }
-        }
+        },
         Err(e) => {
             warn!("Error checking for updates: {}", e);
             None
@@ -126,11 +124,10 @@ pub fn check_updates(current: &str) -> Option<(bool, String)> {
 /// Finally count the values on each bucket and return an approximate value for
 /// `low` and `high`
 pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
-
     if percent < 0. || percent > 1. {
         return Err(err::Error::Internal(
-            "Percent given should be between 0 and 1".to_string())
-        );
+            "Percent given should be between 0 and 1".to_string(),
+        ));
     }
 
     let remainder = (1. - percent) / 2.;
@@ -148,9 +145,9 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
 
     // Get the index of the bucket where the sample falls in
     let get_bucket = |x: &f32| {
-        (((x - min) / total_range * num_buckets as f32)
-            .trunc() as usize)
-            .max(0).min(num_buckets - 1) // Avoid going to an invalid bucket
+        (((x - min) / total_range * num_buckets as f32).trunc() as usize)
+            .max(0)
+            .min(num_buckets - 1) // Avoid going to an invalid bucket
     };
 
     // Count samples on each bucket
@@ -165,16 +162,10 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
     for (bucket, count) in buckets.iter().enumerate() {
         accum += count;
 
-        if low_bucket.is_none()
-            && (accum as f32 / signal.len() as f32) > remainder {
-
+        if low_bucket.is_none() && (accum as f32 / signal.len() as f32) > remainder {
             low_bucket = Some(bucket);
-
-        } else if high_bucket.is_none()
-            && (accum as f32 / signal.len() as f32) > 1. - remainder {
-
+        } else if high_bucket.is_none() && (accum as f32 / signal.len() as f32) > 1. - remainder {
             high_bucket = Some(bucket);
-
         }
     }
 
@@ -184,9 +175,10 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
         high_bucket = Some(num_buckets - 1);
     }
 
-    Ok((low_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min,
-        high_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min))
-
+    Ok((
+        low_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min,
+        high_bucket.unwrap() as f32 / num_buckets as f32 * total_range + min,
+    ))
 }
 
 /// Read timestamp from file.
@@ -194,10 +186,9 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
 /// Returns the timestamp as the amount of seconds from the Unix epoch
 /// (Jan 1, 1970, 0:00:00hs UTC). I ignore the nanoseconds precision.
 pub fn read_timestamp(filename: &Path) -> err::Result<i64> {
-    let metadata = fs::metadata(filename)
-        .map_err(|e| err::Error::Internal(
-            format!("Could not read metadata from input file: {}", e)
-        ))?;
+    let metadata = fs::metadata(filename).map_err(|e| {
+        err::Error::Internal(format!("Could not read metadata from input file: {}", e))
+    })?;
 
     // Read modification timestamp from file. The filetime library returns
     // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
@@ -214,12 +205,8 @@ pub fn read_timestamp(filename: &Path) -> err::Result<i64> {
 /// The argument timestamp is the amount of seconds from the Unix epoch
 /// (Jan 1, 1970, 0:00:00hs UTC).
 pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
-    filetime::set_file_mtime(
-        filename,
-        filetime::FileTime::from_unix_time(timestamp, 0),
-    ).map_err(|_|
-        err::Error::Internal("Could not write timestamp to file".to_string())
-    )?;
+    filetime::set_file_mtime(filename, filetime::FileTime::from_unix_time(timestamp, 0))
+        .map_err(|_| err::Error::Internal("Could not write timestamp to file".to_string()))?;
 
     Ok(())
 }
@@ -227,11 +214,11 @@ pub fn write_timestamp(timestamp: i64, filename: &Path) -> err::Result<()> {
 /// Parse filename to get recording time and satellite name.
 ///
 /// Provide timezone to use.
-fn parse_filename(filename: &str,
+fn parse_filename(
+    filename: &str,
     format: &str,
-    timezone: impl chrono::offset::TimeZone
+    timezone: impl chrono::offset::TimeZone,
 ) -> Option<(RefTime, SatName)> {
-
     fn skip(chars: &mut std::str::Chars<'_>, n: usize) {
         for _ in 0..n {
             chars.next();
@@ -247,7 +234,6 @@ fn parse_filename(filename: &str,
         }
         return closest.1;
     }
-
 
     let mut fname_chars = filename.chars();
     let mut fmt_chars = format.chars();
@@ -266,13 +252,11 @@ fn parse_filename(filename: &str,
     // problem, maybe we were able to parse everything, in that case break from
     // the loop.
     loop {
-
         match fmt_chars.next() {
-
             None => {
                 // Format string ended
                 break;
-            },
+            }
             Some('%') => {
                 match fmt_chars.next() {
                     Some('Y') => {
@@ -281,42 +265,42 @@ fn parse_filename(filename: &str,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 4);
-                    },
+                    }
                     Some('m') => {
                         month = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(m) => m,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('d') => {
                         day = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(d) => d,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('H') => {
                         hour = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(h) => h,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('M') => {
                         minute = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(m) => m,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('S') => {
                         second = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(s) => s,
                             _ => return None,
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('N') => {
                         sat = match fname_chars.as_str()[0..2].parse::<u32>() {
                             Ok(15) => SatName::Noaa15,
@@ -325,7 +309,7 @@ fn parse_filename(filename: &str,
                             _ => return None, // Exit entire function
                         };
                         skip(&mut fname_chars, 2);
-                    },
+                    }
                     Some('!') => {
                         sat = match fname_chars.as_str()[0..9].parse::<u32>() {
                             Ok(freq) => closest_freq(
@@ -333,25 +317,26 @@ fn parse_filename(filename: &str,
                                     (137_620_000, SatName::Noaa15),
                                     (137_912_500, SatName::Noaa18),
                                     (137_100_000, SatName::Noaa19),
-                                ], freq
+                                ],
+                                freq,
                             ),
                             Err(_) => return None, // Exit entire function
                         };
                         skip(&mut fname_chars, 9);
-                    },
+                    }
                     Some(character) => {
                         // Skip n characters
                         match character.to_digit(10) {
                             Some(n) => skip(&mut fname_chars, n as usize),
                             None => return None, // Exit entire function
                         }
-                    },
+                    }
                     None => {
                         // Format string ended unexpectedly (with %)
                         return None;
                     }
                 }
-            },
+            }
 
             Some(c) => {
                 if fname_chars.next() != Some(c) {
@@ -361,7 +346,10 @@ fn parse_filename(filename: &str,
         }
     }
 
-    let time = match timezone.ymd_opt(year, month, day).and_hms_opt(hour, minute, second) {
+    let time = match timezone
+        .ymd_opt(year, month, day)
+        .and_hms_opt(hour, minute, second)
+    {
         chrono::LocalResult::Single(t) => t.with_timezone(&Utc),
         _ => return None,
     };
@@ -370,15 +358,15 @@ fn parse_filename(filename: &str,
 }
 
 /// Infer recording time from filename and timestamp.
-pub fn infer_time_sat(settings: &Settings, path: &Path) ->
-    err::Result<(RefTime, SatName)>
-{
-    let filename: &str = path.file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(||
-        err::Error::Internal("Could not get filename".to_string()))?;
+pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime, SatName)> {
+    let filename: &str = path
+        .file_name()
+        .and_then(std::ffi::OsStr::to_str)
+        .ok_or_else(|| err::Error::Internal("Could not get filename".to_string()))?;
     if settings.prefer_timestamps {
         return Ok((
             RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
-            SatName::Noaa19
+            SatName::Noaa19,
         ));
     } else {
         let offset_seconds = (settings.filename_timezone * 3600.) as i32;
@@ -389,11 +377,13 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) ->
                 return Ok(result);
             }
         }
-        warn!("Could not parse date and time from filename {}, using timestamp",
-            filename);
+        warn!(
+            "Could not parse date and time from filename {}, using timestamp",
+            filename
+        );
         return Ok((
             RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
-            SatName::Noaa19
+            SatName::Noaa19,
         ));
     }
 }
@@ -424,7 +414,7 @@ fn download_save_return_tle(addr: &str, filename: &Path) -> err::Result<String> 
         Err(e) => {
             error!("Could not cache TLE at {}: {}", filename.display(), e);
             return Ok(tle);
-        },
+        }
     };
     if let Err(e) = file.write_all(tle.as_bytes()) {
         error!("Could not cache TLE at {}: {}", filename.display(), e);
@@ -443,7 +433,6 @@ pub fn get_current_tle() -> err::Result<String> {
     // Load cached TLE
 
     if let Some(proj_dirs) = directories::ProjectDirs::from("ar.com.mbernardi", "", "noaa-apt") {
-
         let filename = proj_dirs.config_dir().join("weather.txt");
 
         match read_timestamp(&filename) {
@@ -455,21 +444,30 @@ pub fn get_current_tle() -> err::Result<String> {
                     match read_from_file(&filename) {
                         Ok(tle) => return Ok(tle),
                         Err(e) => {
-                            error!("Could not read cached TLE at {}: {}. \
-                                   Downloading and caching new TLE", filename.display(), e);
+                            error!(
+                                "Could not read cached TLE at {}: {}. \
+                                   Downloading and caching new TLE",
+                                filename.display(),
+                                e
+                            );
                             return download_save_return_tle(addr, &filename);
                         }
                     }
-
                 } else {
-                    info!("Found outdated cached TLE. Date: {}
-                          Downloading and caching new TLE", file_date);
+                    info!(
+                        "Found outdated cached TLE. Date: {}
+                          Downloading and caching new TLE",
+                        file_date
+                    );
                     return download_save_return_tle(addr, &filename);
                 }
-            },
+            }
             Err(e) => {
-                warn!("Unable to read cached TLE timestamp: {}. Downloading \
-                      and caching new TLE", e);
+                warn!(
+                    "Unable to read cached TLE timestamp: {}. Downloading \
+                      and caching new TLE",
+                    e
+                );
                 return download_save_return_tle(addr, &filename);
             }
         }
@@ -486,6 +484,7 @@ mod tests {
 
     use super::*;
 
+    #[rustfmt::skip]
     #[test]
     pub fn test_bessel_i0() {
         let tolerance = 0.001; // 0.1%
@@ -510,7 +509,6 @@ mod tests {
 
     #[test]
     fn test_percent() {
-
         use std::iter::Iterator;
 
         // Use a vector integers from 0 to 10000. It's a quite bad test signal
@@ -539,6 +537,7 @@ mod tests {
         }
     }
 
+    #[rustfmt::skip]
     #[test]
     fn test_parse_filename() {
 

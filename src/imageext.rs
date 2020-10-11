@@ -1,7 +1,6 @@
 /// Some extra utilities for working with images, that use or complement
 /// available functions from `image` crate
-
-use image::{RgbaImage, SubImage, Pixel, GenericImage, GenericImageView};
+use image::{GenericImage, GenericImageView, Pixel, RgbaImage, SubImage};
 use lab::Lab;
 use std::convert::TryInto;
 
@@ -37,7 +36,7 @@ pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
                 // for R, G, B, use equalized values:
                 |_| (255. * fraction) as u8,
                 // for A, leave unmodified
-                |alpha| alpha
+                |alpha| alpha,
             );
         }
     }
@@ -62,17 +61,19 @@ pub fn equalize_histogram_color(sub_image: &mut SubImage<&mut RgbaImage>) {
 
 /// Returns a vector of Lab pixel values, alpha channel value is not used.
 fn rgb_to_lab(sub_image: &mut SubImage<&mut RgbaImage>) -> Vec<Lab> {
-    sub_image.pixels().map(|(_x, _y, p)| {
-        let rgb: [u8; 3] = p.channels()[..3].try_into().unwrap();
-        Lab::from_rgb(&rgb)
-    }).collect()
+    sub_image
+        .pixels()
+        .map(|(_x, _y, p)| {
+            let rgb: [u8; 3] = p.channels()[..3].try_into().unwrap();
+            Lab::from_rgb(&rgb)
+        })
+        .collect()
 }
 
 /// Converts Lab to Rgb and modifies the R, B, G values of pixels
 /// in the original subimage. The value of the alpha channel is unmodified.
 fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, sub_image: &mut SubImage<&mut RgbaImage>) {
-    let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter()
-        .map(|x: &Lab| x.to_rgb()).collect();
+    let rgb_pixels: Vec<[u8; 3]> = lab_pixels.iter().map(|x: &Lab| x.to_rgb()).collect();
 
     let height = sub_image.height();
     let width = sub_image.width();
@@ -89,7 +90,7 @@ fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, sub_image: &mut SubImage<&mut RgbaImage
 
 /// Calculates the cumulative histograms for each channel of the subimage.
 fn cumulative_histogram_rgba(
-    sub_image: &mut SubImage<&mut RgbaImage>
+    sub_image: &mut SubImage<&mut RgbaImage>,
 ) -> CumulativeChannelHistogram {
     let mut hist = histogram_rgba(sub_image);
     for c in 0..hist.channels.len() {

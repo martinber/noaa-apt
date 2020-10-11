@@ -2,8 +2,6 @@
 
 // Do not show terminal window on MS Windows
 #![cfg_attr(not(feature = "windows_console"), windows_subsystem = "windows")]
-
-
 // I like to use `return` when it makes things clearer
 #![allow(clippy::needless_return)]
 // Gives a warning when I take `&Signal` (alias of `Vec<f32>`) as arguments
@@ -13,17 +11,18 @@
 // https://doc.rust-lang.org/edition-guide/rust-2018/ownership-and-lifetimes/the-anonymous-lifetime.html
 #![warn(elided_lifetimes_in_paths)]
 
-
-#[macro_use] mod config;
+#[macro_use]
+mod config;
 mod context;
 mod decode;
 mod dsp;
 mod err;
-mod imageext;
 mod filters;
 mod frequency;
 mod geo;
-#[cfg(feature = "gui")] mod gui;
+#[cfg(feature = "gui")]
+mod gui;
+mod imageext;
 mod map;
 mod misc;
 mod noaa_apt;
@@ -34,9 +33,8 @@ mod wav;
 
 use log::{debug, error, info, warn};
 
-use dsp::Rate;
 use context::Context;
-
+use dsp::Rate;
 
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -51,29 +49,27 @@ fn inner_main() -> err::Result<()> {
 
     match mode {
         config::Mode::Version => {
-
             println!("noaa-apt image decoder version {}", VERSION);
             match misc::check_updates(VERSION) {
                 Some((false, _latest)) => println!("You have the latest version available"),
                 Some((true, latest)) => println!("Version \"{}\" available for download!", latest),
                 None => println!("Could not retrieve latest version available"),
             }
-        },
+        }
         config::Mode::Gui { settings } => {
-
             #[cfg(feature = "gui")]
             {
                 gui::main(check_updates, settings);
             }
             #[cfg(not(feature = "gui"))]
             {
-                return Err(err::Error::FeatureNotAvailable("Program compiled \
-                    without gui support, please download the gui version of \
-                    this program or use --help to see available options.".to_string()
+                return Err(err::Error::FeatureNotAvailable(
+                    "Program compiled without gui support, please download the gui version of \
+                    this program or use --help to see available options."
+                        .to_string(),
                 ));
             }
-
-        },
+        }
         config::Mode::Decode {
             settings,
             input_filename,
@@ -84,14 +80,14 @@ fn inner_main() -> err::Result<()> {
             color_settings,
             orbit_settings,
         } => {
-
             println!("noaa-apt image decoder version {}", VERSION);
 
             if !sync {
                 match contrast_adjustment {
-                    noaa_apt::Contrast::Telemetry | noaa_apt::Contrast::Histogram =>
-                        warn!("Adjusting contrast without syncing, expect horrible results!"),
-                    _ => ()
+                    noaa_apt::Contrast::Telemetry | noaa_apt::Contrast::Histogram => {
+                        warn!("Adjusting contrast without syncing, expect horrible results!")
+                    }
+                    _ => (),
                 }
             }
 
@@ -105,13 +101,7 @@ fn inner_main() -> err::Result<()> {
 
             let (signal, rate) = noaa_apt::load(&input_filename)?;
 
-            let raw_data = noaa_apt::decode(
-                &mut context,
-                &settings,
-                &signal,
-                rate,
-                sync
-            )?;
+            let raw_data = noaa_apt::decode(&mut context, &settings, &signal, rate, sync)?;
 
             let img = noaa_apt::process(
                 &mut context,
@@ -123,15 +113,13 @@ fn inner_main() -> err::Result<()> {
             )?;
 
             img.save(&output_filename)?;
-
-        },
+        }
         config::Mode::Resample {
             settings,
             input_filename,
             output_filename,
             output_rate,
         } => {
-
             println!("noaa-apt image decoder version {}", VERSION);
 
             let mut context = Context::resample(
@@ -147,8 +135,7 @@ fn inner_main() -> err::Result<()> {
                 &output_filename,
                 output_rate,
             )?;
-
-        },
+        }
     };
 
     Ok(())
@@ -158,7 +145,6 @@ fn inner_main() -> err::Result<()> {
 ///
 /// Logs errors and exits.
 fn main() {
-
     std::process::exit(match inner_main() {
         Ok(_) => 0,
 
@@ -166,6 +152,6 @@ fn main() {
             error!("{}", err);
 
             1
-        },
+        }
     })
 }

@@ -26,10 +26,9 @@ use std::ops::MulAssign;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
-
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Freq {
-    pi_rad: f32
+    pi_rad: f32,
 }
 
 /// Represents a discrete-time frequency.
@@ -57,7 +56,7 @@ pub struct Freq {
 impl Freq {
     /// Create frequency struct from radians per second.
     pub fn rad(f: f32) -> Self {
-        Self { pi_rad: f/PI }
+        Self { pi_rad: f / PI }
     }
 
     /// Create frequency struct from fractions of pi radians per second.
@@ -67,12 +66,14 @@ impl Freq {
 
     /// Create frequency struct from Hertz and the sample rate used.
     pub fn hz(f: f32, rate: Rate) -> Self {
-        Self { pi_rad: 2.*f / rate.get_hz() as f32 }
+        Self {
+            pi_rad: 2. * f / rate.get_hz() as f32,
+        }
     }
 
     /// Get radians per second.
     pub fn get_rad(self) -> f32 {
-        self.pi_rad*PI
+        self.pi_rad * PI
     }
 
     /// Get fractions of pi radians per second.
@@ -95,7 +96,7 @@ impl Freq {
 /// easy to overflow.
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Rate {
-    hz: u32
+    hz: u32,
 }
 
 impl Rate {
@@ -318,7 +319,7 @@ mod tests {
         pi_rad: f32,
         rad: f32,
         hz: f32,
-        rate: u32
+        rate: u32,
     }
 
     const TEST_VALUES: [Equivalence; 11] = [
@@ -326,35 +327,69 @@ mod tests {
             pi_rad: 0.435374149659864,
             rad: 1.367768230134332,
             hz: 2400.,
-            rate: 11025
+            rate: 11025,
         },
         Equivalence {
             pi_rad: -0.435374149659864,
             rad: -1.367768230134332,
             hz: -2400.,
-            rate: 11025
+            rate: 11025,
         },
         Equivalence {
             pi_rad: 0.1,
             rad: 0.3141592653589793,
             hz: 100.,
-            rate: 2000
+            rate: 2000,
         },
         Equivalence {
             pi_rad: -0.1,
             rad: -0.3141592653589793,
             hz: -100.,
-            rate: 2000
+            rate: 2000,
         },
-        Equivalence { pi_rad: 0., rad: 0., hz: 0., rate: 11025 },
-        Equivalence { pi_rad: 1., rad: PI, hz: 5512.5, rate: 11025 },
-        Equivalence { pi_rad: -1., rad: -PI, hz: -5512.5, rate: 11025 },
-        Equivalence { pi_rad: 2., rad: 2.*PI, hz: 11025., rate: 11025 },
-        Equivalence { pi_rad: -2., rad: -2.*PI, hz: -11025., rate: 11025 },
-        Equivalence { pi_rad: 300., rad: 300.*PI, hz: 150., rate: 1 },
-        Equivalence { pi_rad: -300., rad: -300.*PI, hz: -150., rate: 1 },
+        Equivalence {
+            pi_rad: 0.,
+            rad: 0.,
+            hz: 0.,
+            rate: 11025,
+        },
+        Equivalence {
+            pi_rad: 1.,
+            rad: PI,
+            hz: 5512.5,
+            rate: 11025,
+        },
+        Equivalence {
+            pi_rad: -1.,
+            rad: -PI,
+            hz: -5512.5,
+            rate: 11025,
+        },
+        Equivalence {
+            pi_rad: 2.,
+            rad: 2. * PI,
+            hz: 11025.,
+            rate: 11025,
+        },
+        Equivalence {
+            pi_rad: -2.,
+            rad: -2. * PI,
+            hz: -11025.,
+            rate: 11025,
+        },
+        Equivalence {
+            pi_rad: 300.,
+            rad: 300. * PI,
+            hz: 150.,
+            rate: 1,
+        },
+        Equivalence {
+            pi_rad: -300.,
+            rad: -300. * PI,
+            hz: -150.,
+            rate: 1,
+        },
     ];
-
 
     /// Check if two floats are equal given some margin of precision
     fn assert_roughly_equal(a: f32, b: f32) {
@@ -390,33 +425,15 @@ mod tests {
 
         // Operators against Frequencies
 
-        assert_roughly_equal(
-            fa.get_pi_rad() + fb.get_pi_rad(),
-            (fa + fb).get_pi_rad()
-        );
-        assert_roughly_equal(
-            fa.get_pi_rad() - fb.get_pi_rad(),
-            (fa - fb).get_pi_rad()
-        );
-        assert_roughly_equal(
-            fa.get_pi_rad() * fb.get_pi_rad(),
-            (fa * fb).get_pi_rad()
-        );
-        assert_roughly_equal(
-            fa.get_pi_rad() / fb.get_pi_rad(),
-            (fa / fb).get_pi_rad()
-        );
+        assert_roughly_equal(fa.get_pi_rad() + fb.get_pi_rad(), (fa + fb).get_pi_rad());
+        assert_roughly_equal(fa.get_pi_rad() - fb.get_pi_rad(), (fa - fb).get_pi_rad());
+        assert_roughly_equal(fa.get_pi_rad() * fb.get_pi_rad(), (fa * fb).get_pi_rad());
+        assert_roughly_equal(fa.get_pi_rad() / fb.get_pi_rad(), (fa / fb).get_pi_rad());
 
         // Operators against f32
 
-        assert_roughly_equal(
-            fa.get_pi_rad() * b,
-            (fa * b).get_pi_rad()
-        );
-        assert_roughly_equal(
-            fa.get_pi_rad() / b,
-            (fa / b).get_pi_rad()
-        );
+        assert_roughly_equal(fa.get_pi_rad() * b, (fa * b).get_pi_rad());
+        assert_roughly_equal(fa.get_pi_rad() / b, (fa / b).get_pi_rad());
 
         // Assign operators against frequencies
 

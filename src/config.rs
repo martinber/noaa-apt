@@ -12,11 +12,12 @@ use serde::Deserialize;
 
 use crate::err;
 use crate::misc;
-use crate::noaa_apt::{ColorSettings, OrbitSettings, MapSettings, Rotate, Contrast, SatName, RefTime};
+use crate::noaa_apt::{
+    ColorSettings, Contrast, MapSettings, OrbitSettings, RefTime, Rotate, SatName,
+};
 
 // Expected configuration file version.
 const SETTINGS_VERSION: u32 = 2;
-
 
 /// Returns a PathBuf of the requested resource file.
 ///
@@ -42,9 +43,7 @@ macro_rules! res_path {
 #[derive(Debug)]
 pub enum Mode {
     /// Open GUI.
-    Gui {
-        settings: Settings
-    },
+    Gui { settings: Settings },
 
     /// Show version and quit.
     Version,
@@ -195,10 +194,10 @@ fn parse_from_file(filename: &std::path::PathBuf) -> err::Result<DeSettings> {
     if de_settings.version == SETTINGS_VERSION {
         Ok(de_settings)
     } else {
-        Err(err::Error::Deserialize(
-            format!("Wrong settings file version {}. Should be {}",
-                    de_settings.version, SETTINGS_VERSION)
-        ))
+        Err(err::Error::Deserialize(format!(
+            "Wrong settings file version {}. Should be {}",
+            de_settings.version, SETTINGS_VERSION
+        )))
     }
 }
 
@@ -207,60 +206,50 @@ fn parse_from_file(filename: &std::path::PathBuf) -> err::Result<DeSettings> {
 /// Tries to create the settings file if it's not available and loads the
 /// default settings.
 fn load_de_settings() -> DeSettings {
-
     let default_settings_str = include_str!("default_settings.toml");
 
     if let Some(proj_dirs) = directories::ProjectDirs::from("ar.com.mbernardi", "", "noaa-apt") {
-
         let filename = proj_dirs.config_dir().join("settings.toml");
 
         match parse_from_file(&filename) {
-            Ok(de_settings) => {
-                return de_settings
-            },
+            Ok(de_settings) => return de_settings,
             Err(e) => {
                 println!("Error loading settings file {:?}: {}", filename, e);
 
                 let _result = std::fs::create_dir_all(proj_dirs.config_dir());
 
                 if filename.exists() {
-
                     let mut dest = filename.clone();
                     dest.set_extension("OLD");
                     println!(
-                        "Outdated or corrupted settings file, moving to {:?} \
-                        and saving default settings file on {:?}",
-                        &dest, &filename);
+                        "Outdated or corrupted settings file, moving to {:?} and saving default \
+                        settings file on {:?}",
+                        &dest, &filename
+                    );
 
                     if let Err(e) = std::fs::rename(&filename, &dest) {
-                        println!("Unable to move {:?} to {:?}: {}",
-                                 &dest, &filename, e);
+                        println!("Unable to move {:?} to {:?}: {}", &dest, &filename, e);
                     }
                 }
 
                 if let Ok(mut file) = std::fs::File::create(&filename) {
-
                     println!("Saving default settings to {:?}", &filename);
                     if let Err(e) = file.write_all(default_settings_str.as_bytes()) {
                         println!("Unable to write: {}", e);
                     }
-
                 } else {
                     println!(
                         "Could not open or create settings file {:?}, using default settings",
                         &filename,
                     );
                 }
-                return toml::from_str(default_settings_str).expect(
-                    "Failed to parse default settings"
-                );
+                return toml::from_str(default_settings_str)
+                    .expect("Failed to parse default settings");
             }
         }
     } else {
         println!("Could not get system settings directory, using default settings");
-        return toml::from_str(default_settings_str).expect(
-            "Failed to parse default settings"
-        )
+        return toml::from_str(default_settings_str).expect("Failed to parse default settings");
     }
 }
 
@@ -269,8 +258,8 @@ fn load_de_settings() -> DeSettings {
 ///
 /// Returns if we should check for updates, the verbosity and the mode including
 /// the settings.
+#[rustfmt::skip]
 pub fn get_config() -> (bool, log::Level, Mode) {
-
     // Parse commandline
 
     let mut arg_input_filename: Option<PathBuf> = None;
@@ -296,103 +285,185 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let mut arg_false_color = false;
     {
         let mut parser = argparse::ArgumentParser::new();
-        parser.set_description("Decode NOAA APT images from WAV files. Run \
-                               without arguments to launch the GUI");
-        parser.refer(&mut arg_input_filename)
-            .add_argument("input_filename", argparse::StoreOption,
-            "Input WAV file.");
-        parser.refer(&mut arg_output_filename)
-            .add_option(&["-o", "--output"], argparse::StoreOption,
-            "Set output path. When decoding images the default is \
-            './output.png', when resampling the default is './output.wav'.")
+        parser
+            .set_description(
+                "Decode NOAA APT images from WAV files. Run without arguments to launch the GUI",
+            );
+        parser
+            .refer(&mut arg_input_filename)
+            .add_argument(
+                "input_filename",
+                argparse::StoreOption,
+                "Input WAV file.",
+            );
+        parser
+            .refer(&mut arg_output_filename)
+            .add_option(
+                &["-o", "--output"],
+                argparse::StoreOption,
+                "Set output path. When decoding images the default is './output.png', when \
+                resampling the default is './output.wav'.",
+            )
             .metavar("FILENAME");
-        parser.refer(&mut arg_print_version)
-            .add_option(&["-v", "--version"], argparse::StoreTrue,
-            "Show version and quit.");
-        parser.refer(&mut arg_debug)
-            .add_option(&["-d", "--debug"], argparse::StoreTrue,
-            "Print debugging messages.");
-        parser.refer(&mut arg_quiet)
-            .add_option(&["-q", "--quiet"], argparse::StoreTrue,
-            "Don't print info messages.");
-        parser.refer(&mut arg_resample_output)
-            .add_option(&["-r", "--resample"], argparse::StoreOption,
-            "Resample WAV file to a given sample rate, no APT image will be \
-            decoded.")
+        parser
+            .refer(&mut arg_print_version)
+            .add_option(
+                &["-v", "--version"],
+                argparse::StoreTrue,
+                "Show version and quit.",
+            );
+        parser
+            .refer(&mut arg_debug)
+            .add_option(
+                &["-d", "--debug"],
+                argparse::StoreTrue,
+                "Print debugging messages.",
+            );
+        parser
+            .refer(&mut arg_quiet)
+            .add_option(
+                &["-q", "--quiet"],
+                argparse::StoreTrue,
+                "Don't print info messages.",
+            );
+        parser
+            .refer(&mut arg_resample_output)
+            .add_option(
+                &["-r", "--resample"],
+                argparse::StoreOption,
+                "Resample WAV file to a given sample rate, no APT image will be decoded.",
+            )
             .metavar("SAMPLE_RATE");
-        parser.refer(&mut arg_sync)
-            .add_option(&["--no-sync"], argparse::StoreFalse,
-            "Disable syncing, useful when the sync frames are noisy and the \
-            syncing attempts do more harm than good.");
-        parser.refer(&mut arg_contrast_adjustment)
-            .add_option(&["-c", "--contrast"], argparse::StoreOption,
-            "Contrast adjustment method for decode. Possible values: \
-            \"98_percent\" (default), \"telemetry\", \"histogram\" or \"disable\".")
+        parser
+            .refer(&mut arg_sync)
+            .add_option(
+                &["--no-sync"],
+                argparse::StoreFalse,
+                "Disable syncing, useful when the sync frames are noisy and the syncing attempts do \
+                more harm than good.",
+            );
+        parser
+            .refer(&mut arg_contrast_adjustment)
+            .add_option(
+                &["-c", "--contrast"],
+                argparse::StoreOption,
+                "Contrast adjustment method for decode. Possible values: \"98_percent\" (default), \
+                \"telemetry\", \"histogram\" or \"disable\".",
+            )
             .metavar("METHOD");
-        parser.refer(&mut arg_sat)
-            .add_option(&["-s", "--sat"], argparse::StoreOption,
-            "Indicate satellite name. Possible values \"noaa_15\", \"noaa_18\" \
-            or \"noaa_19\". If no --sat is provided, it will be guessed from \
-            the filename, otherwise it will be NOAA 19")
+        parser
+            .refer(&mut arg_sat)
+            .add_option(
+                &["-s", "--sat"],
+                argparse::StoreOption,
+                "Indicate satellite name. Possible values \"noaa_15\", \"noaa_18\" or \"noaa_19\". \
+                If no --sat is provided, it will be guessed from the filename, otherwise it will \
+                be NOAA 19",
+            )
             .metavar("SATELLITE");
-        parser.refer(&mut arg_map)
-            .add_option(&["-m", "--map"], argparse::StoreOption,
-            "Enable map overlay. Possible values: \"yes\" or \"no\".")
+        parser
+            .refer(&mut arg_map)
+            .add_option(
+                &["-m", "--map"],
+                argparse::StoreOption,
+                "Enable map overlay. Possible values: \"yes\" or \"no\".",
+            )
             .metavar("MAP_MODE");
-        parser.refer(&mut arg_yaw)
-            .add_option(&["--map-yaw"], argparse::StoreOption,
-            "Yaw correction for map overlay in degrees. Default: 0.")
+        parser
+            .refer(&mut arg_yaw)
+            .add_option(
+                &["--map-yaw"],
+                argparse::StoreOption,
+                "Yaw correction for map overlay in degrees. Default: 0.",
+            )
             .metavar("YAW");
-        parser.refer(&mut arg_hscale)
-            .add_option(&["--map-hscale"], argparse::StoreOption,
-            "Horizontal map scale correction for map overlay. Default: 1.")
+        parser
+            .refer(&mut arg_hscale)
+            .add_option(
+                &["--map-hscale"],
+                argparse::StoreOption,
+                "Horizontal map scale correction for map overlay. Default: 1.",
+            )
             .metavar("HSCALE");
-        parser.refer(&mut arg_vscale)
-            .add_option(&["--map-vscale"], argparse::StoreOption,
-            "Vertical map scale correction for map overlay. Default: 1.")
+        parser
+            .refer(&mut arg_vscale)
+            .add_option(
+                &["--map-vscale"],
+                argparse::StoreOption,
+                "Vertical map scale correction for map overlay. Default: 1.",
+            )
             .metavar("VSCALE");
-        parser.refer(&mut arg_rotate)
-            .add_option(&["-R", "--rotate"], argparse::StoreOption,
-            "Rotate image, useful for South to North passes where the raw image \
-            is received upside-down. Possible values: \"auto\", \"yes\", \
-            \"no\" (default). If using \"auto\", the program uses orbit \
-            calculations and reception time to determine if the pass was South \
-            to North.")
+        parser
+            .refer(&mut arg_rotate)
+            .add_option(
+                &["-R", "--rotate"],
+                argparse::StoreOption,
+                "Rotate image, useful for South to North passes where the raw image is received \
+                upside-down. Possible values: \"auto\", \"yes\", \"no\" (default). If using \
+                \"auto\", the program uses orbit calculations and reception time to determine if \
+                the pass was South to North.",
+            )
             .metavar("METHOD");
-        parser.refer(&mut arg_false_color)
-            .add_option(&["-F", "--false-color"], argparse::StoreTrue,
-            "Attempt to produce a colored image, from the grayscale channel \
-            and IR values. Experimental. Works best with \"--contrast telemetry\".");
-        parser.refer(&mut arg_start_time)
-            .add_option(&["-t", "--start-time"], argparse::StoreOption,
-            "Provide recording start time, used for orbit calculations. Use \
-            RFC 3339 format which includes date, time and timezone, e.g. \
-            \"1996-12-19T16:39:57-08:00\". If this option is not provided, it \
-            will be inferred from the filename or from the file modification \
-            timestamp.");
-        parser.refer(&mut arg_tle_filename)
-            .add_option(&["-T", "--tle"], argparse::StoreOption,
-            "Load TLE from given path. Very useful when decoding old images and \
-            if you have a TLE from around that date. If no --tle is provided \
-            and the current cached TLE is older than a week, a new weather.txt \
-            TLE from celestrak.com will be downloaded and cached.");
-        parser.refer(&mut arg_profile)
-            .add_option(&["-p", "--profile"], argparse::StoreOption,
-            "Profile to use, values loaded from settings file. Possible values: \
-            \"standard\", \"fast\" or \"slow\".");
-        parser.refer(&mut arg_wav_steps)
-            .add_option(&["--wav-steps"], argparse::StoreTrue,
-            "Export a WAV for every step of the decoding process for debugging, \
-            the files will be located on the current folder, named \
-            {number}_{description}.wav");
-        parser.refer(&mut arg_export_resample_filtered)
-            .add_option(&["--export-resample-filtered"], argparse::StoreTrue,
-            "Export a WAV for the expanded and filtered signal on the resampling
-            step. Very expensive operation, can take several GiB of both RAM and
-            disk. --wav-steps should be set.");
-        parser.refer(&mut arg_rotate_deprecated)
-            .add_option(&["--rotate-image"], argparse::StoreTrue,
-            "Deprecated. Use --rotate instead");
+        parser
+            .refer(&mut arg_false_color)
+            .add_option(
+                &["-F", "--false-color"],
+                argparse::StoreTrue,
+                "Attempt to produce a colored image, from the grayscale channel and IR values. \
+                Experimental. Works best with \"--contrast telemetry\".",
+            );
+        parser
+            .refer(&mut arg_start_time)
+            .add_option(
+                &["-t", "--start-time"],
+                argparse::StoreOption,
+                "Provide recording start time, used for orbit calculations. Use RFC 3339 format \
+                which includes date, time and timezone, e.g. \"1996-12-19T16:39:57-08:00\". If \
+                this option is not provided, it will be inferred from the filename or from the \
+                file modification timestamp.",
+            );
+        parser
+            .refer(&mut arg_tle_filename)
+            .add_option(
+                &["-T", "--tle"],
+                argparse::StoreOption,
+                "Load TLE from given path. Very useful when decoding old images and if you have a \
+                TLE from around that date. If no --tle is provided and the current cached TLE is \
+                older than a week, a new weather.txt TLE from celestrak.com will be downloaded and \
+                cached.",
+            );
+        parser
+            .refer(&mut arg_profile)
+            .add_option(
+                &["-p", "--profile"],
+                argparse::StoreOption,
+                "Profile to use, values loaded from settings file. Possible values: \"standard\", \
+                \"fast\" or \"slow\".",
+            );
+        parser
+            .refer(&mut arg_wav_steps)
+            .add_option(
+                &["--wav-steps"],
+                argparse::StoreTrue,
+                "Export a WAV for every step of the decoding process for debugging, the files \
+                will be located on the current folder, named {number}_{description}.wav",
+            );
+        parser
+            .refer(&mut arg_export_resample_filtered)
+            .add_option(
+                &["--export-resample-filtered"],
+                argparse::StoreTrue,
+                "Export a WAV for the expanded and filtered signal on the resampling step. Very \
+                expensive operation, can take several GiB of both RAM and disk. --wav-steps should \
+                be set.",
+            );
+        parser
+            .refer(&mut arg_rotate_deprecated)
+            .add_option(
+                &["--rotate-image"],
+                argparse::StoreTrue,
+                "Deprecated. Use --rotate instead",
+            );
         parser.parse_args_or_exit();
     }
 
@@ -412,7 +483,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
         string => {
             println!("Invalid profile \"{}\", using standard profile", string);
             de_settings.profiles.standard
-        },
+        }
     };
 
     let check_updates = de_settings.check_updates;
@@ -455,21 +526,22 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     // If set, then the program will be used as a command-line one, otherwise we
     // open the GUI
     if let Some(input_filename) = arg_input_filename {
-
         // If set, we are resampling, otherwise we are decoding
         if let Some(rate) = arg_resample_output {
-
-            return (check_updates, verbosity, Mode::Resample {
-                settings,
-                input_filename,
-                output_filename: arg_output_filename.unwrap_or_else(
-                    || PathBuf::from("./output.wav")),
-                output_rate: rate,
-            });
+            return (
+                check_updates,
+                verbosity,
+                Mode::Resample {
+                    settings,
+                    input_filename,
+                    output_filename: arg_output_filename
+                        .unwrap_or_else(|| PathBuf::from("./output.wav")),
+                    output_rate: rate,
+                },
+            );
 
         // resample_output option not set, decode WAV file
         } else {
-
             let contrast_adjustment: Contrast = match arg_contrast_adjustment.as_deref() {
                 Some("telemetry") => Contrast::Telemetry,
                 Some("disable") => Contrast::MinMax,
@@ -478,23 +550,23 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 Some(_) => {
                     println!("Invalid contrast adjustment argument");
                     std::process::exit(0);
-                },
+                }
             };
 
-            let rotate: Rotate =
-                if arg_rotate_deprecated {
-                    Rotate::Yes
-                 } else {
-                    match arg_rotate.as_deref() {
-                        Some("auto") => Rotate::Orbit,
-                        Some("yes") => Rotate::Yes,
-                        Some("no") => Rotate::No,
-                        Some(_) => { println!("Invalid rotate argument");
-                            std::process::exit(0);
-                        },
-                        None => Rotate::No,
+            let rotate: Rotate = if arg_rotate_deprecated {
+                Rotate::Yes
+            } else {
+                match arg_rotate.as_deref() {
+                    Some("auto") => Rotate::Orbit,
+                    Some("yes") => Rotate::Yes,
+                    Some("no") => Rotate::No,
+                    Some(_) => {
+                        println!("Invalid rotate argument");
+                        std::process::exit(0);
                     }
-                };
+                    None => Rotate::No,
+                }
+            };
 
             let color_settings = if arg_false_color {
                 Some(ColorSettings {
@@ -512,10 +584,11 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 Ok((time, sat)) => {
                     sat_name = Some(sat);
                     ref_time = Some(time);
-                },
+                }
                 Err(e) => println!(
                     "Unable to determine satellite name and recording time \
-                    from filename: {}", e
+                    from filename: {}",
+                    e
                 ),
             }
 
@@ -526,7 +599,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 Some(_) => {
                     println!("Invalid provided satellite name");
                     std::process::exit(0);
-                },
+                }
                 None => sat_name, // Keep previous value
             };
 
@@ -544,7 +617,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                     }
 
                     Some(tle)
-                },
+                }
                 None => None,
             };
 
@@ -555,7 +628,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                             println!("Could not parse date and time given: {}", e);
                             std::process::exit(0);
                         })
-                    .into()
+                        .into(),
                 ));
             }
 
@@ -572,7 +645,7 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 Some(_) => {
                     println!("Invalid map argument");
                     std::process::exit(0);
-                },
+                }
                 None => None,
             };
 
@@ -590,8 +663,10 @@ pub fn get_config() -> (bool, log::Level, Mode) {
 
             if sat_name.is_none() || ref_time.is_none() {
                 if let Rotate::Orbit = rotate {
-                    println!("Can't rotate automatically if no satellite and \
-                        time is provided");
+                    println!(
+                        "Can't rotate automatically if no satellite and \
+                        time is provided"
+                    );
                     std::process::exit(0);
                 }
                 if draw_map.is_some() {
@@ -600,21 +675,25 @@ pub fn get_config() -> (bool, log::Level, Mode) {
                 }
             }
 
-            return (check_updates, verbosity, Mode::Decode {
-                settings,
-                input_filename,
-                output_filename: arg_output_filename.unwrap_or_else(
-                    || PathBuf::from("./output.png")),
-                sync: arg_sync,
-                contrast_adjustment,
-                rotate,
-                color_settings,
-                orbit_settings,
-            });
+            return (
+                check_updates,
+                verbosity,
+                Mode::Decode {
+                    settings,
+                    input_filename,
+                    output_filename: arg_output_filename
+                        .unwrap_or_else(|| PathBuf::from("./output.png")),
+                    sync: arg_sync,
+                    contrast_adjustment,
+                    rotate,
+                    color_settings,
+                    orbit_settings,
+                },
+            );
         }
 
     // Input filename not set, launch GUI
     } else {
-        return (check_updates, verbosity, Mode::Gui { settings } );
+        return (check_updates, verbosity, Mode::Gui { settings });
     }
 }

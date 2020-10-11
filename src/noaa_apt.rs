@@ -133,14 +133,14 @@ pub fn process(
             let high = telemetry.get_wedge_value(8, None);
 
             (low, high)
-        },
+        }
         Contrast::Percent(p) => {
             context.status(
                 0.1,
                 format!("Adjusting contrast using {} percent", p * 100.),
             );
             misc::percent(&signal, p)?
-        },
+        }
         Contrast::MinMax | Contrast::Histogram => {
             context.status(0.1, "Mapping values".to_string());
             let low: f32 = *dsp::get_min(&signal)?;
@@ -169,11 +169,10 @@ pub fn process(
 
     // grayscale image obtained by mapping signal values to 0..255
     // based on the selected contrast adjustment
-    let img: GrayImage = GrayImage::from_vec(
-        PX_PER_ROW, height, map_signal_u8(&signal, low, high)
-    ).ok_or_else(|| {
-        err::Error::Internal("Could not create image, wrong buffer length".to_string())
-    })?;
+    let img: GrayImage = GrayImage::from_vec(PX_PER_ROW, height, map_signal_u8(&signal, low, high))
+        .ok_or_else(|| {
+            err::Error::Internal("Could not create image, wrong buffer length".to_string())
+        })?;
 
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
 
@@ -201,7 +200,7 @@ pub fn process(
                 orbit_settings.ref_time,
                 map_settings,
                 orbit_settings.sat_name,
-                tle
+                tle,
             )?;
         }
     }
@@ -212,7 +211,7 @@ pub fn process(
         Rotate::Yes => {
             context.status(0.90, "Rotating output image".to_string());
             processing::rotate(&mut img);
-        },
+        }
         Rotate::Orbit => {
             if let Some(orbit_settings) = orbit {
                 if processing::south_to_north_pass(&orbit_settings)? {
@@ -222,8 +221,8 @@ pub fn process(
             } else {
                 warn!("Can't rotate automatically if no orbit information is provided");
             }
-        },
-        Rotate::No => {},
+        }
+        Rotate::No => {}
     }
 
     Ok(img)
@@ -252,14 +251,13 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let expected: Vec<u8> = vec![
-            0, 0, 0, 0, 1, 2, 50, 120, 200, 255, 255, 255];
+        let expected: Vec<u8> = vec![0, 0, 0, 0, 1, 2, 50, 120, 200, 255, 255, 255];
         let test_values: Signal = vec![
-            -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.];
+            -10., -5., -1., 0., 1., 2.4, 50., 120., 199.6, 255., 256., 300.,
+        ];
 
         // Shift values somewhere
-        let shifted_values: Signal =
-            test_values.iter().map(|x| x * 123.123 - 234.234).collect();
+        let shifted_values: Signal = test_values.iter().map(|x| x * 123.123 - 234.234).collect();
 
         // See where 0 and 255 end up after that
         let low = 0. * 123.123 - 234.234;

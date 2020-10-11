@@ -12,7 +12,6 @@ use crate::context::{Context, Step};
 use crate::err;
 use crate::filters;
 
-
 /// Represents a signal, it's just a `Vec<f32>`.
 pub type Signal = Vec<f32>;
 
@@ -21,7 +20,8 @@ pub type Signal = Vec<f32>;
 pub fn get_max(vector: &Signal) -> err::Result<&f32> {
     if vector.is_empty() {
         return Err(err::Error::Internal(
-            "Can't get maximum of a zero length vector".to_string()));
+            "Can't get maximum of a zero length vector".to_string(),
+        ));
     }
 
     let mut max: &f32 = &vector[0];
@@ -39,7 +39,8 @@ pub fn get_max(vector: &Signal) -> err::Result<&f32> {
 pub fn get_min(vector: &Signal) -> err::Result<&f32> {
     if vector.is_empty() {
         return Err(err::Error::Internal(
-            "Can't get minimum of a zero length vector".to_string()));
+            "Can't get minimum of a zero length vector".to_string(),
+        ));
     }
 
     let mut min: &f32 = &vector[0];
@@ -65,7 +66,6 @@ pub fn resample_with_filter(
     output_rate: Rate,
     mut filt: impl filters::Filter,
 ) -> err::Result<Signal> {
-
     if output_rate.get_hz() == 0 {
         return Err(err::Error::Internal("Can't resample to 0Hz".to_string()));
     }
@@ -76,15 +76,19 @@ pub fn resample_with_filter(
 
     let result;
 
-    if l > 1 { // If we need interpolation
+    if l > 1 {
+        // If we need interpolation
         // Reference the frequencies to the rate we have after interpolation
-        let interpolated_rate = input_rate.checked_mul(l).ok_or_else(||
+        let interpolated_rate = input_rate.checked_mul(l).ok_or_else(|| {
             err::Error::RateOverflow(format!(
                 "Can't resample, looks like the sample rates do not have a big
                 divisor in common. input_rate: {}, output_rate: {}, l: {}, m: {}",
-                input_rate.get_hz(), output_rate.get_hz(), l, m
+                input_rate.get_hz(),
+                output_rate.get_hz(),
+                l,
+                m
             ))
-        )?;
+        })?;
 
         filt.resample(input_rate, interpolated_rate);
         let coeff = filt.design();
@@ -93,19 +97,29 @@ pub fn resample_with_filter(
 
         result = fast_resampling(context, &signal, l, m, &coeff, input_rate)?;
 
-        context.step(Step::signal("resample_decimated", &result, Some(output_rate)))?;
-
+        context.step(Step::signal(
+            "resample_decimated",
+            &result,
+            Some(output_rate),
+        ))?;
     } else {
-
         context.step(Step::filter("resample_filter", &filt.design()))?;
 
         let filtered = &filter(context, &signal, filt)?;
 
-        context.step(Step::signal("resample_filtered", &filtered, Some(input_rate)))?;
+        context.step(Step::signal(
+            "resample_filtered",
+            &filtered,
+            Some(input_rate),
+        ))?;
 
         result = decimate(filtered, m);
 
-        context.step(Step::signal("resample_decimated", &result, Some(output_rate)))?;
+        context.step(Step::signal(
+            "resample_decimated",
+            &result,
+            Some(output_rate),
+        ))?;
     }
 
     Ok(result)
@@ -123,7 +137,6 @@ pub fn resample(
     atten: f32,
     delta_w: Freq,
 ) -> err::Result<Signal> {
-
     let cutout = if output_rate > input_rate {
         // Filter everything outside the original spectrum, so everything higher
         // than input_rate/2.
@@ -135,12 +148,16 @@ pub fn resample(
         Freq::hz(output_rate.get_hz() as f32 / 2., input_rate)
     };
 
-    resample_with_filter(context, &signal, input_rate, output_rate,
+    resample_with_filter(
+        context,
+        &signal,
+        input_rate,
+        output_rate,
         filters::Lowpass {
             cutout,
             atten,
             delta_w,
-        }
+        },
     )
 }
 
@@ -174,7 +191,6 @@ fn fast_resampling(
     coeff: &Signal,
     input_rate: Rate,
 ) -> err::Result<Signal> {
-
     let l = l as u64;
     let m = m as u64;
 
@@ -216,17 +232,18 @@ fn fast_resampling(
 
     // Iterate over each output sample
     while t < interpolated_len {
-
         // Find first n inside the window that has a input sample that I
         // should multiply with a filter coefficient
         if t > offset {
             n = t - offset; // Go to n at start of filter
-            match n % l { // Jump to first sample in window
+            match n % l {
+                // Jump to first sample in window
                 0 => (),
                 rem => n += l - rem, // I checked this on pen and paper once and
                                      // forgot how it works
             }
-        } else { // In this case the first sample in window is located at 0
+        } else {
+            // In this case the first sample in window is located at 0
             n = 0;
         }
 
@@ -259,13 +276,12 @@ fn fast_resampling(
             output.push(sum);
             t += m; // Jump to next output sample
         }
-
     }
 
     context.step(Step::signal(
         "resample_filtered",
         &expanded_filtered,
-        Some(input_rate * l as u32)
+        Some(input_rate * l as u32),
     ))?;
 
     debug!("Resampling finished");
@@ -276,7 +292,6 @@ fn fast_resampling(
 ///
 /// The signal should be accordingly bandlimited previously to avoid aliasing.
 fn decimate(signal: &Signal, m: u32) -> Signal {
-
     let m = m as usize;
 
     debug!("Resampling by decimation, M: {}", m);
@@ -289,7 +304,6 @@ fn decimate(signal: &Signal, m: u32) -> Signal {
 
     debug!("Resampling finished");
     decimated
-
 }
 
 /// Demodulate AM signal.
@@ -333,13 +347,11 @@ fn decimate(signal: &Signal, m: u32) -> Signal {
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 
-
 pub fn demodulate(
     context: &mut Context,
     signal: &Signal,
-    carrier_freq: Freq
+    carrier_freq: Freq,
 ) -> err::Result<Signal> {
-
     debug!("Demodulating signal");
 
     let mut output: Signal = vec![0_f32; signal.len()];
@@ -374,9 +386,8 @@ pub fn demodulate(
 pub fn filter(
     context: &mut Context,
     signal: &Signal,
-    filter: impl filters::Filter
+    filter: impl filters::Filter,
 ) -> err::Result<Signal> {
-
     debug!("Filtering signal");
 
     let coeff = filter.design();
@@ -398,7 +409,6 @@ pub fn filter(
     Ok(output)
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -409,17 +419,16 @@ mod tests {
     /// rate can overflow.
     #[test]
     fn test_rate_overflow() {
-
         let result = resample_with_filter(
-            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
+            &mut Context::resample(|_, _| {}, false, false), // Dummy context, not important
             &vec![0.0; 1000],
             Rate::hz(99371), // Two primes as sample rates
             Rate::hz(93911),
             filters::NoFilter,
         );
 
-        if let Err(err::Error::RateOverflow(_)) = result { }
-        else {
+        if let Err(err::Error::RateOverflow(_)) = result {
+        } else {
             panic!();
         }
     }
@@ -431,12 +440,12 @@ mod tests {
     #[test]
     fn test_fast_resampling() {
         let result = fast_resampling(
-            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
-            &vec![0.0; 1000], // signal
-            3, // l
-            2, // m
-            &vec![0.0; 100], // coeff
-            Rate::hz(1000), // input_rate
+            &mut Context::resample(|_, _| {}, false, false), // Dummy context, not important
+            &vec![0.0; 1000],                                // signal
+            3,                                               // l
+            2,                                               // m
+            &vec![0.0; 100],                                 // coeff
+            Rate::hz(1000),                                  // input_rate
         );
         assert!(result.is_ok());
     }
@@ -448,12 +457,12 @@ mod tests {
     #[test]
     fn test_fast_resampling_short() {
         let result = fast_resampling(
-            &mut Context::resample(|_,_| {}, false, false), // Dummy context, not important
-            &vec![0.0; 100], // signal
-            3, // l
-            2, // m
-            &vec![0.0; 1000], // coeff
-            Rate::hz(1000), // input_rate
+            &mut Context::resample(|_, _| {}, false, false), // Dummy context, not important
+            &vec![0.0; 100],                                 // signal
+            3,                                               // l
+            2,                                               // m
+            &vec![0.0; 1000],                                // coeff
+            Rate::hz(1000),                                  // input_rate
         );
         assert!(result.is_ok());
     }

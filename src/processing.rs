@@ -1,15 +1,14 @@
 //! Image processing functions.
 
 use image::{GenericImage, Rgba, RgbaImage};
-use log::{warn, info};
+use log::{info, warn};
 
-use crate::decode::{PX_PER_CHANNEL, PX_SYNC_FRAME, PX_SPACE_DATA, PX_CHANNEL_IMAGE_DATA};
+use crate::decode::{PX_CHANNEL_IMAGE_DATA, PX_PER_CHANNEL, PX_SPACE_DATA, PX_SYNC_FRAME};
 use crate::err;
-use crate::imageext;
 use crate::geo;
+use crate::imageext;
 use crate::misc;
 use crate::noaa_apt::{ColorSettings, OrbitSettings, RefTime};
-
 
 /// Rotates the channels in place, keeping the sync bands and telemetry intact.
 ///
@@ -25,20 +24,20 @@ pub fn rotate(img: &mut RgbaImage) {
     // where the actual image data starts, past the sync frames and deep space band
     let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA;
 
-    let mut channel_a = img.sub_image(
-        x_offset, 0, PX_CHANNEL_IMAGE_DATA, img.height()
-    );
+    let mut channel_a = img.sub_image(x_offset, 0, PX_CHANNEL_IMAGE_DATA, img.height());
     image::imageops::rotate180_in_place(&mut channel_a);
 
     let mut channel_b = img.sub_image(
-        x_offset + PX_PER_CHANNEL, 0, PX_CHANNEL_IMAGE_DATA, img.height()
+        x_offset + PX_PER_CHANNEL,
+        0,
+        PX_CHANNEL_IMAGE_DATA,
+        img.height(),
     );
     image::imageops::rotate180_in_place(&mut channel_b);
 }
 
 /// Returns true if this was a south to north pass, and the image needs to be rotated.
 pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> {
-
     let tle = match &orbit_settings.custom_tle {
         Some(t) => t.clone(),
         None => misc::get_current_tle()?,
@@ -47,11 +46,13 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
     let (sats, _errors) = satellite::io::parse_multiple(&tle);
     let sat_string = orbit_settings.sat_name.to_string();
 
-    let sat = sats.iter()
+    let sat = sats
+        .iter()
         .find(|&sat| sat.name.as_ref() == Some(&sat_string))
-        .ok_or_else(||
+        .ok_or_else(|| {
             err::Error::Internal(format!("Satellite \"{}\" not found in TLE", sat_string))
-        )?.clone();
+        })?
+        .clone();
 
     let start_time = match orbit_settings.ref_time {
         RefTime::Start(time) => time,
@@ -84,7 +85,10 @@ pub fn south_to_north_pass(orbit_settings: &OrbitSettings) -> err::Result<bool> 
 /// If `has_color=true`, it will convert image from Rgba to Lab, equalize the histogram
 /// for L (lightness) channel, convert back to Rgb and adjust image values accordingly.
 pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
-    info!("Performing histogram equalization, has color: {}", has_color);
+    info!(
+        "Performing histogram equalization, has color: {}",
+        has_color
+    );
     let height = img.height();
 
     let mut channel_a = img.sub_image(0, 0, PX_PER_CHANNEL, height);
@@ -98,7 +102,6 @@ pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
     imageext::equalize_histogram_grayscale(&mut channel_b);
 }
 
-
 /// Attempts to produce a colored image from grayscale channel and IR data.
 /// Works best when contrast is set to "telemetry" or "98 percent".
 /// Needs a way to allow tweaking hardcoded values for water, land, ice
@@ -108,7 +111,8 @@ pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) {
     let vegetation = color_settings.vegetation_threshold;
     let clouds = color_settings.clouds_threshold;
 
-    info!("Colorize image (false color), water={}, vegetation={}, clouds={}",
+    info!(
+        "Colorize image (false color), water={}, vegetation={}, clouds={}",
         water, vegetation, clouds
     );
 
@@ -136,31 +140,27 @@ pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) {
             if val < water as f32 {
                 // Water identification
                 r = (8.0 + val * 0.2).min(255.);
-                g = (20.0 + val * 1.0).min(255.);  // avoid overflow
+                g = (20.0 + val * 1.0).min(255.); // avoid overflow
                 b = (50.0 + val * 0.75).min(255.);
-            }
-            else if irval > clouds as f32 {
+            } else if irval > clouds as f32 {
                 // Cloud/snow/ice identification
                 // IR channel helps distinguish clouds and water, particularly in arctic areas
                 r = (irval + val) * 0.5; // Average the two for a little better cloud distinction
                 g = r;
                 b = r;
-            }
-            else if val < vegetation as f32 {
+            } else if val < vegetation as f32 {
                 // Vegetation identification
                 // green
                 r = val * 0.8;
                 g = val * 0.9;
                 b = val * 0.6;
-            }
-            else if val <= clouds as f32 {
+            } else if val <= clouds as f32 {
                 // Desert/dirt identification
                 // brown
                 r = val * 1.0;
                 g = val * 0.9;
                 b = val * 0.7;
-            }
-            else {
+            } else {
                 // Everything else, but this was probably captured by the IR channel above
                 // Clouds, snow, and really dry desert
                 r = val;

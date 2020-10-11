@@ -19,7 +19,6 @@ use crate::config::Settings;
 use crate::dsp::Signal;
 use crate::noaa_apt::Image;
 
-
 // Stores the Widgets.
 //
 thread_local!(static GLOBAL_WIDGETS: RefCell<Option<Widgets>> = RefCell::new(None));
@@ -31,21 +30,23 @@ thread_local!(static GLOBAL_WIDGETS: RefCell<Option<Widgets>> = RefCell::new(Non
 // Wrapped on RefCell because I need mutable references when saving state.
 thread_local!(static GLOBAL_STATE: RefCell<Option<GuiState>> = RefCell::new(None));
 
-
 /// Work with mutable reference to GuiState.
 ///
 /// Panics if called from a thread different than the GUI one. And also if the
 /// state was already borrowed. So the closures used should be as small as
 /// possible to avoid borrowing twice.
 pub fn borrow_state_mut<F, R>(f: F) -> R
-where F: FnOnce(&mut GuiState) -> R
+where
+    F: FnOnce(&mut GuiState) -> R,
 {
     GLOBAL_STATE.with(|global| {
         if let Some(ref mut state) = *global.borrow_mut() {
             (f)(state)
         } else {
-            panic!("Can't get GuiState. Tried to borrow from another thread \
-                    or tried to borrow before building the GUI")
+            panic!(
+                "Can't get GuiState. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI"
+            )
         }
     })
 }
@@ -56,14 +57,17 @@ where F: FnOnce(&mut GuiState) -> R
 /// state was already borrowed mutably. So the closures used should be as small
 /// as possible to avoid borrowing twice.
 pub fn borrow_state<F, R>(f: F) -> R
-where F: FnOnce(&GuiState) -> R
+where
+    F: FnOnce(&GuiState) -> R,
 {
     GLOBAL_STATE.with(|global| {
         if let Some(ref state) = *global.borrow() {
             (f)(state)
         } else {
-            panic!("Can't get GuiState. Tried to borrow from another thread \
-                    or tried to borrow before building the GUI")
+            panic!(
+                "Can't get GuiState. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI"
+            )
         }
     })
 }
@@ -82,14 +86,17 @@ pub fn set_state(state: GuiState) {
 /// Panics if called from a thread different than the GUI one. Also panics if
 /// the GUI is not built yet.
 pub fn borrow_widgets<F, R>(f: F) -> R
-where F: FnOnce(&Widgets) -> R
+where
+    F: FnOnce(&Widgets) -> R,
 {
     GLOBAL_WIDGETS.with(|global| {
         if let Some(ref widgets) = *global.borrow() {
             (f)(widgets)
         } else {
-            panic!("Can't get Widgets. Tried to borrow from another thread \
-                    or tried to borrow before building the GUI")
+            panic!(
+                "Can't get Widgets. Tried to borrow from another thread \
+                    or tried to borrow before building the GUI"
+            )
         }
     })
 }
@@ -106,6 +113,7 @@ pub fn set_widgets(widgets: Widgets) {
 /// Contains changing state.
 ///
 /// For instance it keeps track of the decoded image.
+#[rustfmt::skip]
 #[derive(Debug, Clone)]
 pub struct GuiState {
     pub settings:                  Settings,
@@ -124,6 +132,7 @@ pub struct GuiState {
 /// - sav: Saving tab.
 /// - res: Resample tool.
 /// - ts: Timesamp tool.
+#[rustfmt::skip]
 #[derive(Debug, Clone)]
 pub struct Widgets {
     pub application:               gtk::Application,
@@ -210,6 +219,7 @@ pub struct Widgets {
     pub ts_calendar:               gtk::Calendar,
 }
 
+#[rustfmt::skip]
 impl Widgets {
     /// Create from widgets on Glade builder and create the rest.
     pub fn from_builder(

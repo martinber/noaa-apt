@@ -27,18 +27,16 @@ use std::env;
 use std::path::Path;
 
 use gio::prelude::*;
-use gtk::Builder;
 use gtk::prelude::*;
+use gtk::Builder;
 use log::info;
 
-use crate::config;
 use super::misc;
 use super::state::{
-    GuiState, borrow_state_mut, borrow_state, set_state,
-    Widgets, borrow_widgets, set_widgets
+    borrow_state, borrow_state_mut, borrow_widgets, set_state, set_widgets, GuiState, Widgets,
 };
 use super::work;
-
+use crate::config;
 
 /// Defined by Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -50,7 +48,8 @@ pub fn main(check_updates: bool, settings: config::Settings) {
     let application = gtk::Application::new(
         Some("ar.com.mbernardi.noaa-apt"),
         gio::ApplicationFlags::empty(),
-    ).expect("Initialization failed");
+    )
+    .expect("Initialization failed");
 
     application.connect_startup(move |app| {
         create_window(check_updates, settings.clone(), app);
@@ -61,12 +60,7 @@ pub fn main(check_updates: bool, settings: config::Settings) {
 }
 
 /// Create window
-fn create_window(
-    check_updates: bool,
-    settings: config::Settings,
-    application: &gtk::Application,
-) {
-
+fn create_window(check_updates: bool, settings: config::Settings, application: &gtk::Application) {
     let window = gtk::ApplicationWindow::new(application);
 
     window.set_title("noaa-apt");
@@ -95,7 +89,8 @@ fn create_window(
             });
         }
     });
-    let info_content_area = widgets.info_bar
+    let info_content_area = widgets
+        .info_bar
         .get_content_area()
         .expect("Couldn't get info_content_area (is None)")
         .downcast::<gtk::Box>()
@@ -112,8 +107,12 @@ fn create_window(
     //         - info_revealer
     //             - info_bar
 
-    widgets.outer_box.pack_start(&widgets.main_paned, true, true, 0);
-    widgets.outer_box.pack_end(&widgets.info_revealer, false, false, 0);
+    widgets
+        .outer_box
+        .pack_start(&widgets.main_paned, true, true, 0);
+    widgets
+        .outer_box
+        .pack_end(&widgets.info_revealer, false, false, 0);
 
     widgets.window.add(&widgets.outer_box);
 
@@ -121,7 +120,11 @@ fn create_window(
 
     // Init GuiState
 
-    set_state(GuiState { settings, decoded_signal: None, processed_image: None });
+    set_state(GuiState {
+        settings,
+        decoded_signal: None,
+        processed_image: None,
+    });
 
     // Connect close button
 
@@ -150,7 +153,6 @@ fn create_window(
 
 /// Initialize widgets and set up them for decoding.
 fn init_widgets(widgets: &Widgets) {
-
     dec_ready();
 
     // Set timezone labels
@@ -158,14 +160,12 @@ fn init_widgets(widgets: &Widgets) {
     // Create any chrono::DateTime from chrono::Local, then ignore the
     // result and only take the timezone
     let time = chrono::Local::now();
-    widgets.ts_timezone_label.set_text(format!(
-        "Local time\n(UTC{})",
-        time.format("%:z"),
-    ).as_str());
-    widgets.p_timezone_label.set_text(format!(
-        "Local time\n(UTC{})",
-        time.format("%:z"),
-    ).as_str());
+    widgets
+        .ts_timezone_label
+        .set_text(format!("Local time\n(UTC{})", time.format("%:z"),).as_str());
+    widgets
+        .p_timezone_label
+        .set_text(format!("Local time\n(UTC{})", time.format("%:z"),).as_str());
 
     // Disable default mouse scroll behavior on processing calendar
     // By default, scrolling changes months, too easy and annoying to do by
@@ -195,8 +195,7 @@ fn init_widgets(widgets: &Widgets) {
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
-                let filename = file_chooser.get_filename()
-                    .expect("Couldn't get filename");
+                let filename = file_chooser.get_filename().expect("Couldn't get filename");
 
                 entry.set_text(filename.to_str().unwrap());
             }
@@ -218,8 +217,7 @@ fn init_widgets(widgets: &Widgets) {
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
-                let filename = file_chooser.get_filename()
-                    .expect("Couldn't get filename");
+                let filename = file_chooser.get_filename().expect("Couldn't get filename");
 
                 entry.set_text(filename.to_str().unwrap());
             }
@@ -238,16 +236,27 @@ fn init_widgets(widgets: &Widgets) {
         )
     });
 
-    widgets.p_color_water_scale.set_value(water_threshold as f64);
-    widgets.p_color_vegetation_scale.set_value(vegetation_threshold as f64);
-    widgets.p_color_clouds_scale.set_value(clouds_threshold as f64);
+    widgets
+        .p_color_water_scale
+        .set_value(water_threshold as f64);
+    widgets
+        .p_color_vegetation_scale
+        .set_value(vegetation_threshold as f64);
+    widgets
+        .p_color_clouds_scale
+        .set_value(clouds_threshold as f64);
 
-    widgets.p_color_water_scale.add_mark(
-            water_threshold as f64, gtk::PositionType::Top, None);
+    widgets
+        .p_color_water_scale
+        .add_mark(water_threshold as f64, gtk::PositionType::Top, None);
     widgets.p_color_vegetation_scale.add_mark(
-            vegetation_threshold as f64, gtk::PositionType::Top, None);
-    widgets.p_color_clouds_scale.add_mark(
-            clouds_threshold as f64, gtk::PositionType::Top, None);
+        vegetation_threshold as f64,
+        gtk::PositionType::Top,
+        None,
+    );
+    widgets
+        .p_color_clouds_scale
+        .add_mark(clouds_threshold as f64, gtk::PositionType::Top, None);
 
     // Set default map lines colors
 
@@ -267,8 +276,12 @@ fn init_widgets(widgets: &Widgets) {
         }
     };
 
-    widgets.p_countries_color.set_rgba(&tuple_to_rgba(countries_color));
-    widgets.p_states_color.set_rgba(&tuple_to_rgba(states_color));
+    widgets
+        .p_countries_color
+        .set_rgba(&tuple_to_rgba(countries_color));
+    widgets
+        .p_states_color
+        .set_rgba(&tuple_to_rgba(states_color));
     widgets.p_lakes_color.set_rgba(&tuple_to_rgba(lakes_color));
 
     // Configure tips to update when GtkEntry changes
@@ -303,11 +316,13 @@ fn init_widgets(widgets: &Widgets) {
                         folder_tip_label.set_text(&format!("{}", cwd.display()));
                         folder_tip_label.set_tooltip_text(Some(&format!("{}", cwd.display())));
                         folder_tip_box.show();
-                    },
+                    }
                     Err(_) => {
-                        misc::show_info(gtk::MessageType::Error,
+                        misc::show_info(
+                            gtk::MessageType::Error,
                             "Invalid current working directory, use \
-                            an absolute output path");
+                            an absolute output path",
+                        );
                     }
                 };
             }
@@ -349,17 +364,31 @@ fn init_widgets(widgets: &Widgets) {
 
     // Configure "Normal Size" toggle button
 
-    widgets.img_size_toggle.connect_toggled(|_| misc::update_image());
-    widgets.img_scroll.connect_size_allocate(|_, _| misc::update_image());
+    widgets
+        .img_size_toggle
+        .connect_toggled(|_| misc::update_image());
+    widgets
+        .img_scroll
+        .connect_size_allocate(|_, _| misc::update_image());
 
     // Connect buttons
 
-    widgets.dec_decode_button.connect_clicked(|_| work::decode());
-    widgets.p_process_button.connect_clicked(|_| work::process());
+    widgets
+        .dec_decode_button
+        .connect_clicked(|_| work::decode());
+    widgets
+        .p_process_button
+        .connect_clicked(|_| work::process());
     widgets.sav_save_button.connect_clicked(|_| work::save());
-    widgets.res_resample_button.connect_clicked(|_| work::resample());
-    widgets.ts_read_button.connect_clicked(|_| work::read_timestamp());
-    widgets.ts_write_button.connect_clicked(|_| work::write_timestamp());
+    widgets
+        .res_resample_button
+        .connect_clicked(|_| work::resample());
+    widgets
+        .ts_read_button
+        .connect_clicked(|_| work::read_timestamp());
+    widgets
+        .ts_write_button
+        .connect_clicked(|_| work::write_timestamp());
 }
 
 /// Show widgets as ready for decoding/processing/saving
@@ -380,7 +409,9 @@ fn dec_ready() {
         widgets.ts_action.set_enabled(true);
 
         // Show widgets
-        widgets.main_stack.set_visible_child(&widgets.dec_stack_child);
+        widgets
+            .main_stack
+            .set_visible_child(&widgets.dec_stack_child);
 
         // Configure widgets
         widgets.dec_decode_button.set_sensitive(true);
@@ -400,7 +431,9 @@ fn res_ready() {
         widgets.ts_action.set_enabled(true);
 
         // Show widgets
-        widgets.main_stack.set_visible_child(&widgets.res_stack_child);
+        widgets
+            .main_stack
+            .set_visible_child(&widgets.res_stack_child);
 
         // Configure widgets
         misc::set_progress(0., "Ready");
@@ -419,7 +452,9 @@ fn ts_ready() {
         widgets.ts_action.set_enabled(false);
 
         // Show widgets
-        widgets.main_stack.set_visible_child(&widgets.ts_stack_child);
+        widgets
+            .main_stack
+            .set_visible_child(&widgets.ts_stack_child);
 
         // Configure widgets
         misc::set_progress(0., "Ready");
@@ -429,7 +464,6 @@ fn ts_ready() {
 
 /// Build menu bar
 fn build_system_menu(widgets: &Widgets) {
-
     // Create menu bar
 
     let menu_bar = gio::Menu::new();
@@ -480,15 +514,36 @@ fn build_system_menu(widgets: &Widgets) {
         dialog.set_program_name("noaa-apt");
         dialog.set_version(Some(VERSION));
         dialog.set_authors(&["Martín Bernardi <martin@mbernardi.com.ar>"]);
-        dialog.add_credit_section("Thank you",
-                &[
-                    "RTL-SDR.com", "pietern", "Ossi Herrala", "Arcadie Z.",
-                    "Nodraak", "Dirk Lison", "Grant T. Olson", "Sasha Engelmann",
-                    "Bill Liles", "FMighty", "Sylogista", "Peter Vogel",
-                    "wren84", "Florentin314", "Gagootron", "xxretartistxx",
-                    "unknownantipatriot", "BGNLouie", "nosduh2", "samarrangepas",
-                    "KiwiEntropy", "budude2", "K2SDR", "K6KZO", "TheLAX18"
-                ]);
+        dialog.add_credit_section(
+            "Thank you",
+            &[
+                "RTL-SDR.com",
+                "pietern",
+                "Ossi Herrala",
+                "Arcadie Z.",
+                "Nodraak",
+                "Dirk Lison",
+                "Grant T. Olson",
+                "Sasha Engelmann",
+                "Bill Liles",
+                "FMighty",
+                "Sylogista",
+                "Peter Vogel",
+                "wren84",
+                "Florentin314",
+                "Gagootron",
+                "xxretartistxx",
+                "unknownantipatriot",
+                "BGNLouie",
+                "nosduh2",
+                "samarrangepas",
+                "KiwiEntropy",
+                "budude2",
+                "K2SDR",
+                "K6KZO",
+                "TheLAX18",
+            ],
+        );
 
         dialog.set_website_label(Some("noaa-apt website"));
         dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
