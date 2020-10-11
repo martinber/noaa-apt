@@ -300,6 +300,11 @@ There you can change some advanced settings, be sure to check it if you plan to
 use noaa-apt for automatic image reception. [Here you can see the default
 configuration file](./default_settings.toml).
 
+Keep in mind that newer versions of the program will need newer versions of
+this file. When executing a new version of noaa-apt your settings file will be
+moved to `settings.OLD` and a updated `settings.toml` will be created. You will
+need to move your changes to the new file afterwards.
+
 ### Profile
 
 The profile can be set using a commandline option, or you can change the default

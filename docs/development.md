@@ -314,6 +314,8 @@ I use Clippy too:
 
 - Increment version number of `/src/default_settings.toml` if necessary.
 
+- Increment version number of settings file in `/src/config.rs` if necessary.
+
 - Copy `/src/default_settings.toml` to `/docs/default_settings.toml` if
     necessary.
 
