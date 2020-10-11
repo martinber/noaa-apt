@@ -239,6 +239,18 @@ geodesic instead of the red satellite track. The fix I found is to:
   small number. That small number is the offset we have to use to do the
   correction.
 
+### Histogram equalization
+
+To be documented, but there is nothing special. In false-color images, the RGB
+channels are converted to Lab and the equalization is made only over the L
+channel.
+
+### False color
+
+To be documented. The method is really simple, the pixels are classified as
+water, land, vegetation or clouds depending in some thresholds. These thresholds
+can be easily configured using the GUI.
+
 ## About APT images
 
 ### Modulation

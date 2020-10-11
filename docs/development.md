@@ -26,6 +26,8 @@ The available documentation is:
 
 ## Code style
 
+- We use rustfmt, run with `cargo fmt`.
+
 - Should follow the [Style guidelines] but 80 characters as line width.
 
 - Docstrings: Try to document everything, follow [RFC-1574] without using links
@@ -363,6 +365,8 @@ I use Clippy too:
 
 - Ask Sylogista to update the [AUR package](https://aur.archlinux.org/packages/noaa-apt/).
 
+- Ask Tom Repetti to update the [NixOS Package](https://github.com/NixOS/nixpkgs/pull/96519).
+
 ## Check for updates
 
 The program sends a HTTP GET request and receives the latest version available,
@@ -395,11 +399,12 @@ If you want to disable this you can do it from the
 - RTL-SDR.com: For writing
     [a blog post](https://www.rtl-sdr.com/new-noaa-apt-image-decoder/).
 
+- Arcadie Z.: Histogram equalization, image rotation, false color, fixes and
+	  more.
+
 - pietern: I took the AM demodulator from his [apt137 decoder][apt137].
 
 - Ossi Herrala: Did some fixes and updated dependencies.
-
-- Arcadie Z.: Added a feature for rotating images. Did some fixes.
 
 - Nodraak: Added tips when saving files.
 
@@ -413,6 +418,8 @@ If you want to disable this you can do it from the
 
 - Sylogista: Maintains an [AUR package](https://aur.archlinux.org/packages/noaa-apt/).
 
+- Tom Repetti: [Packaged](https://github.com/NixOS/nixpkgs/pull/96519) program for NixOS.
+
 - Peter Vogel: For writing about noaa-apt on the web.
 
 - wren84 and Florentin314: Reported problems with decoded images.
@@ -422,6 +429,10 @@ If you want to disable this you can do it from the
 
 - BGNLouie, nosduh2, samarrangepas, KiwiEntropy, budude2, K2SDR, K6KZO,
     TheLAX18: Provided recordings to test map overlays.
+
+- JKamue, Kind-Shame: Provided example images for website.
+
+- To everyone who reported issues or sent me emails showing their images!
 
 ## References
 

@@ -114,7 +114,7 @@ There are also two optional *tools*:
     timestamp from one file to another. Otherwise just select time, date and
     write the timestamp to your WAV recording.
 
-![GUI]({{ site.baseurl }}/images/gui.png)
+![GUI]({{ site.baseurl }}/images/gui_2.png)
 
 ### Terminal
 
@@ -158,6 +158,9 @@ Optional arguments:
                         "auto", "yes", "no" (default). If using "auto", the
                         program uses orbit calculations and reception time to
                         determine if the pass was South to North.
+  -F,--false-color      Attempt to produce a colored image, from the grayscale
+                        channel and IR values. Experimental. Works best with
+                        "--contrast telemetry".
   -t,--start-time START_TIME
                         Provide recording start time, used for orbit
                         calculations. Use RFC 3339 format which includes date,
@@ -179,6 +182,7 @@ Optional arguments:
                         the resampling step. Very expensive operation, can take
                         several GiB of both RAM and disk. --wav-steps should be
                         set.
+  --rotate-image        Deprecated. Use --rotate instead
 ```
 
 If resampling, the modification timestamp should be preserved correctly.
@@ -222,6 +226,13 @@ south and sometimes from south to north. The program will try to guess the
 correct orientation from the satellite position at the recording time, be sure
 to select the correct satellite. If this fails, you can manually set to rotate
 the image or not.
+
+### False color
+
+The image is colorized according to the brightness of the pixels in the image.
+Generally this does not produce good results because water is confused with
+land, clouds are confused with vegetation, etc. In the GUI there are available
+three sliders that should be moved until the image looks acceptable.
 
 ### Satellite prediction
 

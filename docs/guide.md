@@ -26,11 +26,15 @@ too. It is meant for another decoder, WXtoImg, but it has useful information.
 
 ## Important things to know
 
+- NOAA satellites are transmitting images 24/7, and the image you receive is a
+	real-time image of your location. The transmission is free to be received by
+	anyone with an antenna, and there is no official decoder or receiver.
+
 - NOAA **images are black and white**. People on the internet share color
     images, those images were originally black and white and then were
     colorized, probably by WXtoImg.
 
-- NOAA **images don't have map lines** (divisions between countries, states,
+- NOAA **images do not have map lines** (divisions between countries, states,
 		or coastlines). When you see images with lines, it means that they used
 		noaa-apt or WXtoImg to draw them according to a map and calculations about
 		the position of the satellite when the image was taken.

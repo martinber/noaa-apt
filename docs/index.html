@@ -11,7 +11,8 @@ layout: landing
 			<div id="sidebar" class="4u sidebar">
 				<section>
 					<img src="images/index_sidebar.jpg" alt="Example image"/>
-					Example image of Argentina, better antennas yield better results.
+					Example image of Europe, better antennas yield better results.
+					Credit: JKamue
 				</section>
 				<section>
 					<img src="images/index_sidebar_2.jpg" alt="Example image"/>
@@ -72,12 +73,10 @@ layout: landing
 			<h3>Disadvantages</h3>
 
 			<p>
-				<em>WXtoIMG</em> has lots of features you might want that
-				<em>noaa-apt</em> does not have, for example false-color images and live
-				decoding. Anyways, the quality of the black and white image should be
-				the same. Currently, my program has problems doing accurate map
-				overlays, but you can get nice results if you play a bit with some
-				settings.
+				<em>WXtoIMG</em> has better false-color and image overlays, also has
+				features <em>noaa-apt</em> does not have (like live decoding). Anyways,
+				the quality of the black and white image should be the same in both
+				programs.
 			</p>
 
 			<p>
@@ -91,12 +90,51 @@ layout: landing
 
 			<img src="images/gui.png" alt="GUI"/>
 
+			<h3>About NOAA images</h3>
+
+			<ul>
+				<li>
+					NOAA satellites are transmitting images 24/7, and the image you
+					receive is a real-time image of your location. The transmission is
+					free to be received by anyone with an antenna, and there is no
+					<em>official</em> decoder or receiver.
+				</li>
+
+				<li>
+					NOAA <strong>images are black and white</strong>. When you see a color
+					image it means it was colorized by some program, this is called
+					<em>false color</em>.
+				</li>
+
+				<li>
+					NOAA <strong>images do not have map lines</strong> (divisions between
+					countries, states, or coastlines). When you see images with lines, it
+					means that they used noaa-apt or WXtoImg to draw them according to a
+					map and calculations about the position of the satellite when the
+					image was taken.
+				</li>
+
+				<li>
+					The <strong>images are upside down 50% of the time</strong>, that's
+					because the satellites sometimes go from south to north and sometimes
+					fron north to south. noaa-apt and WXtoImg can calculate the orbit of
+					the satellite and rotate the image accordingly.
+				</li>
+
+				<li>
+					Images look <strong>much better on daylight</strong>, the satellites
+					also send infrared images at night but I recommend receiving passes
+					when the sun is high in the sky,
+				</li>
+			</ul>
+
 			<h3>Features</h3>
 
 			<ul>
 				<li>Decode raw images from WAV files.</li>
 				<li>Add map overlays with countries, states, provinces and lakes.</li>
-				<li>Really easy to use GUI (at least easier than most decoders).</li>
+				<li>Simple false color</li>
+				<li>Really easy to use (at least easier than other decoders).</li>
 				<li>Histogram equalization.</li>
 				<li>You can disable syncing and export every step of the decoding
 					process, useful for corrupted recordings.</li>

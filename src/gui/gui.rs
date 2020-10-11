@@ -518,9 +518,9 @@ fn build_system_menu(widgets: &Widgets) {
             "Thank you",
             &[
                 "RTL-SDR.com",
+                "Arcadie Z.",
                 "pietern",
                 "Ossi Herrala",
-                "Arcadie Z.",
                 "Nodraak",
                 "Dirk Lison",
                 "Grant T. Olson",
@@ -528,6 +528,7 @@ fn build_system_menu(widgets: &Widgets) {
                 "Bill Liles",
                 "FMighty",
                 "Sylogista",
+                "Tom Repetti",
                 "Peter Vogel",
                 "wren84",
                 "Florentin314",
@@ -542,6 +543,9 @@ fn build_system_menu(widgets: &Widgets) {
                 "K2SDR",
                 "K6KZO",
                 "TheLAX18",
+                "JKamue",
+                "Kind-Shame",
+                "Everyone who reported issues and sent me emails!",
             ],
         );
 
