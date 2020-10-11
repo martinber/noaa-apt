@@ -246,7 +246,7 @@ impl Widgets {
             img_image:                builder.get_object("img_image"               ).expect("Couldn't get img_image"               ),
             img_size_toggle:          builder.get_object("img_size_toggle"         ).expect("Couldn't get img_size_toggle"         ),
 
-            img_def_pixbuf:           gdk_pixbuf::Pixbuf::new_from_file(res_path!("icon.png")).expect("Couldn't load resource icon.png"),
+            img_def_pixbuf:           gdk_pixbuf::Pixbuf::from_file(res_path!("icon.png")).expect("Couldn't load resource icon.png"),
 
             main_paned:               builder.get_object("main_paned"              ).expect("Couldn't get main_paned"              ),
             main_progress_bar:        builder.get_object("main_progress_bar"       ).expect("Couldn't get main_progress_bar"       ),

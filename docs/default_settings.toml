@@ -2,7 +2,7 @@
 
 # Settings file version, newer noaa-apt releases will require more fields and
 # variables
-version = 2
+version = 3
 
 check_updates = true
 

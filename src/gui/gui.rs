@@ -75,7 +75,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
 
     // Load widgets from glade file and create some others
 
-    let builder = Builder::new_from_string(include_str!("main.glade"));
+    let builder = Builder::from_string(include_str!("main.glade"));
     let widgets = Widgets::from_builder(&builder, &window, &application);
 
     // Add info_bar
@@ -89,13 +89,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
             });
         }
     });
-    let info_content_area = widgets
-        .info_bar
-        .get_content_area()
-        .expect("Couldn't get info_content_area (is None)")
-        .downcast::<gtk::Box>()
-        .expect("Couldn't get info_content_area (not a gtk::Box)");
-    info_content_area.add(&widgets.info_label);
+    widgets.info_bar.get_content_area().add(&widgets.info_label);
 
     // Finish adding elements
 
@@ -130,7 +124,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
 
     widgets.window.connect_delete_event(|_, _| {
         borrow_widgets(|widgets| {
-            widgets.window.destroy();
+            widgets.window.close();
             Inhibit(false)
         })
     });
@@ -200,7 +194,7 @@ fn init_widgets(widgets: &Widgets) {
                 entry.set_text(filename.to_str().unwrap());
             }
 
-            file_chooser.destroy();
+            file_chooser.close();
         });
     });
     widgets.res_output_entry.connect_icon_press(|entry, _, _| {
@@ -222,7 +216,7 @@ fn init_widgets(widgets: &Widgets) {
                 entry.set_text(filename.to_str().unwrap());
             }
 
-            file_chooser.destroy();
+            file_chooser.close();
         });
     });
 
@@ -300,10 +294,7 @@ fn init_widgets(widgets: &Widgets) {
 
             // Exit if no output_filename
 
-            let output_filename = match this.get_text() {
-                None => return,
-                Some(s) => s,
-            };
+            let output_filename = this.get_text();
             if output_filename.as_str() == "" {
                 return;
             }
@@ -566,7 +557,7 @@ fn build_system_menu(widgets: &Widgets) {
         }
 
         dialog.run();
-        dialog.destroy();
+        dialog.close();
     });
     widgets.application.add_action(&about);
 }

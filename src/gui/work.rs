@@ -490,20 +490,7 @@ pub fn save() {
         widgets.info_revealer.set_reveal_child(false);
         misc::set_progress(0., "Saving");
 
-        let output_filename: PathBuf = match widgets
-            .sav_output_entry
-            .get_text()
-            .map(|text| PathBuf::from(text.as_str()))
-        {
-            Some(f) => f,
-            None => {
-                misc::set_progress(1., "Error");
-                misc::show_info(gtk::MessageType::Info, "Error parsing output filename");
-                error!("Error parsing output filename");
-
-                return;
-            }
-        };
+        let output_filename = PathBuf::from(widgets.sav_output_entry.get_text().as_str());
 
         if output_filename.as_os_str().is_empty() {
             misc::set_progress(1., "Error");
@@ -579,20 +566,7 @@ pub fn resample() {
                 return;
             }
         };
-        let output_filename: PathBuf = match widgets
-            .res_output_entry
-            .get_text()
-            .map(|text| PathBuf::from(text.as_str()))
-        {
-            Some(f) => f,
-            None => {
-                misc::set_progress(1., "Error");
-                misc::show_info(gtk::MessageType::Info, "Error parsing output filename");
-                error!("Error parsing output filename");
-
-                return;
-            }
-        };
+        let output_filename = PathBuf::from(widgets.res_output_entry.get_text().as_str());
 
         let wav_steps = widgets.res_wav_steps_check.get_active();
         let resample_step = widgets.res_resample_step_check.get_active();

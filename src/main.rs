@@ -43,7 +43,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn inner_main() -> err::Result<()> {
     let (check_updates, verbosity, mode) = config::get_config();
 
-    simple_logger::init_with_level(verbosity)?;
+    simple_logger::SimpleLogger::new().with_level(verbosity).init()?;
 
     debug!("Mode: {:?}", mode);
 

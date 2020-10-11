@@ -124,7 +124,7 @@ pub fn update_image() {
             Some(image) => {
                 let rgb_image: image::RgbImage = image.convert();
                 let flat_image = rgb_image.as_flat_samples();
-                gdk_pixbuf::Pixbuf::new_from_bytes(
+                gdk_pixbuf::Pixbuf::from_bytes(
                     &glib::Bytes::from(&flat_image.samples),
                     gdk_pixbuf::Colorspace::Rgb,
                     false, // has_alpha

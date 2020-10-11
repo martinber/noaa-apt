@@ -17,7 +17,7 @@ use crate::noaa_apt::{
 };
 
 // Expected configuration file version.
-const SETTINGS_VERSION: u32 = 2;
+const SETTINGS_VERSION: u32 = 3;
 
 /// Returns a PathBuf of the requested resource file.
 ///
@@ -259,7 +259,7 @@ fn load_de_settings() -> DeSettings {
 /// Returns if we should check for updates, the verbosity and the mode including
 /// the settings.
 #[rustfmt::skip]
-pub fn get_config() -> (bool, log::Level, Mode) {
+pub fn get_config() -> (bool, log::LevelFilter, Mode) {
     // Parse commandline
 
     let mut arg_input_filename: Option<PathBuf> = None;
@@ -489,11 +489,11 @@ pub fn get_config() -> (bool, log::Level, Mode) {
     let check_updates = de_settings.check_updates;
 
     let verbosity = if arg_debug {
-        log::Level::Debug
+        log::LevelFilter::Debug
     } else if arg_quiet {
-        log::Level::Warn
+        log::LevelFilter::Warn
     } else {
-        log::Level::Info
+        log::LevelFilter::Info
     };
 
     if arg_print_version {
