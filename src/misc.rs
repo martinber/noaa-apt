@@ -6,6 +6,7 @@ use std::path::Path;
 
 use chrono::prelude::*;
 use log::{error, info, warn};
+use semver::Version;
 
 use crate::config::Settings;
 use crate::dsp::{self, Signal};
@@ -63,37 +64,28 @@ pub fn bessel_i0(x: f32) -> f32 {
 /// `String` with the latest version. Wrapped in `Option`, returns `None` if
 /// there was a problem retrieving new versions and logs the error.
 pub fn check_updates(current: &str) -> Option<(bool, String)> {
-    let addr = format!(
-        "https://noaa-apt.mbernardi.com.ar/version_check?{}",
-        current
-    );
-
-    let latest: Option<String> = match reqwest::blocking::get(addr.as_str()) {
-        Ok(response) => match response.text() {
-            Ok(text) => Some(text.trim().to_string()),
-            Err(e) => {
-                warn!("Error checking for updates: {}", e);
-                None
-            }
-        },
+    match fetch_versions(current) {
+        Ok((current, latest)) => Some((latest > current, format!("{}", latest))),
         Err(e) => {
             warn!("Error checking for updates: {}", e);
             None
         }
-    };
-
-    match latest {
-        Some(latest) => {
-            if latest.len() > 10 {
-                warn!("Error checking for updates: Response too long");
-                None
-            } else {
-                // Return true if there are updates
-                Some((latest != current, latest))
-            }
-        }
-        None => None,
     }
+}
+
+/// Fetches the latest version string from the main website.
+/// Returns a Result with the following tuple: (current_version, latest_version).
+/// Each of these versions is parsed according to semantic versioning
+/// and can be compared to each other.
+fn fetch_versions(current: &str) -> Result<(Version, Version), Box<dyn std::error::Error>> {
+    let current_version = Version::parse(current)?;
+    let addr = format!(
+        "https://noaa-apt.mbernardi.com.ar/version_check?{}",
+        current
+    );
+    let latest = reqwest::blocking::get(&addr)?.text()?;
+    let latest_version = Version::parse(&latest)?;
+    Ok((current_version, latest_version))
 }
 
 /// Returns lowest and highest values that fall inside the percent given.
