@@ -35,6 +35,9 @@ pub enum Error {
     /// Functionality not available because the program was compiled without
     /// those features
     FeatureNotAvailable(String),
+
+    /// Related to semantic versioning used for update checks
+    SemanticVersion(String),
 }
 
 impl std::fmt::Display for Error {
@@ -49,6 +52,7 @@ impl std::fmt::Display for Error {
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::Shapefile(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref msg) => f.write_str(msg.as_str()),
+            Error::SemanticVersion(ref msg) => f.write_str(msg.as_str()),
         }
     }
 }
@@ -102,5 +106,11 @@ impl From<reqwest::Error> for Error {
 impl From<shapefile::Error> for Error {
     fn from(err: shapefile::Error) -> Self {
         Error::Shapefile(err.to_string())
+    }
+}
+
+impl From<semver::SemVerError> for Error {
+    fn from(err: semver::SemVerError) -> Self {
+        Error::SemanticVersion(err.to_string())
     }
 }

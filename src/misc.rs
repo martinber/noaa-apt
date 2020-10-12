@@ -77,7 +77,7 @@ pub fn check_updates(current: &str) -> Option<(bool, String)> {
 /// Returns a Result with the following tuple: (current_version, latest_version).
 /// Each of these versions is parsed according to semantic versioning
 /// and can be compared to each other.
-fn fetch_versions(current: &str) -> Result<(Version, Version), Box<dyn std::error::Error>> {
+fn fetch_versions(current: &str) -> err::Result<(Version, Version)> {
     let current_version = Version::parse(current)?;
     let addr = format!(
         "https://noaa-apt.mbernardi.com.ar/version_check?{}",
