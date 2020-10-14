@@ -202,8 +202,12 @@ GUI version and the GUI .deb package. Also I build the Raspberry Pi versions
 
 ### Mac / OSX
 
-This is a summary of
-[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac)
+You can use the
+[Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
+but I don't know how this works. If someone knows please write a guide.
+
+The only method I know is by using Homebrew. This is a summary of
+[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac).
 
 - Install [rustup](https://rustup.rs/):
 
@@ -230,6 +234,7 @@ This is a summary of
 Run with:
 
     ./target/release/noaa-apt
+
 
 ### Windows portable
 
@@ -399,7 +404,7 @@ If you want to disable this you can do it from the
     [a blog post](https://www.rtl-sdr.com/new-noaa-apt-image-decoder/).
 
 - Arcadie Z.: Histogram equalization, image rotation, false color, fixes and
-	  more.
+    more.
 
 - pietern: I took the AM demodulator from his [apt137 decoder][apt137].
 

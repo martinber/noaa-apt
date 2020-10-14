@@ -41,6 +41,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 - Sylogista maintains an [AUR package](https://aur.archlinux.org/packages/noaa-apt/)
 
+#### NixOS
+
+- Tom Repetti maintains a [Nix package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable)
+
 #### Other distros
 
 - Executable with GUI:
@@ -78,6 +82,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
 ### OSX
 
 - [Compile it yourself following these instructions](./development.html#compilation).
+
+- Otherwise, you can use the
+    [Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
+    but I don't know how this works. If someone knows please write a guide.
 
 ### Something else?
 
