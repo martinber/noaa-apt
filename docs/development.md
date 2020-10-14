@@ -121,9 +121,6 @@ Notes:
     - The error system is a mess. I'd like to make it consistent. Functions
         should add context to errors using for example `map_err()`?.
 
-    - Implement false colors, both from map and from channel values. See
-        [algorithm by enigmastrat](https://github.com/enigmastrat/apt137/tree/feature/false_color)
-
     - Use new Rust `async` syntax where needed?.
 
     - Show telemetry bands on GUI.

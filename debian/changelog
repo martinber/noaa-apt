@@ -1,3 +1,14 @@
+noaa-apt (1.3.0-1) testing; urgency=medium
+
+  * False color.
+  * Histogram equalization.
+  * Image now is rotated in-place leaving calibration frames untouched.
+  * Filename guessing of date and time for WXtoIMG files.
+  * Various fixes.
+  * Most of the work done by Arcadie Z. Thanks a lot!
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Sun, 11 Oct 2020 13:24:32 +0200
+
 noaa-apt (1.2.0-1) testing; urgency=medium
 
   * Redesigned GUI.
