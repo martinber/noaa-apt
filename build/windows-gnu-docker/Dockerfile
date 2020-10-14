@@ -1,5 +1,5 @@
 # Use fedora or Arch because mingw64-gtk3 is not available on Debian.
-FROM fedora:27
+FROM fedora:latest
 
 RUN set -x
 
@@ -25,10 +25,13 @@ RUN dnf -y update \
 RUN useradd --create-home --shell /bin/bash rustacean
 USER rustacean
 
-RUN curl https://sh.rustup.rs -sSf | \
-    sh -s -- --default-toolchain stable -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
-RUN /home/rustacean/.cargo/bin/rustup target add x86_64-pc-windows-gnu
+RUN . ~/.cargo/env && \
+    rustup install nightly && \
+    rustup default nightly && \
+    rustup target add x86_64-pc-windows-gnu
+
 ADD .cargo/config /home/rustacean/.cargo/config
 
 # Build as user rustacean
@@ -36,6 +39,8 @@ ADD .cargo/config /home/rustacean/.cargo/config
 VOLUME /home/rustacean/src
 WORKDIR /home/rustacean/src
 ENV PKG_CONFIG_ALLOW_CROSS=1
+ENV GTK_INSTALL_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/
+ENV PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/lib/pkgconfig/
 
 COPY ./entrypoint.sh /home/rustacean/entrypoint.sh
 CMD ["/home/rustacean/entrypoint.sh"]

@@ -8,8 +8,6 @@ NOAA_APT_VERSION=$(awk '/^version =/{print substr($NF, 2, length($NF)-2)}' Cargo
 PACKAGES_FOLDER=/home/rustacean/src/target/docker_builds
 GUI_PACKAGE_NAME="noaa-apt-$NOAA_APT_VERSION-x86_64-windows-gnu"
 GUI_PACKAGE_FOLDER="$PACKAGES_FOLDER/$GUI_PACKAGE_NAME"
-# GTK_INSTALL_PATH=/usr/i686-w64-mingw32
-GTK_INSTALL_PATH=/usr/x86_64-w64-mingw32/sys-root/mingw/
 
 rm -r "$GUI_PACKAGE_FOLDER" || true
 mkdir -p "$GUI_PACKAGE_FOLDER"
