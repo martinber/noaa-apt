@@ -821,3 +821,15 @@ hr {
 	font-size: 150% !important;
 	background: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Sidebar and donate button */
+
+#main .sidebar section {
+	margin-bottom: 3em;
+}
+
+#main .sidebar input {
+	margin: 0 auto;
+	display: block;
+}
+
