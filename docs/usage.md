@@ -317,15 +317,16 @@ images you can try the "slow" profile once just in case, but the default
 
 ### Filename guessing
 
-The program tries to guess the exact time the recording was made. Three methods
-are tried in order:
+For the map overlay to work, the program needs to know the exact time the
+recording was done and the recorded satellite. Three methods are tried in order:
 
-- Priority is given to the date and time provided manually by the user, it can
-    be done from the GUI or from the command-line.
+- Priority is given to the date, time and satellite provided manually by the
+    user, it can be done from the GUI or from the command-line.
 
-- If no time and date was given, the program looks at the WAV filename if it has
-    a known format (e.g. `gqrx_20201231_235959_...wav`). Add more filename
-    formats in the configuration file if necessary.
+- If no information was given, the program looks at the WAV filename if it has
+    a known format (e.g. `gqrx_20201231_235959_...wav`) to determine the
+    necessary details. The program supports some common filename formats, you
+    can add more in the configuration file if necessary.
 
 - Otherwise, the file modification timestamp will be used. This is not very
     precise and it tends to change unexpectedly when editing the WAV file.
@@ -338,10 +339,6 @@ known (i.e. it is defined in the configuration file), the program will
 automatically detect if NOAA 15, NOAA 18 or NOAA 19 was recorded. This is
 possible because some filenames indicate the satellite number or the recording
 frequency.
-
-Note for people decoding recordings from WXtoIMG: Download the latest
-[configuration file](./default_settings.toml) and set the filename template
-in WXtoIMG to `%Y%m%d-%H%M-%e-%s` (In Options > File Names and Locations...).
 
 ### Export WAV steps
 
