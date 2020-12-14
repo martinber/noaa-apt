@@ -132,7 +132,7 @@ First you have to download some SDR software and some drivers, then connect the
 RTL-SDR dongle and the antenna and open GQRX/SDR#.
 
 - GNU/Linux: Download GQRX and the rtl-sdr drivers, `sudo apt install rtl-sdr
-  qqrx-sdr` should be enough.
+  gqrx-sdr` should be enough.
 
 - Windows: Download SDR# and install the drivers. Check the steps on the
     [RTL-SDR.com guide](https://www.rtl-sdr.com/qsg) or on the video below.
