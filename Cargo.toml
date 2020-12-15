@@ -34,6 +34,7 @@ image = { version = "0.23.10", features = ["png"] }
 reqwest = { version = "0.10.8", features = ["blocking"] }
 rustfft = "4.0.0"
 satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
+semver = "0.11.0"
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
 shapefile = "0.2.0"
