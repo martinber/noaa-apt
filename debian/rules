@@ -15,4 +15,4 @@ override_dh_auto_clean:
 	rm -r *.png || true
 
 override_dh_auto_build:
-	$(CARGO_BINARY) build --release --frozen --verbose --features static_ssl
+	$(CARGO_BINARY) build --release --verbose --features static_ssl
