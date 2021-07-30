@@ -187,13 +187,13 @@ pub fn process(
     // --------------------
 
     if let Some(orbit_settings) = orbit.clone() {
-        let tle = match orbit_settings.custom_tle {
-            Some(t) => t,
-            None => misc::get_current_tle()?,
-        };
-
         if let Some(map_settings) = orbit_settings.draw_map {
             context.status(0.5, "Drawing map".to_string());
+
+            let tle = match orbit_settings.custom_tle {
+                Some(t) => t,
+                None => misc::get_current_tle()?,
+            };
 
             map::draw_map(
                 &mut img,
