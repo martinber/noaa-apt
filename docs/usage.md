@@ -29,13 +29,8 @@ program.
     noaa-apt
     ```
 
-- On GNU/Linux, if you extracted the `.zip` file, `cd` to the directory and run
-    it. E.g:
-
-    ```
-    cd ~/Desktop/folder/
-    ./noaa-apt
-    ```
+- On GNU/Linux, if you extracted the `.zip` file, double click
+    `run-noaa-apt.sh`.
 
 ### Terminal
 
@@ -56,8 +51,8 @@ input filename as an option.
     noaa-apt input.wav -o output.png
     ```
 
-- On GNU/Linux, if you extracted the `.zip` file, `cd` to the directory and run
-    it. E.g:
+- On GNU/Linux, if you extracted the `.zip` file, **`cd` to the directory** and
+    run it. E.g:
 
     ```
     cd ~/Desktop/folder/
