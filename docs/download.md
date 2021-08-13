@@ -28,7 +28,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
     an "Install" button. Otherwise open a terminal and install it by running:
 
     ```
-    sudo apt install ~/Downloads/noaa-apt_X.X.X-1_amd64.deb
+    sudo apt install ~/Downloads/noaa-apt_1.3.1-1_amd64.deb
     ```
 
 - Executable without GUI:

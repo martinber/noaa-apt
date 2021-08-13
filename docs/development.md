@@ -328,7 +328,7 @@ I use Clippy too:
 - Write changelog on `/debian/changelog`.
 
 - Edit the Downloads page on the website, point to the new packages that are
-    going to be uploaded.
+    going to be uploaded. Also change the version in the install command.
 
 - Build using Docker for:
 
