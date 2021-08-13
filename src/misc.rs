@@ -74,6 +74,7 @@ pub fn check_updates(current: &str) -> Option<(bool, String)> {
 }
 
 /// Fetches the latest version string from the main website.
+///
 /// Returns a Result with the following tuple: (current_version, latest_version).
 /// Each of these versions is parsed according to semantic versioning
 /// and can be compared to each other.
