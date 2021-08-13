@@ -74,7 +74,6 @@ mkdir -p "$ARMV7_NOGUI_PACKAGE_FOLDER"
 cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_NOGUI_PACKAGE_FOLDER/"
 cp -r "./test" "$ARMV7_NOGUI_PACKAGE_FOLDER/"
 cp -r "./res" "$ARMV7_NOGUI_PACKAGE_FOLDER/"
-cp -r "./build/run-noaa-apt.sh" "$X86_64_GUI_PACKAGE_FOLDER/"
 rm -r "$ARMV7_NOGUI_PACKAGE_FOLDER/test/results" || true
 
 # Build deb
