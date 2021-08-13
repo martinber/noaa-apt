@@ -55,9 +55,16 @@ input filename as an option.
     run it. E.g:
 
     ```
-    cd ~/Desktop/folder/
+    cd ~/Desktop/noaa-apt/
     ./noaa-apt input.wav -o output.png
     ```
+
+    When doing automation like in a cronjob:
+
+    ```
+    cd ~/Desktop/noaa-apt/ && ./noaa-apt input.wav -o output.png
+    ```
+
 
 See below for more command-line options.
 
