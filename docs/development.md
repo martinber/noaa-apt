@@ -244,6 +244,12 @@ The only method I know is by using Homebrew. This is a summary of
       export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
       cargo build --release
 
+There has been also a [succesful installation by installing first in OSX
+Catalina and then copying the folder to OSX
+Sierra](https://github.com/martinber/noaa-apt/issues/38). Apparently it is
+necessary to have Homebrew and have the packages updated, including `gtk+3`,
+`adwait-icon-theme`, `openssl` and `harfbuzz`.
+
 Run with:
 
     ./target/release/noaa-apt
