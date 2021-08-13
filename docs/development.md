@@ -173,9 +173,18 @@ Build with `--release`, Rust does some optimizations and it works faster.
 
 - `cargo build --release`.
 
-Run with:
+It is important to be located in the root folder of this repository. Run with:
 
     ./target/release/noaa-apt
+
+If you are moving the executable somewhere, it is important to move along the
+`res/` folder, because it is needed in the working directory during runtime. For
+example:
+
+    mkdir ~/Desktop/noaa-apt/
+    cp ./target/release/noaa-apt ~/Desktop/noaa-apt/
+    cp -r ./res ~/Desktop/noaa-apt/
+    cp ./build/run-noaa-apt.sh ~/Desktop/noaa-apt/
 
 ### GNU/Linux portable
 
