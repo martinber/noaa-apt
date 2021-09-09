@@ -203,18 +203,15 @@ mod tests {
     /// Calculate absolute value of fft
     fn abs_fft(signal: &Signal) -> Signal {
         use rustfft::num_complex::Complex;
-        use rustfft::num_traits::Zero;
-        use rustfft::FFTplanner;
+        use rustfft::FftPlanner;
 
-        let mut input: Vec<Complex<f32>> = signal.iter().map(|x| Complex::new(*x, 0.)).collect();
+        let mut buffer: Vec<Complex<f32>> = signal.iter().map(|x| Complex::new(*x, 0.)).collect();
 
-        let mut output: Vec<Complex<f32>> = vec![Complex::zero(); input.len()];
+        let mut planner = FftPlanner::new();
+        let fft = planner.plan_fft_forward(buffer.len());
+        fft.process(&mut buffer); // Result is in buffer
 
-        let mut planner = FFTplanner::new(false); // inverse=false
-        let fft = planner.plan_fft(input.len());
-        fft.process(&mut input, &mut output);
-
-        output.iter().map(|x| x.norm()).collect()
+        buffer.iter().map(|x| x.norm()).collect()
     }
 
     /// Check if two vectors of float are equal given some margin of precision
