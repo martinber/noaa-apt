@@ -44,7 +44,7 @@ pub fn decode() {
 
                         // Read start time from file and update widgets
                         //
-                        let input_filename: PathBuf = match widgets.dec_input_chooser.get_filename()
+                        let input_filename: PathBuf = match widgets.dec_input_chooser.filename()
                         {
                             Some(path) => path,
                             None => {
@@ -155,7 +155,7 @@ pub fn decode() {
 
         // Read widgets
 
-        let input_filename: PathBuf = match widgets.dec_input_chooser.get_filename() {
+        let input_filename: PathBuf = match widgets.dec_input_chooser.filename() {
             Some(path) => path,
             None => {
                 callback(Err(err::Error::Internal("Select input file".to_string())));
@@ -163,11 +163,11 @@ pub fn decode() {
             }
         };
 
-        let sync = widgets.dec_sync_check.get_active();
+        let sync = widgets.dec_sync_check.is_active();
 
-        let wav_steps = widgets.dec_wav_steps_check.get_active();
+        let wav_steps = widgets.dec_wav_steps_check.is_active();
 
-        let resample_step = widgets.dec_resample_step_check.get_active();
+        let resample_step = widgets.dec_resample_step_check.is_active();
 
         let settings = borrow_state(|state| state.settings.clone());
 
@@ -249,13 +249,13 @@ pub fn process() {
 
         // Read widgets
 
-        let wav_steps = widgets.dec_wav_steps_check.get_active();
+        let wav_steps = widgets.dec_wav_steps_check.is_active();
 
-        let resample_step = widgets.dec_resample_step_check.get_active();
+        let resample_step = widgets.dec_resample_step_check.is_active();
 
         let contrast_adjustment: Contrast = match widgets
             .p_contrast_combo
-            .get_active_id()
+            .active_id()
             .as_ref()
             .map(|s| s.as_str())
         {
@@ -280,7 +280,7 @@ pub fn process() {
 
         let rotate: Rotate = match widgets
             .p_rotate_combo
-            .get_active_id()
+            .active_id()
             .as_ref()
             .map(|s| s.as_str())
         {
@@ -302,11 +302,11 @@ pub fn process() {
             }
         };
 
-        let color = if widgets.p_false_color_check.get_active() {
+        let color = if widgets.p_false_color_check.is_active() {
             Some(ColorSettings {
-                water_threshold: widgets.p_color_water_scale.get_value() as u8,
-                vegetation_threshold: widgets.p_color_vegetation_scale.get_value() as u8,
-                clouds_threshold: widgets.p_color_clouds_scale.get_value() as u8,
+                water_threshold: widgets.p_color_water_scale.value() as u8,
+                vegetation_threshold: widgets.p_color_vegetation_scale.value() as u8,
+                clouds_threshold: widgets.p_color_clouds_scale.value() as u8,
             })
         } else {
             None
@@ -314,7 +314,7 @@ pub fn process() {
 
         let sat_name: SatName = match widgets
             .p_satellite_combo
-            .get_active_id()
+            .active_id()
             .as_ref()
             .map(|s| s.as_str())
         {
@@ -338,9 +338,9 @@ pub fn process() {
 
         // Custom TLE
 
-        let custom_tle = match widgets.p_custom_tle_check.get_active() {
+        let custom_tle = match widgets.p_custom_tle_check.is_active() {
             false => None,
-            true => match widgets.p_custom_tle_chooser.get_filename() {
+            true => match widgets.p_custom_tle_chooser.filename() {
                 Some(path) => {
                     let mut file = match File::open(path) {
                         Ok(f) => f,
@@ -374,10 +374,10 @@ pub fn process() {
 
         // Get date and time
 
-        let hour = widgets.p_hs_spinner.get_value_as_int();
-        let minute = widgets.p_min_spinner.get_value_as_int();
-        let second = widgets.p_sec_spinner.get_value_as_int();
-        let (year, month, day) = widgets.p_calendar.get_date();
+        let hour = widgets.p_hs_spinner.value_as_int();
+        let minute = widgets.p_min_spinner.value_as_int();
+        let second = widgets.p_sec_spinner.value_as_int();
+        let (year, month, day) = widgets.p_calendar.date();
 
         let time = match chrono::Local
             .ymd_opt(year as i32, month + 1, day)
@@ -400,7 +400,7 @@ pub fn process() {
 
         let ref_time = match widgets
             .p_ref_time_combo
-            .get_active_id()
+            .active_id()
             .as_ref()
             .map(|s| s.as_str())
         {
@@ -416,7 +416,7 @@ pub fn process() {
 
         // Map settings
 
-        let draw_map = match widgets.p_overlay_check.get_active() {
+        let draw_map = match widgets.p_overlay_check.is_active() {
             false => None,
             true => {
                 use std::f64::consts::PI;
@@ -430,13 +430,13 @@ pub fn process() {
                 };
                 Some(MapSettings {
                     // Convert degrees to radians
-                    yaw: widgets.p_yaw_spinner.get_value() * PI / 180.,
+                    yaw: widgets.p_yaw_spinner.value() * PI / 180.,
                     // Convert percent to fraction
-                    hscale: widgets.p_hscale_spinner.get_value() / 100.,
-                    vscale: widgets.p_vscale_spinner.get_value() / 100.,
-                    countries_color: rgba_to_tuple(widgets.p_countries_color.get_rgba()),
-                    states_color: rgba_to_tuple(widgets.p_states_color.get_rgba()),
-                    lakes_color: rgba_to_tuple(widgets.p_lakes_color.get_rgba()),
+                    hscale: widgets.p_hscale_spinner.value() / 100.,
+                    vscale: widgets.p_vscale_spinner.value() / 100.,
+                    countries_color: rgba_to_tuple(widgets.p_countries_color.rgba()),
+                    states_color: rgba_to_tuple(widgets.p_states_color.rgba()),
+                    lakes_color: rgba_to_tuple(widgets.p_lakes_color.rgba()),
                 })
             }
         };
@@ -490,7 +490,7 @@ pub fn save() {
         widgets.info_revealer.set_reveal_child(false);
         misc::set_progress(0., "Saving");
 
-        let output_filename = PathBuf::from(widgets.sav_output_entry.get_text().as_str());
+        let output_filename = PathBuf::from(widgets.sav_output_entry.text().as_str());
 
         if output_filename.as_os_str().is_empty() {
             misc::set_progress(1., "Error");
@@ -559,18 +559,18 @@ pub fn resample() {
 
         // Read widgets
 
-        let input_filename: PathBuf = match widgets.res_input_chooser.get_filename() {
+        let input_filename: PathBuf = match widgets.res_input_chooser.filename() {
             Some(path) => path,
             None => {
                 callback(Err(err::Error::Internal("Select input file".to_string())));
                 return;
             }
         };
-        let output_filename = PathBuf::from(widgets.res_output_entry.get_text().as_str());
+        let output_filename = PathBuf::from(widgets.res_output_entry.text().as_str());
 
-        let wav_steps = widgets.res_wav_steps_check.get_active();
-        let resample_step = widgets.res_resample_step_check.get_active();
-        let output_rate = widgets.res_rate_spinner.get_value_as_int() as u32;
+        let wav_steps = widgets.res_wav_steps_check.is_active();
+        let resample_step = widgets.res_resample_step_check.is_active();
+        let output_rate = widgets.res_rate_spinner.value_as_int() as u32;
 
         let settings = borrow_state(|state| state.settings.clone());
 
@@ -595,7 +595,7 @@ pub fn write_timestamp() {
     };
 
     borrow_widgets(|widgets| {
-        let filename = match widgets.ts_write_chooser.get_filename() {
+        let filename = match widgets.ts_write_chooser.filename() {
             Some(f) => f,
             None => {
                 show_error("Select file to write");
@@ -603,10 +603,10 @@ pub fn write_timestamp() {
             }
         };
 
-        let hour = widgets.ts_hs_spinner.get_value_as_int();
-        let minute = widgets.ts_min_spinner.get_value_as_int();
-        let second = widgets.ts_sec_spinner.get_value_as_int();
-        let (year, month, day) = widgets.ts_calendar.get_date();
+        let hour = widgets.ts_hs_spinner.value_as_int();
+        let minute = widgets.ts_min_spinner.value_as_int();
+        let second = widgets.ts_sec_spinner.value_as_int();
+        let (year, month, day) = widgets.ts_calendar.date();
 
         // Write modification timestamp to file. The filetime library uses
         // the amount of seconds from the Unix epoch (Jan 1, 1970). I ignore the
@@ -646,7 +646,7 @@ pub fn read_timestamp() {
     };
 
     borrow_widgets(|widgets| {
-        let filename = match widgets.ts_read_chooser.get_filename() {
+        let filename = match widgets.ts_read_chooser.filename() {
             Some(f) => f,
             None => {
                 show_error("Select file to read");

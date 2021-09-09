@@ -48,15 +48,14 @@ pub fn main(check_updates: bool, settings: config::Settings) {
     let application = gtk::Application::new(
         Some("ar.com.mbernardi.noaa-apt"),
         gio::ApplicationFlags::empty(),
-    )
-    .expect("Initialization failed");
+    );
 
     application.connect_startup(move |app| {
         create_window(check_updates, settings.clone(), app);
     });
     application.connect_activate(|_| {});
 
-    application.run(&[]);
+    application.run();
 }
 
 /// Create window
@@ -89,7 +88,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
             });
         }
     });
-    widgets.info_bar.get_content_area().add(&widgets.info_label);
+    widgets.info_bar.content_area().add(&widgets.info_label);
 
     // Finish adding elements
 
@@ -189,7 +188,7 @@ fn init_widgets(widgets: &Widgets) {
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
-                let filename = file_chooser.get_filename().expect("Couldn't get filename");
+                let filename = file_chooser.filename().expect("Couldn't get filename");
 
                 entry.set_text(filename.to_str().unwrap());
             }
@@ -211,7 +210,7 @@ fn init_widgets(widgets: &Widgets) {
             ]);
 
             if file_chooser.run() == gtk::ResponseType::Ok {
-                let filename = file_chooser.get_filename().expect("Couldn't get filename");
+                let filename = file_chooser.filename().expect("Couldn't get filename");
 
                 entry.set_text(filename.to_str().unwrap());
             }
@@ -294,7 +293,7 @@ fn init_widgets(widgets: &Widgets) {
 
             // Exit if no output_filename
 
-            let output_filename = this.get_text();
+            let output_filename = this.text();
             if output_filename.as_str() == "" {
                 return;
             }

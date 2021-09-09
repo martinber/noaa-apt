@@ -105,9 +105,9 @@ where
     #[cfg(not(windows))]
     {
         gtk::show_uri(
-            window.clone().upcast::<gtk::Window>().get_screen().as_ref(),
+            window.clone().upcast::<gtk::Window>().screen().as_ref(),
             url,
-            gtk::get_current_event_time(),
+            gtk::current_event_time(),
         )
         .map_err(|_| err::Error::Internal("Could not open browser".to_string()))
     }
@@ -137,13 +137,13 @@ pub fn update_image() {
             None => widgets.img_def_pixbuf.clone(),
         };
 
-        if widgets.img_size_toggle.get_active() {
+        if widgets.img_size_toggle.is_active() {
             widgets.img_image.set_from_pixbuf(Some(&pixbuf));
         } else {
-            let img_width = pixbuf.get_width() as f32;
-            let img_height = pixbuf.get_height() as f32;
-            let max_width = widgets.img_viewport.get_allocated_width() as f32;
-            let max_height = widgets.img_viewport.get_allocated_height() as f32;
+            let img_width = pixbuf.width() as f32;
+            let img_height = pixbuf.height() as f32;
+            let max_width = widgets.img_viewport.allocated_width() as f32;
+            let max_height = widgets.img_viewport.allocated_height() as f32;
 
             let scale = f32::min(max_width / img_width, max_height / img_height);
 

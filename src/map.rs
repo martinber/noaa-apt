@@ -133,7 +133,7 @@ pub fn draw_map(
     // Draw shapefiles
 
     let filename = res_path!("shapefiles", "states.shp");
-    let reader = shapefile::Reader::from_path(&filename)
+    let mut reader = shapefile::ShapeReader::from_path(&filename)
         .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polyline>() {
         let polyline = result?;
@@ -151,7 +151,7 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "countries.shp");
-    let reader = shapefile::Reader::from_path(&filename)
+    let mut reader = shapefile::ShapeReader::from_path(&filename)
         .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;
@@ -174,7 +174,7 @@ pub fn draw_map(
     }
 
     let filename = res_path!("shapefiles", "lakes.shp");
-    let reader = shapefile::Reader::from_path(&filename)
+    let mut reader = shapefile::ShapeReader::from_path(&filename)
         .map_err(|_| err::Error::Internal(format!("Could not load {:?}", filename)))?;
     for result in reader.iter_shapes_as::<shapefile::Polygon>() {
         let polygon = result?;

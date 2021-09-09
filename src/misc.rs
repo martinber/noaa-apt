@@ -85,7 +85,7 @@ fn fetch_versions(current: &str) -> err::Result<(Version, Version)> {
         current
     );
     let latest = reqwest::blocking::get(&addr)?.text()?;
-    let latest_version = Version::parse(&latest)?;
+    let latest_version = Version::parse(&latest.trim_end_matches("\n"))?;
     Ok((current_version, latest_version))
 }
 

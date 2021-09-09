@@ -174,7 +174,7 @@ pub fn process(
             err::Error::Internal("Could not create image, wrong buffer length".to_string())
         })?;
 
-    let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba(); // convert to RGBA
+    let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba8(); // convert to RGBA
 
     if let Some(color_settings) = &color {
         processing::false_color(&mut img, color_settings);

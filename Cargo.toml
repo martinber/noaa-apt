@@ -20,38 +20,38 @@ static_ssl = ["openssl/vendored"] # Not valid for Microsoft Windows
 windows_console = [] # Show console on Microsoft Windows
 
 [dependencies]
-approx = "0.3.2"
+approx = "0.5.0"
 argparse = "0.2.2"
 chrono = "0.4.19"
-directories = "3.0.1"
-filetime = "0.2.12"
+directories = "3.0.2"
+filetime = "0.2.15"
 gcd = "2.0.1"
 hound = "3.4.0"
-lab = "0.8.1"
-line_drawing = "0.8.0"
-log = "0.4.11"
-image = { version = "0.23.10", features = ["png"] }
-reqwest = { version = "0.10.8", features = ["blocking"] }
-rustfft = "4.0.0"
+lab = "0.11.0"
+line_drawing = "1.0.0"
+log = "0.4.14"
+image = { version = "0.23.14", features = ["png"] }
+reqwest = { version = "0.11.4", features = ["blocking"] }
+rustfft = "6.0.1"
 satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
-semver = "0.11.0"
-serde = { version = "1.0.116", features = ["derive"] }
-serde_json = "1.0.58"
-shapefile = "0.2.0"
-simple_logger = "1.11.0"
-toml = "0.5.6"
+semver = "1.0.4"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.67"
+shapefile = "0.3.0"
+simple_logger = "1.13.0"
+toml = "0.5.8"
 
 # openssl is a indirect dependency because of reqwest, I have to add openssl as
 # a direct dependency if I want to enable the "vendored" feature, but for
 # Windows it breaks the build. Looks like adding it as an optional dependency is
 # working for both cases
-openssl = { version = "0.10.30", optional = true }
+openssl = { version = "0.10.36", optional = true }
 
-gtk = { version = "0.9.2", optional = true, features = ["v3_16"] }
-gdk = { version = "0.13.2", optional = true }
-gdk-pixbuf = { version = "0.9.0", optional = true, features = ["v2_32"] }
-gio = { version = "0.9.1", optional = true }
-glib = { version = "0.10.2", optional = true }
+gtk = { version = "0.14.1", optional = true }
+gdk = { version = "0.14.2", optional = true }
+gdk-pixbuf = { version = "0.14.0", optional = true }
+gio = { version = "0.14.5", optional = true }
+glib = { version = "0.14.5", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["shellapi"] }

@@ -109,8 +109,8 @@ impl From<shapefile::Error> for Error {
     }
 }
 
-impl From<semver::SemVerError> for Error {
-    fn from(err: semver::SemVerError) -> Self {
+impl From<semver::Error> for Error {
+    fn from(err: semver::Error) -> Self {
         Error::SemanticVersion(err.to_string())
     }
 }
