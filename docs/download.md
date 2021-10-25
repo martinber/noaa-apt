@@ -87,6 +87,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
     [Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
     but I don't know how this works. If someone knows please write a guide.
 
+### Android+Termux
+
+- [Compile it yourself following these instructions](./development.html#compilation).
+
 ### Something else?
 
 - [Compile it yourself following these instructions](./development.html#compilation).

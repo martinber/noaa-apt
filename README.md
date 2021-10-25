@@ -1,6 +1,7 @@
 # noaa-apt
 
-NOAA APT image decoder. Runs on GNU/Linux, Windows, Raspberry Pi 2+ and OSX.
+NOAA APT image decoder. Runs on GNU/Linux, Windows, Raspberry Pi 2+, OSX and
+Android+Termux.
 
 [Visit the website](http://noaa-apt.mbernardi.com.ar/).
 
@@ -10,4 +11,4 @@ Pull requests welcome, see [things to do on the development page](https://noaa-a
 
 Those docker images you are seeing are the environments I use to build
 cross-platform binaries. Don't be afraid, you don't need docker for building for
-yourself. Anyways you should use the pre built binaries.
+yourself. Also you can use the pre built binaries.

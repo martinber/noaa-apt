@@ -171,7 +171,15 @@ Build with `--release`, Rust does some optimizations and it works faster.
 
 - `sudo apt install libgtk-3-dev libssl-dev`.
 
+If building with GUI:
+
+- `sudo apt install libgtk-3-dev`
+
 - `cargo build --release`.
+
+If building without GUI:
+
+- `cargo build --release --no-default-features`.
 
 It is important to be located in the root folder of this repository. Run with:
 
@@ -254,6 +262,11 @@ Run with:
 
     ./target/release/noaa-apt
 
+### Android with Termux
+
+You will need a good device and quite a lot of patience. The instructions to
+compile are the same as in GNU/Linux. It may be necesary to set the
+`OPENSSL_DIR` variable to point to the correct path.
 
 ### Windows portable
 
@@ -442,6 +455,8 @@ If you want to disable this you can do it from the
 - Sylogista: Maintains an [AUR package](https://aur.archlinux.org/packages/noaa-apt/).
 
 - Tom Repetti: [Packaged](https://github.com/NixOS/nixpkgs/pull/96519) program for NixOS.
+
+- ButchOfBurdock: Instructions for compilation in Android + Termux.
 
 - Peter Vogel: For writing about noaa-apt on the web.
 

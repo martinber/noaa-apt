@@ -520,6 +520,7 @@ fn build_system_menu(widgets: &Widgets) {
                 "Sylogista",
                 "Tom Repetti",
                 "Peter Vogel",
+                "ButchOfBurdock",
                 "wren84",
                 "Florentin314",
                 "Gagootron",
