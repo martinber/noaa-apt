@@ -81,11 +81,18 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 ### OSX
 
-- [Compile it yourself following these instructions](./development.html#compilation).
+- You can use the [Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable).
+    First, install Nix, then install the `noaa-apt` package and then run the
+    program from the terminal:
 
-- Otherwise, you can use the
-    [Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
-    but I don't know how this works. If someone knows please write a guide.
+    ```
+    sh <(curl -L https://nixos.org/nix/install)
+    nix-env -iA nixos.noaa-apt
+    noaa-apt
+    ```
+
+
+- [Otherwise compile it yourself following these instructions](./development.html#compilation).
 
 ### Android+Termux
 
