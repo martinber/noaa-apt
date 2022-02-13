@@ -127,7 +127,7 @@ pub fn process(
         Contrast::Telemetry => {
             context.status(0.1, "Adjusting contrast from telemetry".to_string());
 
-            let telemetry = telemetry::read_telemetry(context, &signal)?;
+            let telemetry = telemetry::read_telemetry(context, signal)?;
 
             let low = telemetry.get_wedge_value(9, None);
             let high = telemetry.get_wedge_value(8, None);
@@ -139,12 +139,12 @@ pub fn process(
                 0.1,
                 format!("Adjusting contrast using {} percent", p * 100.),
             );
-            misc::percent(&signal, p)?
+            misc::percent(signal, p)?
         }
         Contrast::MinMax | Contrast::Histogram => {
             context.status(0.1, "Mapping values".to_string());
-            let low: f32 = *dsp::get_min(&signal)?;
-            let high: f32 = *dsp::get_max(&signal)?;
+            let low: f32 = *dsp::get_min(signal)?;
+            let high: f32 = *dsp::get_max(signal)?;
 
             (low, high)
         }
@@ -155,7 +155,7 @@ pub fn process(
     // then equalize histogram of color image if needed
     if color.is_some() {
         if let Contrast::Histogram = contrast_adjustment {
-            let (l, h) = misc::percent(&signal, 0.98)?;
+            let (l, h) = misc::percent(signal, 0.98)?;
             low = l;
             high = h;
         }
@@ -169,7 +169,7 @@ pub fn process(
 
     // grayscale image obtained by mapping signal values to 0..255
     // based on the selected contrast adjustment
-    let img: GrayImage = GrayImage::from_vec(PX_PER_ROW, height, map_signal_u8(&signal, low, high))
+    let img: GrayImage = GrayImage::from_vec(PX_PER_ROW, height, map_signal_u8(signal, low, high))
         .ok_or_else(|| {
             err::Error::Internal("Could not create image, wrong buffer length".to_string())
         })?;

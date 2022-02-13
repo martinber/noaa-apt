@@ -85,7 +85,7 @@ fn fetch_versions(current: &str) -> err::Result<(Version, Version)> {
         current
     );
     let latest = reqwest::blocking::get(&addr)?.text()?;
-    let latest_version = Version::parse(&latest.trim_end_matches("\n"))?;
+    let latest_version = Version::parse(latest.trim_end_matches('\n'))?;
     Ok((current_version, latest_version))
 }
 
@@ -132,8 +132,8 @@ pub fn percent(signal: &Signal, percent: f32) -> err::Result<(f32, f32)> {
     let mut buckets: Vec<u32> = vec![0; num_buckets];
 
     // Range of input samples
-    let min = dsp::get_min(&signal)?;
-    let max = dsp::get_max(&signal)?;
+    let min = dsp::get_min(signal)?;
+    let max = dsp::get_max(signal)?;
     let total_range = max - min;
 
     // Get the index of the bucket where the sample falls in
@@ -358,7 +358,7 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime,
         .ok_or_else(|| err::Error::Internal("Could not get filename".to_string()))?;
     if settings.prefer_timestamps {
         return Ok((
-            RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+            RefTime::End(Utc.timestamp(read_timestamp(path)?, 0)),
             SatName::Noaa19,
         ));
     } else {
@@ -375,7 +375,7 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime,
             filename
         );
         return Ok((
-            RefTime::End(Utc.timestamp(read_timestamp(&path)?, 0)),
+            RefTime::End(Utc.timestamp(read_timestamp(path)?, 0)),
             SatName::Noaa19,
         ));
     }

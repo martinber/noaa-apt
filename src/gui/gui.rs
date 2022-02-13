@@ -75,7 +75,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
     // Load widgets from glade file and create some others
 
     let builder = Builder::from_string(include_str!("main.glade"));
-    let widgets = Widgets::from_builder(&builder, &window, &application);
+    let widgets = Widgets::from_builder(&builder, &window, application);
 
     // Add info_bar
 

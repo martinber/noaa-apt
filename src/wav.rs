@@ -68,7 +68,7 @@ pub fn write_wav(filename: &Path, signal: &Signal, spec: hound::WavSpec) -> err:
         filename.display()
     );
 
-    let max = dsp::get_max(&signal)?;
+    let max = dsp::get_max(signal)?;
     debug!("Max: {}", max);
 
     debug!("WAV specifications: {:?}", spec);

@@ -63,8 +63,8 @@ pub fn resample(
         format!("Writing WAV to '{}'", output_filename.display()),
     );
 
-    wav::write_wav(&output_filename, &resampled, writer_spec)?;
-    misc::write_timestamp(timestamp, &output_filename)?;
+    wav::write_wav(output_filename, &resampled, writer_spec)?;
+    misc::write_timestamp(timestamp, output_filename)?;
 
     context.status(1., "Finished".to_string());
     Ok(())

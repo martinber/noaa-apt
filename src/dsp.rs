@@ -95,7 +95,7 @@ pub fn resample_with_filter(
 
         context.step(Step::filter("resample_filter", &coeff))?;
 
-        result = fast_resampling(context, &signal, l, m, &coeff, input_rate)?;
+        result = fast_resampling(context, signal, l, m, &coeff, input_rate)?;
 
         context.step(Step::signal(
             "resample_decimated",
@@ -105,11 +105,11 @@ pub fn resample_with_filter(
     } else {
         context.step(Step::filter("resample_filter", &filt.design()))?;
 
-        let filtered = &filter(context, &signal, filt)?;
+        let filtered = &filter(context, signal, filt)?;
 
         context.step(Step::signal(
             "resample_filtered",
-            &filtered,
+            filtered,
             Some(input_rate),
         ))?;
 
@@ -150,7 +150,7 @@ pub fn resample(
 
     resample_with_filter(
         context,
-        &signal,
+        signal,
         input_rate,
         output_rate,
         filters::Lowpass {

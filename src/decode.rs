@@ -56,7 +56,7 @@ pub fn decode(
 
     let work_rate = Rate::hz(settings.work_rate);
 
-    context.step(Step::signal("input", &signal, Some(input_rate)))?;
+    context.step(Step::signal("input", signal, Some(input_rate)))?;
 
     // --------------------
 
@@ -74,7 +74,7 @@ pub fn decode(
         // nothing below 500Hz.
         delta_w: Freq::hz(settings.resample_delta_freq, input_rate),
     };
-    let signal = dsp::resample_with_filter(context, &signal, input_rate, work_rate, filter)?;
+    let signal = dsp::resample_with_filter(context, signal, input_rate, work_rate, filter)?;
 
     if signal.len() < 10 * samples_per_work_row as usize {
         return Err(err::Error::Internal(

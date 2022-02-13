@@ -181,7 +181,7 @@ impl Context {
                     };
 
                     let filename = PathBuf::from(metadata.filename).with_extension("wav");
-                    wav::write_wav(&filename, &step.signal, writer_spec)?;
+                    wav::write_wav(&filename, step.signal, writer_spec)?;
                 }
                 Variant::Signal => {
                     let unpacked_rate = match step.rate.or(metadata.rate) {
@@ -202,7 +202,7 @@ impl Context {
                     };
 
                     let filename = PathBuf::from(metadata.filename).with_extension("wav");
-                    wav::write_wav(&filename, &step.signal, writer_spec)?;
+                    wav::write_wav(&filename, step.signal, writer_spec)?;
                 }
             };
         }
