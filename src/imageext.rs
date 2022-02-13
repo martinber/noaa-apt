@@ -1,8 +1,9 @@
 /// Some extra utilities for working with images, that use or complement
 /// available functions from `image` crate
-use image::{GenericImage, GenericImageView, Pixel, RgbaImage, SubImage};
+use image::{GenericImage, GenericImageView, Pixel, Rgba, RgbaImage, SubImage};
 use lab::Lab;
 use std::convert::TryInto;
+
 
 /// A set of per-channel histograms from an image with 8 bits per channel.
 pub struct ChannelHistogram {
@@ -26,7 +27,7 @@ pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
 
     for y in 0..sub_image.height() {
         for x in 0..sub_image.width() {
-            let p = sub_image.get_pixel_mut(x, y);
+            let mut p = sub_image.get_pixel(x, y);
 
             // Each histogram has length 256 and RgbaImage has 8 bits per pixel
             let fraction = hist[p.channels()[0] as usize] as f32 / total;
@@ -38,6 +39,8 @@ pub fn equalize_histogram_grayscale(sub_image: &mut SubImage<&mut RgbaImage>) {
                 // for A, leave unmodified
                 |alpha| alpha,
             );
+
+            sub_image.put_pixel(x, y, p);
         }
     }
 }
@@ -80,10 +83,10 @@ fn lab_to_rgb_mut(lab_pixels: &Vec<Lab>, sub_image: &mut SubImage<&mut RgbaImage
 
     for y in 0..height {
         for x in 0..width {
-            let p = sub_image.get_pixel_mut(x, y);
+            let p = sub_image.get_pixel(x, y);
             let [r, g, b] = rgb_pixels[(y * width + x) as usize];
             let a = p.channels()[3]; // get original alpha channel
-            *p = Pixel::from_channels(r, g, b, a);
+            sub_image.put_pixel(x, y, Rgba([r, g, b, a]));
         }
     }
 }

@@ -25,7 +25,7 @@ pub fn rotate(img: &mut RgbaImage) {
     let x_offset = PX_SYNC_FRAME + PX_SPACE_DATA;
 
     let mut channel_a = img.sub_image(x_offset, 0, PX_CHANNEL_IMAGE_DATA, img.height());
-    image::imageops::rotate180_in_place(&mut channel_a);
+    image::imageops::rotate180_in_place(&mut *channel_a);
 
     let mut channel_b = img.sub_image(
         x_offset + PX_PER_CHANNEL,
@@ -33,7 +33,7 @@ pub fn rotate(img: &mut RgbaImage) {
         PX_CHANNEL_IMAGE_DATA,
         img.height(),
     );
-    image::imageops::rotate180_in_place(&mut channel_b);
+    image::imageops::rotate180_in_place(&mut *channel_b);
 }
 
 /// Returns true if this was a south to north pass, and the image needs to be rotated.

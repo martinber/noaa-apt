@@ -166,7 +166,7 @@ fn init_widgets(widgets: &Widgets) {
 
     widgets.p_calendar.connect_scroll_event(|widget, _| {
         // https://stackoverflow.com/questions/7611813/remove-scroll-ability-from-gtkspinbutton
-        widget.stop_signal_emission("scroll-event");
+        widget.stop_signal_emission_by_name("scroll-event");
         // Propagate signal so it ends up scrolling the window
         Inhibit(false)
     });
@@ -261,12 +261,12 @@ fn init_widgets(widgets: &Widgets) {
         )
     });
     let tuple_to_rgba = |(r, g, b, a): (u8, u8, u8, u8)| -> gdk::RGBA {
-        gdk::RGBA {
-            red: r as f64 / 255.,
-            green: g as f64 / 255.,
-            blue: b as f64 / 255.,
-            alpha: a as f64 / 255.,
-        }
+        gdk::RGBA::new(
+            r as f64 / 255.,
+            g as f64 / 255.,
+            b as f64 / 255.,
+            a as f64 / 255.,
+        )
     };
 
     widgets

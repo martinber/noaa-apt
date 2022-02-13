@@ -422,10 +422,10 @@ pub fn process() {
                 use std::f64::consts::PI;
                 let rgba_to_tuple = |rgba: gdk::RGBA| -> (u8, u8, u8, u8) {
                     (
-                        (rgba.red * 255.).max(0.).min(255.) as u8,
-                        (rgba.green * 255.).max(0.).min(255.) as u8,
-                        (rgba.blue * 255.).max(0.).min(255.) as u8,
-                        (rgba.alpha * 255.).max(0.).min(255.) as u8,
+                        (rgba.red() * 255.).max(0.).min(255.) as u8,
+                        (rgba.green() * 255.).max(0.).min(255.) as u8,
+                        (rgba.blue() * 255.).max(0.).min(255.) as u8,
+                        (rgba.alpha() * 255.).max(0.).min(255.) as u8,
                     )
                 };
                 Some(MapSettings {
