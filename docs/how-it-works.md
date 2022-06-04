@@ -423,7 +423,7 @@ can show any of the following sensors (also called channels).
 - [zacstewart/apt-decoder][9]: Easy to understand NOAA APT decoder.
 
 - [pietern/apt137][10]: The fastest NOAA APT decoder, I took the AM
-  demodulation methid from there.
+  demodulation method from there.
 
 - [APT on sigidwiki.com][11]: More about the APT format.
 
