@@ -22,36 +22,36 @@ windows_console = [] # Show console on Microsoft Windows
 [dependencies]
 approx = "0.5.1"
 argparse = "0.2.2"
-chrono = "0.4.19"
+chrono = "0.4.20"
 directories = "4.0.1"
-filetime = "0.2.15"
+filetime = "0.2.17"
 gcd = "2.1.0"
 hound = "3.4.0"
 lab = "0.11.0"
 line_drawing = "1.0.0"
-log = "0.4.14"
-image = { version = "0.24.0", features = ["png"] }
-reqwest = { version = "0.11.9", features = ["blocking"] }
+log = "0.4.17"
+image = { version = "0.24.3", features = ["png"] }
+reqwest = { version = "0.11.11", features = ["blocking"] }
 rustfft = "6.0.1"
 satellite = { git = "https://github.com/richinfante/satellite-rs", rev = "1f95726" }
-semver = "1.0.4"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.78"
+semver = "1.0.13"
+serde = { version = "1.0.142", features = ["derive"] }
+serde_json = "1.0.83"
 shapefile = "0.3.0"
-simple_logger = "2.1.0"
-toml = "0.5.8"
+simple_logger = "2.2.0"
+toml = "0.5.9"
 
 # openssl is a indirect dependency because of reqwest, I have to add openssl as
 # a direct dependency if I want to enable the "vendored" feature, but for
 # Windows it breaks the build. Looks like adding it as an optional dependency is
 # working for both cases
-openssl = { version = "0.10.38", optional = true }
+openssl = { version = "0.10.41", optional = true }
 
-gtk = { version = "0.15.3", optional = true }
-gdk = { version = "0.15.2", optional = true }
-gdk-pixbuf = { version = "0.15.4", optional = true }
-gio = { version = "0.15.4", optional = true }
-glib = { version = "0.15.4", optional = true }
+gtk = { version = "0.15.5", optional = true }
+gdk = { version = "0.15.4", optional = true }
+gdk-pixbuf = { version = "0.15.11", optional = true }
+gio = { version = "0.15.12", optional = true }
+glib = { version = "0.15.12", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["shellapi"] }
