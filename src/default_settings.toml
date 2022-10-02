@@ -57,6 +57,10 @@ filenames = [
 
     # 20200320-213957NOAA19El64.wav
     "%Y%m%d-%H%M%SNOAA%NEl%2.wav",
+
+    # For SDR++
+    # audio_137914500Hz_20-29-20_24-09-2022.wav
+    "audio_%!Hz_%H-%M-%S_%d-%m-%Y.wav",
 ]
 
 # Timezone offset in hours to assume when reading filenames.
