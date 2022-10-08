@@ -2,7 +2,7 @@
 
 # Settings file version, newer noaa-apt releases will require more fields and
 # variables
-version = 3
+version = 4
 
 check_updates = true
 
@@ -75,11 +75,8 @@ default_lakes_color = [50, 200, 200, 255]
 
 [false_color]
 
-# Values used as thresholds for false color algorithm:
-# [water, vegetation, clouds]
-# Valid values: 0..255 with water < vegetation < clouds
-default_false_color_values = [50, 105, 137]
-
+# Filename relative to the "res/palettes/" folder
+default_palette_filename = "N19-HRPT-Falsecolor.png"
 
 [profiles]
 

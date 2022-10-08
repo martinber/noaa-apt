@@ -1,7 +1,7 @@
 //! Image processing functions.
 
-use image::{GenericImage, Rgba, RgbaImage};
-use log::{info, warn};
+use image::{GenericImage, RgbaImage, Pixel};
+use log::info;
 
 use crate::decode::{PX_CHANNEL_IMAGE_DATA, PX_PER_CHANNEL, PX_SPACE_DATA, PX_SYNC_FRAME};
 use crate::err;
@@ -104,71 +104,33 @@ pub fn histogram_equalization(img: &mut RgbaImage, has_color: bool) {
 
 /// Attempts to produce a colored image from grayscale channel and IR data.
 /// Works best when contrast is set to "telemetry" or "98 percent".
-/// Needs a way to allow tweaking hardcoded values for water, land, ice
-/// and dirt detection, from the UI or command line.
-pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) {
-    let water = color_settings.water_threshold;
-    let vegetation = color_settings.vegetation_threshold;
-    let clouds = color_settings.clouds_threshold;
+/// Uses a palette image to map channel brightness values to a color.
+pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) -> err::Result<()>{
 
-    info!(
-        "Colorize image (false color), water={}, vegetation={}, clouds={}",
-        water, vegetation, clouds
-    );
+    let palette_img = image::open(&color_settings.palette_filename).map_err(
+            |_| err::Error::InvalidInput(format!("Could not load {:?}", &color_settings.palette_filename))
+        )?.into_rgb8();
 
-    if water > vegetation || vegetation > clouds {
-        warn!("Condition not satisfied: 'water < vegetation < clouds'. Expect wrong results");
+    if palette_img.width() != 256 || palette_img.height() != 256 {
+        return Err(err::Error::InvalidInput("Invalid palette image dimensions".to_string()))
     }
 
+    // Determine region of channel A, which will be the only one colorized
     let x_start = PX_SYNC_FRAME + PX_SPACE_DATA;
     let x_end = x_start + PX_CHANNEL_IMAGE_DATA;
     let image_height = img.height();
 
-    // colorize
+    // Colorize
     for x in x_start..x_end {
         for y in 0..image_height {
-            let val_pixel = img.get_pixel(x, y);
-            let irval_pixel = img.get_pixel(x + PX_PER_CHANNEL, y);
+            let ch_a = img.get_pixel(x, y)[0]; // Red channel of channel A
+            let ch_b = img.get_pixel(x + PX_PER_CHANNEL, y)[0]; // Red channel of channel B
 
-            let val = val_pixel[0] as f32;
-            let irval = irval_pixel[0] as f32;
-
-            let r: f32;
-            let g: f32;
-            let b: f32;
-
-            if val < water as f32 {
-                // Water identification
-                r = (8.0 + val * 0.2).min(255.);
-                g = (20.0 + val * 1.0).min(255.); // avoid overflow
-                b = (50.0 + val * 0.75).min(255.);
-            } else if irval > clouds as f32 {
-                // Cloud/snow/ice identification
-                // IR channel helps distinguish clouds and water, particularly in arctic areas
-                r = (irval + val) * 0.5; // Average the two for a little better cloud distinction
-                g = r;
-                b = r;
-            } else if val < vegetation as f32 {
-                // Vegetation identification
-                // green
-                r = val * 0.8;
-                g = val * 0.9;
-                b = val * 0.6;
-            } else if val <= clouds as f32 {
-                // Desert/dirt identification
-                // brown
-                r = val * 1.0;
-                g = val * 0.9;
-                b = val * 0.7;
-            } else {
-                // Everything else, but this was probably captured by the IR channel above
-                // Clouds, snow, and really dry desert
-                r = val;
-                g = val;
-                b = val;
-            }
-
-            img.put_pixel(x, y, Rgba([r as u8, g as u8, b as u8, 255]));
+            img.put_pixel(x, y,
+                palette_img.get_pixel(u32::from(ch_a), u32::from(ch_b)).to_rgba()
+            );
         }
     }
+
+    Ok(())
 }

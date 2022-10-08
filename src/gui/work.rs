@@ -43,7 +43,7 @@ pub fn decode() {
                         misc::update_image();
 
                         // Read start time from file and update widgets
-                        //
+
                         let input_filename: PathBuf = match widgets.dec_input_chooser.filename()
                         {
                             Some(path) => path,
@@ -303,10 +303,17 @@ pub fn process() {
         };
 
         let color = if widgets.p_false_color_check.is_active() {
+
+            let palette_filename: PathBuf = match widgets.p_palette_chooser.filename() {
+                Some(path) => path,
+                None => {
+                    callback(Err(err::Error::Internal("Select palette file".to_string())));
+                    return;
+                }
+            };
+
             Some(ColorSettings {
-                water_threshold: widgets.p_color_water_scale.value() as u8,
-                vegetation_threshold: widgets.p_color_vegetation_scale.value() as u8,
-                clouds_threshold: widgets.p_color_clouds_scale.value() as u8,
+                palette_filename,
             })
         } else {
             None

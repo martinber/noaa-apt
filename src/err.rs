@@ -32,6 +32,9 @@ pub enum Error {
     /// shapefile library errors.
     Shapefile(String),
 
+    /// Invalid user parameter.
+    InvalidInput(String),
+
     /// Functionality not available because the program was compiled without
     /// those features
     FeatureNotAvailable(String),
@@ -51,6 +54,7 @@ impl std::fmt::Display for Error {
             Error::Internal(ref msg) => f.write_str(msg.as_str()),
             Error::RateOverflow(ref msg) => f.write_str(msg.as_str()),
             Error::Shapefile(ref msg) => f.write_str(msg.as_str()),
+            Error::InvalidInput(ref msg) => f.write_str(msg.as_str()),
             Error::FeatureNotAvailable(ref msg) => f.write_str(msg.as_str()),
             Error::SemanticVersion(ref msg) => f.write_str(msg.as_str()),
         }

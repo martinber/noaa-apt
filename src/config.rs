@@ -17,7 +17,7 @@ use crate::noaa_apt::{
 };
 
 // Expected configuration file version.
-const SETTINGS_VERSION: u32 = 3;
+const SETTINGS_VERSION: u32 = 4;
 
 /// Returns a PathBuf of the requested resource file.
 ///
@@ -125,9 +125,7 @@ pub struct Settings {
     pub default_lakes_color: (u8, u8, u8, u8),
 
     /// Default thresholds for false color (water, vegetation, clouds)
-    pub default_color_water_threshold: u8,
-    pub default_color_vegetation_threshold: u8,
-    pub default_color_clouds_threshold: u8,
+    pub default_palette_filename: PathBuf,
 }
 
 /// Holds the deserialized raw parsed settings file.
@@ -160,7 +158,7 @@ struct DeMapOverlay {
 /// Holds the deserialized raw parsed false color thresholds
 #[derive(Deserialize)]
 struct DeFalseColor {
-    default_false_color_values: (u8, u8, u8),
+    default_palette_filename: String,
 }
 
 /// Holds the deserialized raw parsed profiles table
@@ -283,6 +281,7 @@ pub fn get_config() -> (bool, log::LevelFilter, Mode) {
     let mut arg_rotate: Option<String> = None;
     let mut arg_rotate_deprecated = false;
     let mut arg_false_color = false;
+    let mut arg_palette: Option<PathBuf> = None;
     {
         let mut parser = argparse::ArgumentParser::new();
         parser
@@ -409,8 +408,18 @@ pub fn get_config() -> (bool, log::LevelFilter, Mode) {
             .add_option(
                 &["-F", "--false-color"],
                 argparse::StoreTrue,
-                "Attempt to produce a colored image, from the grayscale channel and IR values. \
-                Experimental. Works best with \"--contrast telemetry\".",
+                "Attempt to produce a colored image. Use with \"--contrast 98_percent\" or
+                \"--contrast telemetry\". Also see the option \"--palette\".",
+            );
+        parser
+            .refer(&mut arg_palette)
+            .add_option(
+                &["-P", "--palette"],
+                argparse::StoreOption,
+                "Palette to use when generating false color image. Should be a PNG with a size of \
+                256x256 pixels. It will map channel brightness to a pixel color, X axis represents \
+                channel A brightness and Y axis is channel B brigtness. Built-in palettes are \
+                available in the folder \"res/palettes/\".",
             );
         parser
             .refer(&mut arg_start_time)
@@ -518,9 +527,7 @@ pub fn get_config() -> (bool, log::LevelFilter, Mode) {
         default_countries_color: de_settings.map_overlay.default_countries_color,
         default_states_color: de_settings.map_overlay.default_states_color,
         default_lakes_color: de_settings.map_overlay.default_lakes_color,
-        default_color_water_threshold: de_settings.false_color.default_false_color_values.0,
-        default_color_vegetation_threshold: de_settings.false_color.default_false_color_values.1,
-        default_color_clouds_threshold: de_settings.false_color.default_false_color_values.2,
+        default_palette_filename: res_path!("palettes", de_settings.false_color.default_palette_filename),
     };
 
     // If set, then the program will be used as a command-line one, otherwise we
@@ -570,9 +577,7 @@ pub fn get_config() -> (bool, log::LevelFilter, Mode) {
 
             let color_settings = if arg_false_color {
                 Some(ColorSettings {
-                    water_threshold: settings.default_color_water_threshold,
-                    vegetation_threshold: settings.default_color_vegetation_threshold,
-                    clouds_threshold: settings.default_color_clouds_threshold,
+                    palette_filename: arg_palette.unwrap_or_else(|| settings.default_palette_filename.clone()),
                 })
             } else {
                 None

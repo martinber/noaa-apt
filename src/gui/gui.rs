@@ -219,37 +219,11 @@ fn init_widgets(widgets: &Widgets) {
         });
     });
 
-    // Set default false color values
+    // Set default false color palette
 
-    let (water_threshold, vegetation_threshold, clouds_threshold) = borrow_state(|state| {
-        (
-            state.settings.default_color_water_threshold,
-            state.settings.default_color_vegetation_threshold,
-            state.settings.default_color_clouds_threshold,
-        )
+    borrow_state(|state| {
+        widgets.p_palette_chooser.set_filename(&state.settings.default_palette_filename);
     });
-
-    widgets
-        .p_color_water_scale
-        .set_value(water_threshold as f64);
-    widgets
-        .p_color_vegetation_scale
-        .set_value(vegetation_threshold as f64);
-    widgets
-        .p_color_clouds_scale
-        .set_value(clouds_threshold as f64);
-
-    widgets
-        .p_color_water_scale
-        .add_mark(water_threshold as f64, gtk::PositionType::Top, None);
-    widgets.p_color_vegetation_scale.add_mark(
-        vegetation_threshold as f64,
-        gtk::PositionType::Top,
-        None,
-    );
-    widgets
-        .p_color_clouds_scale
-        .add_mark(clouds_threshold as f64, gtk::PositionType::Top, None);
 
     // Set default map lines colors
 

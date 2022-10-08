@@ -5,7 +5,7 @@
 pub use crate::decode::{decode, FINAL_RATE, PX_PER_CHANNEL, PX_PER_ROW};
 pub use crate::resample::resample;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use log::warn;
 
@@ -63,9 +63,7 @@ pub enum RefTime {
 /// Settings related to false colors
 #[derive(Clone, Debug)]
 pub struct ColorSettings {
-    pub water_threshold: u8,
-    pub vegetation_threshold: u8,
-    pub clouds_threshold: u8,
+    pub palette_filename: PathBuf,
 }
 
 /// Settings that need orbit calculations.
@@ -177,7 +175,7 @@ pub fn process(
     let mut img: Image = image::DynamicImage::ImageLuma8(img).into_rgba8(); // convert to RGBA
 
     if let Some(color_settings) = &color {
-        processing::false_color(&mut img, color_settings);
+        processing::false_color(&mut img, color_settings)?;
     }
 
     if let Contrast::Histogram = contrast_adjustment {
