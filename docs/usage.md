@@ -122,7 +122,7 @@ There are also two optional *tools*:
 
 ```
 Usage:
-  noaa-apt [OPTIONS] [INPUT_FILENAME]
+  target/debug/noaa-apt [OPTIONS] [INPUT_FILENAME]
 
 Decode NOAA APT images from WAV files. Run without arguments to launch the GUI
 
@@ -160,9 +160,15 @@ Optional arguments:
                         "auto", "yes", "no" (default). If using "auto", the
                         program uses orbit calculations and reception time to
                         determine if the pass was South to North.
-  -F,--false-color      Attempt to produce a colored image, from the grayscale
-                        channel and IR values. Experimental. Works best with
-                        "--contrast telemetry".
+  -F,--false-color      Attempt to produce a colored image. Use with
+                        "--contrast 98_percent" or "--contrast telemetry". Also
+                        see the option "--palette".
+  -P,--palette PALETTE  Palette to use when generating false color image.
+                        Should be a PNG with a size of 256x256 pixels. It will
+                        map channel brightness to a pixel color, X axis
+                        represents channel A brightness and Y axis is channel B
+                        brigtness. Built-in palettes are available in the
+                        folder "res/palettes/".
   -t,--start-time START_TIME
                         Provide recording start time, used for orbit
                         calculations. Use RFC 3339 format which includes date,
@@ -233,8 +239,9 @@ the image or not.
 
 The image is colorized according to the brightness of the pixels in the image.
 Generally this does not produce good results because water is confused with
-land, clouds are confused with vegetation, etc. In the GUI there are available
-three sliders that should be moved until the image looks acceptable.
+land, clouds are confused with vegetation, etc. There are several color palettes
+available, and more color palettes can be created since they are simple 256x256
+images.
 
 ### Satellite prediction
 

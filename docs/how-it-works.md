@@ -241,15 +241,20 @@ geodesic instead of the red satellite track. The fix I found is to:
 
 ### Histogram equalization
 
-To be documented, but there is nothing special. In false-color images, the RGB
-channels are converted to Lab and the equalization is made only over the L
-channel.
+It is a standard histogram equalization. In false-color images, the RGB
+channels are converted to the Lab color space and the equalization is made only
+over the L (brightness) channel leaving colors unchanged.
 
 ### False color
 
-To be documented. The method is really simple, the pixels are classified as
-water, land, vegetation or clouds depending in some thresholds. These thresholds
-can be easily configured using the GUI.
+The color is determined solely from the channel A and channel B brightness,
+mapping their values as indicated by a palette image. The size of the palette
+image is 256x256, where the X axis is the value of channel A and the Y axis is
+the value of channel B.
+
+For example: if for a certain pixel, the brightness values (that range from 0 to
+255) are 123 for channel A and 204 for channel B, then the pixel will be set to
+the color found on the palette image at coordinates X=123, Y=204.
 
 ## About APT images
 

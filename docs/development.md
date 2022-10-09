@@ -94,8 +94,6 @@ Notes:
 
 - Someday:
 
-    - Save choosen colors in configuration file.
-
     - Option to select a pre set path to save images (and notify DG4EK)
 
     - Implement histogram equalization on floats, before converting pixel values

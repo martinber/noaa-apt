@@ -2,6 +2,7 @@
 **/*.rs.bk
 _site/
 test/results/
+.jekyll-cache/
 
 /*.wav
 output*.png
