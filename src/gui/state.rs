@@ -190,6 +190,7 @@ pub struct Widgets {
     pub p_yaw_spinner:             gtk::SpinButton,
     pub p_vscale_spinner:          gtk::SpinButton,
     pub p_hscale_spinner:          gtk::SpinButton,
+    pub p_auto_update_check:       gtk::CheckButton,
     pub p_process_button:          gtk::Button,
 
     pub sav_output_entry:          gtk::Entry,
@@ -287,6 +288,7 @@ impl Widgets {
             p_yaw_spinner:            builder.object("p_yaw_spinner"           ).expect("Couldn't get p_yaw_spinner"           ),
             p_vscale_spinner:         builder.object("p_vscale_spinner"        ).expect("Couldn't get p_vscale_spinner"        ),
             p_hscale_spinner:         builder.object("p_hscale_spinner"        ).expect("Couldn't get p_hscale_spinner"        ),
+            p_auto_update_check:      builder.object("p_auto_update_check"     ).expect("Couldn't get p_auto_update_check"     ),
             p_process_button:         builder.object("p_process_button"        ).expect("Couldn't get p_process_button"        ),
 
             sav_output_entry:         builder.object("sav_output_entry"        ).expect("Couldn't get sav_output_entry"        ),

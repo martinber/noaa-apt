@@ -360,6 +360,58 @@ fn init_widgets(widgets: &Widgets) {
     widgets
         .ts_write_button
         .connect_clicked(|_| work::write_timestamp());
+
+    // Connect all widgets to process if the auto-update flag is set
+
+    widgets.p_contrast_combo
+        .connect_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_rotate_combo
+        .connect_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_false_color_check
+        .connect_toggled(|_| work::process_if_auto_update_enabled());
+    widgets.p_channel_a_start_scale
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_channel_a_end_scale
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_channel_b_start_scale
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_channel_b_end_scale
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_palette_chooser
+        .connect_file_set(|_| work::process_if_auto_update_enabled());
+    widgets.p_satellite_combo
+        .connect_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_custom_tle_check
+        .connect_toggled(|_| work::process_if_auto_update_enabled());
+    widgets.p_custom_tle_chooser
+        .connect_file_set(|_| work::process_if_auto_update_enabled());
+    widgets.p_ref_time_combo
+        .connect_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_hs_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_min_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_sec_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_overlay_check
+        .connect_toggled(|_| work::process_if_auto_update_enabled());
+    widgets.p_countries_color
+        .connect_color_set(|_| work::process_if_auto_update_enabled());
+    widgets.p_states_color
+        .connect_color_set(|_| work::process_if_auto_update_enabled());
+    widgets.p_lakes_color
+        .connect_color_set(|_| work::process_if_auto_update_enabled());
+    widgets.p_yaw_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_vscale_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+    widgets.p_hscale_spinner
+        .connect_value_changed(|_| work::process_if_auto_update_enabled());
+
+    widgets.p_calendar
+        .connect_day_selected(|_| work::process_if_auto_update_enabled());
+    widgets.p_calendar
+        .connect_month_changed(|_| work::process_if_auto_update_enabled());
 }
 
 /// Show widgets as ready for decoding/processing/saving

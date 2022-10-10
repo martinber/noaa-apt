@@ -198,6 +198,19 @@ pub fn decode() {
     });
 }
 
+
+/// Calls process() if auto update is enabled.
+///
+/// Meant to be executed each time a widget is changed in the Process tab.
+pub fn process_if_auto_update_enabled() {
+    borrow_widgets(|widgets| {
+        if widgets.p_auto_update_check.is_active() {
+            process();
+        }
+    });
+}
+
+
 /// Get values from widgets, process and update widgets.
 ///
 /// Starts another working thread.Sets buttons as not sensitive until the
