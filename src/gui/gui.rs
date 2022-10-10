@@ -225,6 +225,13 @@ fn init_widgets(widgets: &Widgets) {
         widgets.p_palette_chooser.set_filename(&state.settings.default_palette_filename);
     });
 
+    // Set markers in false color sliders
+
+    widgets.p_channel_a_start_scale.add_mark(0.0, gtk::PositionType::Top, None);
+    widgets.p_channel_a_end_scale.add_mark(0.0, gtk::PositionType::Top, None);
+    widgets.p_channel_b_start_scale.add_mark(0.0, gtk::PositionType::Top, None);
+    widgets.p_channel_b_end_scale.add_mark(0.0, gtk::PositionType::Top, None);
+
     // Set default map lines colors
 
     let (countries_color, states_color, lakes_color) = borrow_state(|state| {

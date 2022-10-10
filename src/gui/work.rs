@@ -314,6 +314,10 @@ pub fn process() {
 
             Some(ColorSettings {
                 palette_filename,
+                ch_a_tune_start: widgets.p_channel_a_start_scale.value() as f32,
+                ch_a_tune_end: widgets.p_channel_a_end_scale.value() as f32,
+                ch_b_tune_start: widgets.p_channel_b_start_scale.value() as f32,
+                ch_b_tune_end: widgets.p_channel_b_end_scale.value() as f32,
             })
         } else {
             None

@@ -64,6 +64,10 @@ pub enum RefTime {
 #[derive(Clone, Debug)]
 pub struct ColorSettings {
     pub palette_filename: PathBuf,
+    pub ch_a_tune_start: f32,
+    pub ch_a_tune_end: f32,
+    pub ch_b_tune_start: f32,
+    pub ch_b_tune_end: f32,
 }
 
 /// Settings that need orbit calculations.

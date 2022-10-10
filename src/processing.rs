@@ -120,14 +120,35 @@ pub fn false_color(img: &mut RgbaImage, color_settings: &ColorSettings) -> err::
     let x_end = x_start + PX_CHANNEL_IMAGE_DATA;
     let image_height = img.height();
 
+    // Assumes input and output values from 0 to 255
+    // Gives output in u32 because that is the input to the next function
+    let tune_input_values = |in_a: u8, in_b: u8| -> (u32, u32) {
+        let factor: f32 = 0.3; // Determines how much the values will be modified
+
+        let in_a: f32 = in_a.into();
+        let in_b: f32 = in_b.into();
+
+        let s_a: f32 = color_settings.ch_a_tune_start * factor;
+        let e_a: f32 = color_settings.ch_a_tune_end * factor;
+        let s_b: f32 = color_settings.ch_b_tune_start * factor;
+        let e_b: f32 = color_settings.ch_b_tune_end * factor;
+
+        let out_a = in_a * (1. + e_a - s_a) - s_a * 255.;
+        let out_b = in_b * (1. + e_b - s_b) - s_b * 255.;
+
+        return (out_a.clamp(0., 255.) as u32, out_b.clamp(0., 255.) as u32);
+    };
+
     // Colorize
     for x in x_start..x_end {
         for y in 0..image_height {
             let ch_a = img.get_pixel(x, y)[0]; // Red channel of channel A
             let ch_b = img.get_pixel(x + PX_PER_CHANNEL, y)[0]; // Red channel of channel B
 
+            let (val_a, val_b) = tune_input_values(ch_a, ch_b);
+
             img.put_pixel(x, y,
-                palette_img.get_pixel(u32::from(ch_a), u32::from(ch_b)).to_rgba()
+                palette_img.get_pixel(val_a, val_b).to_rgba()
             );
         }
     }

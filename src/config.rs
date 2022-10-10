@@ -578,6 +578,10 @@ pub fn get_config() -> (bool, log::LevelFilter, Mode) {
             let color_settings = if arg_false_color {
                 Some(ColorSettings {
                     palette_filename: arg_palette.unwrap_or_else(|| settings.default_palette_filename.clone()),
+                    ch_a_tune_start: 0.,
+                    ch_a_tune_end: 0.,
+                    ch_b_tune_start: 0.,
+                    ch_b_tune_end: 0.,
                 })
             } else {
                 None
