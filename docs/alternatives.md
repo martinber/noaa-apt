@@ -3,16 +3,20 @@ title: Alternatives
 layout: main
 ---
 
-If [noaa-apt](./index.html) is not useful to you, these are the alternatives I
-found, as of August 2018:
+If [noaa-apt](./index.html) is not useful to you, these are some alternatives I
+found:
 
 - [WXtoImg], by far the most popular, lots of features but the site looks dead
   forever.
 
 - [WXtoImg Restored], unofficial mirror with installers recovered by users.
 
+- [aptdec], looks like it has real time decoding and false color.
+
 - [xwxapt], receives and decodes live, something like [WXtoImg]. I should try it
   sometime.
+
+- [SatNOGS], it is a big project that also happens to include a APT decoder.
 
 - [atp-dec/apt-dec], works really good. Keep in mind that the [1.7 release]
   looks newer than the [repo's master branch]. I tried several times to compile
@@ -35,7 +39,7 @@ Others I found on GitHub:
 
 - [brainwagon/noaa-apt], written in C, does not sync images.
 
-- [LongHairedHacker/apt-decoder]. written in Rust.
+- [LongHairedHacker/apt-decoder], written in Rust.
 
 - [dlew1716/APT], written in Python and C++, not easily usable.
 
@@ -51,6 +55,8 @@ made a comparison of the results on `./extra/comparison.ods`.
 [WXtoImg]: http://wxtoimg.com/
 [WXtoImg Restored]: https://wxtoimgrestored.xyz/
 [xwxapt]: http://www.5b4az.org/
+[aptdec]: https://github.com/Xerbo/aptdec
+[SatNOGS]: https://satnogs.org/
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
 [1.7 release]: https://github.com/csete/aptdec/releases
 [repo's master branch]: https://github.com/csete/aptdec

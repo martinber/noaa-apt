@@ -238,10 +238,37 @@ the image or not.
 ### False color
 
 The image is colorized according to the brightness of the pixels in the image.
-Generally this does not produce good results because water is confused with
-land, clouds are confused with vegetation, etc. There are several color palettes
-available, and more color palettes can be created since they are simple 256x256
-images.
+Generally this does not produce very good results because water can be confused
+with land, clouds can be confused with vegetation, etc.
+
+When using the GUI, some sliders will be available to tune the values used when
+computing the false colors. And this can help to get better results in
+problematic images.
+
+There are several color palettes available:
+
+- `noaa-apt-daylight.png`: Will try to do a guess of colorizing water, land and
+    ground. When the program is not sure of which color to use, it will
+    use some color in-between, trying to make the result pleasant to the eye.
+    Designed for images transmitted at daylight (channels 2 and 4)
+
+- `noaa-apt-daylight-thresholds.png`: The same as before but in this case it
+    will always colorize with a very well defined color, but it will be very
+    evident when the program confuses water with ground.
+
+- `aptdec-HRPT-falsecolor.png`: It was taken from [aptdec], and is also designed
+    for daylight images. A more technical explanation is
+    [available here](https://github.com/Xerbo/aptdec/issues/21).
+
+- `noaa-apt-night.png`: It is designed to be used when the satellite sends
+    infrared images at night (channels 3A and 4). It will colorize the image in
+    a way that highlights differences between channels, trying to make very
+    visible everything captured in the image. The colors have no physical
+    meaning, I chose them to make the image beautiful.
+
+- Also there are several palettes taken from [WXtoImg]. Honestly I don't like
+    and I don't understand them. Some seem to be also designed to just put nice
+    colors without a precise meaning.
 
 ### Satellite prediction
 
@@ -453,3 +480,4 @@ problem with my decoder.
 
 [atp-dec/apt-dec]: https://github.com/csete/aptdec
 [WXtoImg]: http://wxtoimg.com/
+[aptdec]: https://github.com/Xerbo/aptdec

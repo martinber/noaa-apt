@@ -76,7 +76,7 @@ default_lakes_color = [50, 200, 200, 255]
 [false_color]
 
 # Filename relative to the "res/palettes/" folder
-default_palette_filename = "N19-HRPT-Falsecolor.png"
+default_palette_filename = "noaa-apt-daylight.png"
 
 [profiles]
 

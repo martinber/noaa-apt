@@ -27,17 +27,17 @@ too. It is meant for another decoder, WXtoImg, but it has useful information.
 ## Important things to know
 
 - NOAA satellites are transmitting images 24/7, and the image you receive is a
-	real-time image of your location. The transmission is free to be received by
-	anyone with an antenna, and there is no official decoder or receiver.
+    **real-time image of your location**. The transmission is free to be
+    received by anyone with an antenna, and there is no official decoder or
+    receiver.
 
-- NOAA **images are black and white**. People on the internet share color
-    images, those images were originally black and white and then were
-    colorized, probably by WXtoImg.
+- NOAA **images are black and white**. When you see a color image it means it
+  was colorized.
 
-- NOAA **images do not have map lines** (divisions between countries, states,
-		or coastlines). When you see images with lines, it means that they used
-		noaa-apt or WXtoImg to draw them according to a map and calculations about
-		the position of the satellite when the image was taken.
+- NOAA **images do not have map lines** (divisions between countries, states, or
+    coastlines). When you see images with lines, it means that they used
+    noaa-apt or WXtoImg to draw them according to a map and calculations about
+    the position of the satellite when the image was taken.
 
 - The **images are upside down 50% of the time**, that's because the satellites
     sometimes go from south to north and sometimes fron north to south.
@@ -46,7 +46,7 @@ too. It is meant for another decoder, WXtoImg, but it has useful information.
 
 - Images look **much better on daylight**, the satellites also send infrared
     images at night but I recommend receiving passes when the sun is high in the
-    sky,
+    sky.
 
 - These satellites send images at realtime, line by line. Something like a
     1000x1 resolution video or like a flying
@@ -56,9 +56,13 @@ too. It is meant for another decoder, WXtoImg, but it has useful information.
 - The satellite sends a FM signal, something like FM broadcast radio
     transmissions. Instead of music it sends images, but it works exactly the
     same. You can imagine that if your car stereo could tune to 137.1MHz you
-    should hear the satellite transmissions. That's also why you can save the
-    recordings as .wav files and decode those .wav files with this program,
-    because it's just a sound that encodes an image.
+    should hear the satellite transmissions without the need of a special
+    antenna. That's also why you can save the recordings as .wav files and
+    decode those .wav files with this program, because it's just a sound that
+    encodes an image.
+
+- Image quality depends mostly on the signal quality. This is why it is
+    recommended to do a antenna designed specially for these satellites.
 
 - If you want to know more visit [How it works](./how-it-works.html).
 

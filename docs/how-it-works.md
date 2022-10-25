@@ -256,6 +256,15 @@ For example: if for a certain pixel, the brightness values (that range from 0 to
 255) are 123 for channel A and 204 for channel B, then the pixel will be set to
 the color found on the palette image at coordinates X=123, Y=204.
 
+The sliders in the GUI will modify the brightness values before they are used to
+look-up the palette. For example, by moving the first two sliders, the channel A
+values originally in the range 0-255 can be mapped to a range of 30-189. This
+will produce that the colors obtained from the palette will be different, and
+this can be used to manually fix when ground is confused with water.
+
+[Here you can find more information about the included palettes](./usage.html#false-color).
+Open the palettes with an image editor to better understand them.
+
 ## About APT images
 
 ### Modulation
