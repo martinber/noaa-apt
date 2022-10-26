@@ -116,7 +116,7 @@ There are also two optional *tools*:
     timestamp from one file to another. Otherwise just select time, date and
     write the timestamp to your WAV recording.
 
-![GUI]({{ site.baseurl }}/images/gui_2.png)
+![GUI]({{ site.baseurl }}/images/gui.png)
 
 ### Terminal
 
