@@ -104,8 +104,8 @@ where
 
     #[cfg(not(windows))]
     {
-        gtk::show_uri(
-            window.clone().upcast::<gtk::Window>().screen().as_ref(),
+        gtk::show_uri_on_window(
+            Some(window),
             url,
             gtk::current_event_time(),
         )
