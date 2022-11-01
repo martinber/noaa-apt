@@ -79,6 +79,16 @@ Notes:
 
 ## Things to do
 
+- Bugs:
+
+    - App icon not showing on Windows and maybe not on Linux
+
+    - Decoded image preview is not removed when setting resample mode
+
+    - Stop downloading TLE if not needed
+
+    - Image preview is bugged when resizing
+
 - Important:
 
     - Look for defaults for yaw and scales?. See if yaw problems are caused by

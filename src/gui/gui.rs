@@ -63,7 +63,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
     let window = gtk::ApplicationWindow::new(application);
 
     window.set_title("noaa-apt");
-    window.set_default_size(450, -1);
+    window.set_default_size(1000, -1);
 
     // Load widgets from glade file and create some others
 
