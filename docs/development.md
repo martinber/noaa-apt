@@ -368,6 +368,8 @@ I use Clippy too:
     Download page. Use `/build/check_glibc.sh`, e.g.:
     `./build/check_glibc.sh ./target/docker_builds/noaa-apt-?.?.?-x86_64-linux-gnu/noaa-apt`
 
+- Update downloads page with dependencies from `/debian/noaa-apt/DEBIAN/control`
+
 - Check archives, names should be:
 
     - `noaa-apt-?.?.?-x86_64-linux-gnu.zip`

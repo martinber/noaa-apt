@@ -2,7 +2,7 @@
 
 # Settings file version, newer noaa-apt releases will require more fields and
 # variables
-version = 3
+version = 4
 
 check_updates = true
 
@@ -57,6 +57,10 @@ filenames = [
 
     # 20200320-213957NOAA19El64.wav
     "%Y%m%d-%H%M%SNOAA%NEl%2.wav",
+
+    # For SDR++
+    # audio_137914500Hz_20-29-20_24-09-2022.wav
+    "audio_%!Hz_%H-%M-%S_%d-%m-%Y.wav",
 ]
 
 # Timezone offset in hours to assume when reading filenames.
@@ -71,11 +75,8 @@ default_lakes_color = [50, 200, 200, 255]
 
 [false_color]
 
-# Values used as thresholds for false color algorithm:
-# [water, vegetation, clouds]
-# Valid values: 0..255 with water < vegetation < clouds
-default_false_color_values = [50, 105, 137]
-
+# Filename relative to the "res/palettes/" folder
+default_palette_filename = "noaa-apt-daylight.png"
 
 [profiles]
 

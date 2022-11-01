@@ -1,6 +1,6 @@
 [package]
 name = "noaa-apt"
-version = "1.3.1"
+version = "1.4.0"
 authors = ["Martin Bernardi <martinber.710@gmail.com>"]
 edition = "2018"
 build = "src/build.rs"

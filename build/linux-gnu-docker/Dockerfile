@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:buster
 
 RUN set -x
 
@@ -14,7 +14,7 @@ RUN dpkg --add-architecture armhf \
     && apt-get install -y curl \
                           git \
                           zip \
-                          gcc-6-arm-linux-gnueabihf \
+                          gcc-8-arm-linux-gnueabihf \
                           debhelper \
                           libgtk-3-dev:armhf \
     && mkdir -p /tmp/gtklibs/usr/lib/ \

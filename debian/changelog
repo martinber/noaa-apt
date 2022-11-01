@@ -1,3 +1,13 @@
+noaa-apt (1.4.0-1) testing; urgency=medium
+
+  * New false color method based on palettes.
+  * Added support to obtain timestamps from SDR++ filenames.
+  * Updated dependencies.
+  * Sadly, minimum glibc version is now 2.28. Therefore, a newer distro is
+    needed: Debian Buster or Ubuntu 20.04 or equivalent.
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Wed, 26 Oct 2022 23:48:04 +0200
+
 noaa-apt (1.3.1-1) testing; urgency=medium
 
   * Added run-noaa-apt.sh script for standalone GNU/Linux users, can be double

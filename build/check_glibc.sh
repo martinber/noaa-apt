@@ -7,7 +7,7 @@
 # https://www.agardner.me/golang/cgo/c/dependencies/glibc/kernel/linux/2015/12/12/c-dependencies.html
 
 BIN="$1"
-MAX_ALLOWED_VER="2.19"
+MAX_ALLOWED_VER="2.28"
 
 if [ -z "$BIN" ] || [ -z "$MAX_ALLOWED_VER" ]; then
   echo "Usage: glibc_check.sh <binary>"

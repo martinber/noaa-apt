@@ -49,7 +49,7 @@ rm -r "$X86_64_NOGUI_PACKAGE_FOLDER/test/results" || true
 # Build with GUI for Raspberry Pi
 
 # Otherwise it can't find `arm-linux-gnueabihf-gcc` because of the missing `-6`
-export TARGET_CC=arm-linux-gnueabihf-gcc-6
+export TARGET_CC=arm-linux-gnueabihf-gcc-8
 
 # Otherwise for some reason it can't find
 # `/usr/lib/arm-linux-gnueabihf/pkgconfig/glib-2.0.pc`
