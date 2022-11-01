@@ -383,7 +383,15 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime,
 
 /// Try downloading TLE from URL.
 fn download_tle(addr: &str) -> err::Result<String> {
-    Ok(reqwest::blocking::get(addr)?.text()?)
+    Ok(
+        reqwest::blocking::get(addr)
+            .map_err(|e| {
+                error!("{}", e);
+                err::Error::Request("Unable to download satellite TLE data. Connect to internet, \
+                                    provide a custom TLE, or disable image rotation and map \
+                                    overlay.".to_string())
+            })?.text()?
+    )
 }
 
 /// Try reading TLE from file.

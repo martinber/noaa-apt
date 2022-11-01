@@ -85,8 +85,6 @@ Notes:
 
     - Decoded image preview is not removed when setting resample mode
 
-    - Stop downloading TLE if not needed
-
     - Image preview is bugged when resizing
 
 - Important:
