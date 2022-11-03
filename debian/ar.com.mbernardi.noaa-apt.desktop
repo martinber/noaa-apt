@@ -3,6 +3,7 @@ Name=noaa-apt
 GenericName=Image decoder for APT signals from NOAA satellites
 Exec=noaa-apt
 Icon=ar.com.mbernardi.noaa-apt
+StartupNotify=true
 Terminal=false
 Type=Application
 Categories=Graphics;Utility;2DGraphics;RasterGraphics;HamRadio;Audio;ImageProcessing;

@@ -60,6 +60,8 @@ pub fn main(check_updates: bool, settings: config::Settings) {
 
 /// Create window
 fn create_window(check_updates: bool, settings: config::Settings, application: &gtk::Application) {
+
+    gtk::Window::set_default_icon_name("ar.com.mbernardi.noaa-apt");
     let window = gtk::ApplicationWindow::new(application);
 
     window.set_title("noaa-apt");
@@ -570,6 +572,7 @@ fn build_system_menu(widgets: &Widgets) {
         dialog.set_website(Some("https://noaa-apt.mbernardi.com.ar/"));
         dialog.set_license_type(gtk::License::Gpl30);
         dialog.set_title("About noaa-apt");
+        dialog.set_logo_icon_name(Some("ar.com.mbernardi.noaa-apt"));
         // dialog.set_transient_for(Some(&window)); // Not working?
 
         // Override links on Windows, by default GTK uses `show_uri_on_window`, see
