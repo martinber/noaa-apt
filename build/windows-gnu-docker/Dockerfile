@@ -28,8 +28,6 @@ USER rustacean
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 RUN . ~/.cargo/env && \
-    rustup install nightly && \
-    rustup default nightly && \
     rustup target add x86_64-pc-windows-gnu
 
 ADD .cargo/config /home/rustacean/.cargo/config

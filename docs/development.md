@@ -81,8 +81,6 @@ Notes:
 
 - Bugs:
 
-    - App icon not showing on Windows and maybe not on Linux
-
     - Decoded image preview is not removed when setting resample mode
 
     - Image preview is bugged when resizing

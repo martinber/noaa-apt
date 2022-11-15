@@ -29,6 +29,11 @@ fn main() {
             .unwrap();
 
         println!("cargo:rustc-link-search=native={}", out_dir);
-        println!("cargo:rustc-link-lib=static=program");
+
+        // In some rustc version 1.45.2 and 1.46.0.
+        // Between 2021 and 2022, the linking of the resources file for windows broke. Apparently
+        // since rustc version 1.61.0, the "+whole-archive" is necessary:
+        // https://github.com/mxre/winres/issues/40
+        println!("cargo:rustc-link-lib=static:+whole-archive=program");
     }
 }
