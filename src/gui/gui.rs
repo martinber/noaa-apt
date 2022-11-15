@@ -522,7 +522,7 @@ fn build_system_menu(widgets: &Widgets) {
     let w = widgets.window.clone();
     guide.connect_activate(move |_, _| {
         misc::open_in_browser(&w, "https://noaa-apt.mbernardi.com.ar/guide.html")
-            .expect("Failed to open usage webpage");
+            .expect("Failed to open guide webpage");
     });
     widgets.application.add_action(&guide);
 

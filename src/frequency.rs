@@ -94,7 +94,7 @@ impl Freq {
 /// When testing on Raspberry Pi I realised that we should be careful working
 /// with usize or u32, because when resampling we multiply against L and it's
 /// easy to overflow.
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
 pub struct Rate {
     hz: u32,
 }

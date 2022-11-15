@@ -88,11 +88,14 @@ where
         use std::ffi::CString;
         use std::ptr;
 
+        let open_str = CString::new("open").unwrap();
+        let url_str = CString::new(url).unwrap();
+
         unsafe {
             winapi::um::shellapi::ShellExecuteA(
                 ptr::null_mut(),                        // Window
-                CString::new("open").unwrap().as_ptr(), // Action
-                CString::new(url).unwrap().as_ptr(),    // URL
+                open_str.as_ptr(),                      // Action
+                url_str.as_ptr(),                       // URL
                 ptr::null_mut(),                        // Parameters
                 ptr::null_mut(),                        // Working directory
                 winapi::um::winuser::SW_SHOWNORMAL,     // How to show the window
