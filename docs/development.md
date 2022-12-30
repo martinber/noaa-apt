@@ -231,8 +231,21 @@ You can use the
 [Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
 but I don't know how this works. If someone knows please write a guide.
 
-The only method I know is by using Homebrew. This is a summary of
-[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac).
+The easiest way is to use the install script  `osx_installer.sh` like the following:
+
+- Download the [source code zip file](https://github.com/martinber/noaa-apt/releases)
+  and extract it somewhere.
+
+- Move to the downloaded folder
+      
+      cd Downloads/noaa-apt-1.4.1/
+
+- Run the bash script
+
+      bash osx_installer.sh
+
+Or install it manually. (This is a summary of
+[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac).)
 
 - Install [rustup](https://rustup.rs/):
 
@@ -249,7 +262,7 @@ The only method I know is by using Homebrew. This is a summary of
 
 - Move to the downloaded folder
 
-      cd Downloads/noaa-apt-1.2.0/
+      cd Downloads/noaa-apt-1.4.1/
 
 - Compile
 
