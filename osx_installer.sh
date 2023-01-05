@@ -31,9 +31,9 @@ printf "\n${white} [*] Installing dependencies via Homebrew (gtk+3 adwaita-icon-
 echo -e "\n"
 brew install gtk+3 adwaita-icon-theme openssl
 
-printf "\n${white} [*] Compiling the source code... (Password needed for sudo privileges)${clean}"
+printf "\n${white} [*] Compiling the source code...${clean}"
 echo -e "\n"
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
-sudo cargo build --release
+cargo build --release
 
 printf "\n${white} [*] Installation completed... Run it with: ./target/release/noaa-apt${clean}\n"
