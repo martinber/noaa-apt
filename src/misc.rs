@@ -339,10 +339,7 @@ fn parse_filename(
         }
     }
 
-    let time = match timezone
-        .ymd_opt(year, month, day)
-        .and_hms_opt(hour, minute, second)
-    {
+    let time = match timezone.with_ymd_and_hms(year, month, day, hour, minute, second) {
         chrono::LocalResult::Single(t) => t.with_timezone(&Utc),
         _ => return None,
     };
@@ -358,12 +355,16 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime,
         .ok_or_else(|| err::Error::Internal("Could not get filename".to_string()))?;
     if settings.prefer_timestamps {
         return Ok((
-            RefTime::End(Utc.timestamp(read_timestamp(path)?, 0)),
+            RefTime::End(Utc.timestamp_opt(read_timestamp(path)?, 0)
+                .earliest().expect("Invalid file timestamp")
+            ),
             SatName::Noaa19,
         ));
     } else {
         let offset_seconds = (settings.filename_timezone * 3600.) as i32;
-        let timezone: FixedOffset = TimeZone::from_offset(&FixedOffset::east(offset_seconds));
+        let timezone: FixedOffset = TimeZone::from_offset(
+            &FixedOffset::east_opt(offset_seconds).expect("Invalid timezone")
+        );
         // Try every supported format
         for format in settings.filename_formats.iter() {
             if let Some(result) = parse_filename(filename, format, timezone) {
@@ -375,7 +376,9 @@ pub fn infer_time_sat(settings: &Settings, path: &Path) -> err::Result<(RefTime,
             filename
         );
         return Ok((
-            RefTime::End(Utc.timestamp(read_timestamp(path)?, 0)),
+            RefTime::End(Utc.timestamp_opt(read_timestamp(path)?, 0)
+                .earliest().expect("Invalid file timestamp")
+            ),
             SatName::Noaa19,
         ));
     }
@@ -438,7 +441,8 @@ pub fn get_current_tle() -> err::Result<String> {
 
         match read_timestamp(&filename) {
             Ok(ts) => {
-                let file_date = chrono::Utc.timestamp(ts, 0); // 0 milliseconds
+                let file_date = chrono::Utc.timestamp_opt(ts, 0)
+                    .earliest().expect("Invalid TLE timestamp");
                 let now = chrono::Utc::now();
                 if now - file_date < chrono::Duration::days(7) {
                     info!("Found recent cached TLE. Date: {}", file_date);
@@ -562,50 +566,50 @@ mod tests {
         check_result(
             parse_filename("gqrx_20181222_203941_137100000.wav",
                            "gqrx_%Y%m%d_%H%M%S_%!.wav", Utc),
-            Utc.ymd(2018, 12, 22).and_hms(20, 39, 41),
+            Utc.with_ymd_and_hms(2018, 12, 22, 20, 39, 41).unwrap(),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("gqrx_20111001_111111_137600000.wav",
                            "gqrx_%Y%m%d_%H%M%S_%!.wav",
-                           FixedOffset::east(3600)), // 1 hour
-            Utc.ymd(2011, 10, 1).and_hms(10, 11, 11),
+                           FixedOffset::east_opt(3600).unwrap()), // 1 hour
+            Utc.with_ymd_and_hms(2011, 10, 1, 10, 11, 11).unwrap(),
             SatName::Noaa15,
         );
         check_result(
             parse_filename("gqrx_20181222_203941_137100000.wav",
                            "gqrx_%Y%m%d_%H%M%S_%!.wav", Utc),
-            Utc.ymd(2018, 12, 22).and_hms(20, 39, 41),
+            Utc.with_ymd_and_hms(2018, 12, 22, 20, 39, 41).unwrap(),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("NOAA15-20200325-060601.wav",
                            "NOAA%N-%Y%m%d-%H%M%S.wav", Utc),
-            Utc.ymd(2020, 03, 25).and_hms(6, 6, 1),
+            Utc.with_ymd_and_hms(2020, 03, 25, 6, 6, 1).unwrap(),
             SatName::Noaa15,
         );
         check_result(
             parse_filename("N1520200327073417.wav",
                            "N%N%Y%m%d%H%M%S.wav", Utc),
-            Utc.ymd(2020, 03, 27).and_hms(7, 34, 17),
+            Utc.with_ymd_and_hms(2020, 03, 27, 7, 34, 17).unwrap(),
             SatName::Noaa15,
         );
         check_result(
             parse_filename("2020-02-09-05-24-16-NOAA_19.wav",
                            "%Y-%m-%d-%H-%M-%S-NOAA_%N.wav", Utc),
-            Utc.ymd(2020, 02, 09).and_hms(05, 24, 16),
+            Utc.with_ymd_and_hms(2020, 02, 09, 05, 24, 16).unwrap(),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("20200320-213957NOAA19El64.wav",
                            "%Y%m%d-%H%M%SNOAA%NEl%2.wav", Utc),
-            Utc.ymd(2020, 03, 20).and_hms(21, 39, 57),
+            Utc.with_ymd_and_hms(2020, 03, 20, 21, 39, 57).unwrap(),
             SatName::Noaa19,
         );
         check_result(
             parse_filename("SDRSharp_20200325_204556Z_137102578Hz_AF.wav",
                            "SDRSharp_%Y%m%d_%H%M%SZ_%!Hz_AF.wav", Utc),
-            Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
+            Utc.with_ymd_and_hms(2020, 03, 25, 20, 45, 56).unwrap(),
             SatName::Noaa19,
         );
 
@@ -613,7 +617,7 @@ mod tests {
         check_result(
             parse_filename("20200325_204556Z.wav",
                            "%Y%m%d_%H%M%SZ.wav", Utc),
-            Utc.ymd(2020, 03, 25).and_hms(20, 45, 56),
+            Utc.with_ymd_and_hms(2020, 03, 25, 20, 45, 56).unwrap(),
             SatName::Noaa19,
         );
 

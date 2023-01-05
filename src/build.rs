@@ -17,14 +17,14 @@ fn main() {
     if target_os.as_str() == "windows" {
         let out_dir = env::var("OUT_DIR").unwrap();
         Command::new("x86_64-w64-mingw32-windres")
-            .args(&["src/program.rc"])
+            .args(["src/program.rc"])
             .arg(&format!("{}/program.o", out_dir))
             .status()
             .unwrap();
 
         Command::new("x86_64-w64-mingw32-gcc-ar")
-            .args(&["crus", "libprogram.a", "program.o"])
-            .current_dir(&Path::new(&out_dir))
+            .args(["crus", "libprogram.a", "program.o"])
+            .current_dir(Path::new(&out_dir))
             .status()
             .unwrap();
 

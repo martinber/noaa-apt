@@ -235,7 +235,7 @@ NOAA 19
         for test in test_values.iter() {
             let tolerance = test.4; // Degrees
             let mut sat = load_test_sat(test.0);
-            let time = chrono::Utc.timestamp(test.1, 0); // 0 milliseconds
+            let time = chrono::Utc.timestamp_opt(test.1, 0).unwrap(); // 0 milliseconds
             let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
             let gmst = satellite::propogation::gstime::gstime_datetime(time);
             let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);
@@ -330,7 +330,7 @@ NOAA 19
                 .expect(&format!("{} not found in weather.txt TLE file", name))
                 .clone();
 
-            let time = chrono::Utc.timestamp(timestamp, 0); // 0 milliseconds
+            let time = chrono::Utc.timestamp_opt(timestamp, 0).unwrap(); // 0 milliseconds
             let result = satellite::propogation::propogate_datetime(&mut sat, time).unwrap();
             let gmst = satellite::propogation::gstime::gstime_datetime(time);
             let sat_pos = satellite::transforms::eci_to_geodedic(&result.position, gmst);

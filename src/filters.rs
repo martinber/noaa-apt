@@ -18,7 +18,7 @@ pub trait Filter {
 /// No filter.
 ///
 /// Impulse response is an impulse.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct NoFilter;
 
 /// Lowpass FIR filter, windowed by a kaiser window.

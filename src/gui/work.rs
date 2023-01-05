@@ -403,10 +403,10 @@ pub fn process() {
         let second = widgets.p_sec_spinner.value_as_int();
         let (year, month, day) = widgets.p_calendar.date();
 
-        let time = match chrono::Local
-            .ymd_opt(year as i32, month + 1, day)
-            .and_hms_opt(hour as u32, minute as u32, second as u32)
-        {
+        // GTK counts months from 0 to 11. Years and days are fine
+        let time = match chrono::Local.with_ymd_and_hms(
+            year as i32, month + 1, day, hour as u32, minute as u32, second as u32
+        ) {
             chrono::offset::LocalResult::None => {
                 callback(Err(err::Error::Internal(
                     "Invalid date or time".to_string(),
@@ -640,10 +640,9 @@ pub fn write_timestamp() {
         // 0:00:00hs UTC.
 
         // GTK counts months from 0 to 11. Years and days are fine
-        let datetime = match chrono::Local
-            .ymd_opt(year as i32, month + 1, day)
-            .and_hms_opt(hour as u32, minute as u32, second as u32)
-        {
+        let datetime = match chrono::Local.with_ymd_and_hms(
+            year as i32, month + 1, day, hour as u32, minute as u32, second as u32
+        ) {
             chrono::offset::LocalResult::Single(dt) => dt,
             chrono::offset::LocalResult::None => {
                 show_error("Invalid date or time");
@@ -685,7 +684,8 @@ pub fn read_timestamp() {
                 return;
             }
         };
-        let datetime = chrono::Local.timestamp(timestamp, 0); // 0 milliseconds
+        let datetime = chrono::Local.timestamp_opt(timestamp, 0).earliest()
+            .expect("Invalid file timestamp");
 
         // GTK counts months from 0 to 11. Years and days are fine
         widgets
