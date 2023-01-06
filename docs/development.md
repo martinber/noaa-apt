@@ -167,8 +167,6 @@ Notes:
 
 ## Compilation
 
-Build with `--release`, Rust does some optimizations and it works faster.
-
 ### GNU/Linux
 
 - Install [rustup](https://rustup.rs/)
@@ -185,7 +183,7 @@ If building without GUI:
 
 - `cargo build --release --no-default-features`.
 
-It is important to be located in the root folder of this repository. Run with:
+To run the program:
 
     ./target/release/noaa-apt
 
@@ -198,54 +196,55 @@ example:
     cp -r ./res ~/Desktop/noaa-apt/
     cp ./build/run-noaa-apt.sh ~/Desktop/noaa-apt/
 
-### GNU/Linux portable
+### GNU/Linux portable, or cross-compilation
+
+The binaries uploaded in GitHub are built inside a docker container, in a way
+that produces a "portable" program that can be run on most machines. This means
+that most libraries are statically compiled.
 
 I can't make `gtk-rs` to work with the `x86_64-unknown-linux-musl` target, so
-I'm building with the default `x86_64-unknown-linux-gnu` on Debian Stretch. I
-think the binary works on any linux with GLIBC newer than the one used when
-building, that's why I'm using a Debian Jessie docker image.
+I'm building with the default `x86_64-unknown-linux-gnu` on the oldest possible
+Debian image. I think that this way, the binary works on any linux with GLIBC
+newer than the one used when building.
 
-So in the end, I build by releases with a Docker image: The GUI version, the no
-GUI version and the GUI .deb package. Also I build the Raspberry Pi versions
-(armhf).
+In the end, I build all the GNU/Linux releases with a Docker image.
 
-- Set up:
 
-  - Install Docker.
+- Install Docker.
 
-  - Move to root folder on this repository.
+- Move to root folder on this repository.
 
-  - `docker build ./build/linux-gnu-docker/ -t noaa-apt-linux-build-image`
+- `docker build ./build/linux-gnu-docker/ -t noaa-apt-linux-build-image`
 
-  - `docker create -v "$(pwd)":/home/rustacean/src --name noaa-apt-linux-build noaa-apt-linux-build-image`
+- `docker run -v $(pwd):/home/rustacean/src -it noaa-apt-linux-build-image ALL`
 
-- Building the binaries:
+In this case, the build was done for `ALL` targets. You can replace `ALL` for
+one of the following: `X86_64_GUI`, `X86_64_GUI_DEB`, `X86_64_NOGUI`,
+`ARMV7_GUI`, `ARMV7_NOGUI`, `AARCH64_GUI`, `AARCH64_NOGUI`.
 
-  - `docker start -ai noaa-apt-linux-build`
-
-- The binaries/packages are on `./target/docker_builds`
+The resuting binaries/packages will be found at `./target/docker_builds`.
 
 ### Mac / OSX
 
-You can use the
-[Nix Package](https://search.nixos.org/packages?query=noaa-apt&from=0&size=30&sort=relevance&channel=unstable),
-but I don't know how this works. If someone knows please write a guide.
-
-The easiest way is to use the install script  `osx_installer.sh` like the following:
+One option is to use the install script `osx_installer.sh` like the following:
 
 - Download the [source code zip file](https://github.com/martinber/noaa-apt/releases)
   and extract it somewhere.
 
 - Move to the downloaded folder
-      
+
       cd Downloads/noaa-apt-1.4.1/
 
-- Run the bash script
+- Run the installer
 
       bash osx_installer.sh
 
-Or install it manually. (This is a summary of
-[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac).)
+- Then run the program
+
+      ./target/release/noaa-apt
+
+Another option is to do all the steps manually (This is a summary of
+[this extensive installation guide](https://publiclab.org/notes/sashae/07-02-2020/how-to-compile-noaa-apt-1-2-0-on-mac)):
 
 - Install [rustup](https://rustup.rs/):
 
@@ -269,21 +268,22 @@ Or install it manually. (This is a summary of
       export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig/
       cargo build --release
 
+- Then run the program
+
+      ./target/release/noaa-apt
+
 There has been also a [succesful installation by installing first in OSX
 Catalina and then copying the folder to OSX
 Sierra](https://github.com/martinber/noaa-apt/issues/38). Apparently it is
 necessary to have Homebrew and have the packages updated, including `gtk+3`,
 `adwait-icon-theme`, `openssl` and `harfbuzz`.
 
-Run with:
-
-    ./target/release/noaa-apt
-
 ### Android with Termux
 
 You will need a good device and quite a lot of patience. The instructions to
 compile are the same as in GNU/Linux. It may be necesary to set the
-`OPENSSL_DIR` variable to point to the correct path.
+`OPENSSL_DIR` variable to point to the correct path. If someone knows please
+write a guide.
 
 ### Windows portable
 
@@ -292,25 +292,21 @@ Windows. I tried to get a mingw64-gtk environment to work on Debian without
 success. So I use a modification of a Docker image I found
 [here](https://github.com/LeoTindall/rust-mingw64-gtk-docker).
 
-- Set up:
+- Install Docker.
 
-  - Install Docker.
+- Move to root folder on this repository.
 
-  - Move to root folder on this repository.
+- `docker build ./build/windows-gnu-docker/ -t noaa-apt-windows-build-image`
 
-  - `docker build ./build/windows-gnu-docker/ -t noaa-apt-windows-build-image`
+- `docker run -v $(pwd):/home/rustacean/src -it noaa-apt-windows-build-image`
 
-  - `docker create -v $(pwd):/home/rustacean/src --name noaa-apt-windows-build noaa-apt-windows-build-image`.
-
-- Building the package:
-
-  - `docker start -ai noaa-apt-windows-build`.
-
-- The binaries/packages are on `./target/docker_builds`
+The binaries/packages are on `./target/docker_builds`
 
 ### Raspberry Pi
 
-I'm building it using the same docker container I use for GNU/Linux portables.
+I'm building it from my x86_64 computer using the same docker container I use
+for GNU/Linux portables. If you want to build it from your Raspberry Pi, you
+have to follow the normal steps for GNU/Linux.
 
 ## Tests
 
@@ -398,6 +394,10 @@ I use Clippy too:
     - `noaa-apt-?.?.?-armv7-linux-gnueabihf.zip`
 
     - `noaa-apt-?.?.?-armv7-linux-gnueabihf-nogui.zip`
+
+    - `noaa-apt-?.?.?-aarch64-linux-gnu.zip`
+
+    - `noaa-apt-?.?.?-aarch64-linux-gnu-nogui.zip`
 
     - `noaa-apt_?.?.?-1_amd64.deb`
 

@@ -65,7 +65,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     To install, extract the zip file anywhere.
 
-### Raspberry Pi 2+
+### Raspberry Pi 2/3 (armv7, armhf)
 
 - Executable with GUI:
 
@@ -76,6 +76,20 @@ After downloading and installing, visit [the Usage page](./usage.html).
 - Executable without GUI:
 
     [GNU/Linux armv7 (no-GUI) zip][armv7_linux_gnueabihf_nogui_zip].
+
+    To install, extract the zip file anywhere.
+
+### Raspberry Pi 4 (armv8, aarch64, arm64)
+
+- Executable with GUI:
+
+    [GNU/Linux aarch64 zip][aarch64_linux_gnu_zip].
+
+    To install, extract the zip file anywhere.
+
+- Executable without GUI:
+
+    [GNU/Linux aarch64 (no-GUI) zip][aarch64_linux_gnu_nogui_zip].
 
     To install, extract the zip file anywhere.
 
@@ -90,7 +104,6 @@ After downloading and installing, visit [the Usage page](./usage.html).
     nix-env -iA nixos.noaa-apt
     noaa-apt
     ```
-
 
 - [Otherwise compile it yourself following these instructions](./development.html#compilation).
 
@@ -125,3 +138,5 @@ compiled noaa-apt yourself.
 [x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-x86_64-linux-gnu-nogui.zip
 [armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-armv7-linux-gnueabihf.zip
 [armv7_linux_gnueabihf_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-armv7-linux-gnueabihf-nogui.zip
+[aarch64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-aarch64-linux-gnu.zip
+[aarch64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-aarch64-linux-gnu-nogui.zip
