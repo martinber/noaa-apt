@@ -37,6 +37,7 @@ export CARGO_BINARY=/home/rustacean/.cargo/bin/cargo
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "X86_64_GUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     "$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --features static_ssl
 
     rm -r "$X86_64_GUI_PACKAGE_FOLDER" || true
@@ -58,6 +59,7 @@ fi
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "X86_64_NOGUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     "$CARGO_BINARY" build --target=x86_64-unknown-linux-gnu --release --no-default-features --features static_ssl
 
     rm -r "$X86_64_NOGUI_PACKAGE_FOLDER" || true
@@ -99,6 +101,7 @@ fi
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "ARMV7_GUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     export TARGET_CC=arm-linux-gnueabihf-gcc-8
     export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/
     "$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --features static_ssl
@@ -122,6 +125,7 @@ fi
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "ARMV7_NOGUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     export TARGET_CC=arm-linux-gnueabihf-gcc-8
     export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/
     "$CARGO_BINARY" build --target=armv7-unknown-linux-gnueabihf --release --no-default-features --features static_ssl
@@ -144,6 +148,7 @@ fi
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "AARCH64_GUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc-8
     export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar-8
     export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-8
@@ -173,6 +178,7 @@ fi
 
 if [[ "$RELEASE" == "ALL" || "$RELEASE" == "AARCH64_NOGUI" ]]; then
 
+    unset NOAA_APT_RES_DIR
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc-8
     export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar-8
     export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-8
