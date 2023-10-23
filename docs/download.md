@@ -10,8 +10,9 @@ The relevant downloads from the
 listed below. You can also download/clone the GitHub repository, but I recommend
 using one of the links below.
 
-The GUI version has [an easy to use graphical interface](./usage.html#gui) but
-you can [use it from the terminal too](./usage.html#terminal). The no-GUI
+The GUI version is recommended because it includes
+[an easy to use graphical interface](./usage.html#gui), and also can be
+[used from the terminal](./usage.html#terminal). The no-GUI
 version can be [used only from the terminal](./usage.html#terminal).
 
 After downloading and installing, visit [the Usage page](./usage.html).
@@ -20,7 +21,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 #### Debian-based distros (Ubuntu, Linux Mint, etc.)
 
-- GUI version `.deb` package:
+- `.deb` package with GUI (recommended):
 
     [GNU/Linux x86_64 .deb package][amd64_deb].
 
@@ -47,7 +48,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 #### Other distros
 
-- Executable with GUI:
+- Executable with GUI (recommended):
 
     [GNU/Linux x86_64 zip][x86_64_linux_gnu_zip].
 
@@ -67,7 +68,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
 ### Raspberry Pi 2/3 (armv7, armhf)
 
-- Executable with GUI:
+- Executable with GUI (recommended):
 
     [GNU/Linux armv7 zip][armv7_linux_gnueabihf_zip].
 
@@ -79,9 +80,9 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     To install, extract the zip file anywhere.
 
-### Raspberry Pi 4 (armv8, aarch64, arm64)
+### Raspberry Pi 4/5 (armv8, aarch64, arm64)
 
-- Executable with GUI:
+- Executable with GUI (recommended):
 
     [GNU/Linux aarch64 zip][aarch64_linux_gnu_zip].
 
