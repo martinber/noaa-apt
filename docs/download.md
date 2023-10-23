@@ -32,7 +32,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
     sudo apt install ~/Downloads/noaa-apt_1.4.0-1_amd64.deb
     ```
 
-- Executable without GUI:
+    To run, search for noaa-apt in your installed programs or run `noaa-apt` in
+    a terminal
+
+- Executable without GUI (for a terminal):
 
     [GNU/Linux x86_64 (no-GUI) zip][x86_64_linux_gnu_nogui_zip].
 
@@ -52,9 +55,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     [GNU/Linux x86_64 zip][x86_64_linux_gnu_zip].
 
-    To install, extract the zip file anywhere.
+    To install, extract the zip file anywhere. To run, double click
+    `run-noaa-apt.sh`.
 
-- Executable without GUI:
+- Executable without GUI (for a terminal):
 
     [GNU/Linux x86_64 (no-GUI) zip][x86_64_linux_gnu_nogui_zip].
 
@@ -72,9 +76,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     [GNU/Linux armv7 zip][armv7_linux_gnueabihf_zip].
 
-    To install, extract the zip file anywhere.
+    To install, extract the zip file anywhere. To run, double click
+    `run-noaa-apt.sh`.
 
-- Executable without GUI:
+- Executable without GUI (for a terminal):
 
     [GNU/Linux armv7 (no-GUI) zip][armv7_linux_gnueabihf_nogui_zip].
 
@@ -86,9 +91,10 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     [GNU/Linux aarch64 zip][aarch64_linux_gnu_zip].
 
-    To install, extract the zip file anywhere.
+    To install, extract the zip file anywhere. To run, double click
+    `run-noaa-apt.sh`.
 
-- Executable without GUI:
+- Executable without GUI (for a terminal):
 
     [GNU/Linux aarch64 (no-GUI) zip][aarch64_linux_gnu_nogui_zip].
 
