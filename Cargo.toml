@@ -45,7 +45,7 @@ toml = "0.7.3"
 # a direct dependency if I want to enable the "vendored" feature, but for
 # Windows it breaks the build. Looks like adding it as an optional dependency is
 # working for both cases
-openssl = { version = "0.10.48", optional = true }
+openssl = { version = "0.10.55", optional = true }
 
 gtk = { version = "0.17.1", optional = true }
 gdk = { version = "0.17.1", optional = true }
