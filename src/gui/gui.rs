@@ -29,6 +29,7 @@ use std::path::Path;
 use gio::prelude::*;
 use gtk::prelude::*;
 use gtk::Builder;
+use glib::Propagation;
 use log::info;
 
 use super::misc;
@@ -119,7 +120,7 @@ fn create_window(check_updates: bool, settings: config::Settings, application: &
     widgets.window.connect_delete_event(|_, _| {
         borrow_widgets(|widgets| {
             widgets.window.close();
-            Inhibit(false)
+            Propagation::Proceed
         })
     });
 
@@ -163,7 +164,7 @@ fn init_widgets(widgets: &Widgets) {
         // https://stackoverflow.com/questions/7611813/remove-scroll-ability-from-gtkspinbutton
         widget.stop_signal_emission_by_name("scroll-event");
         // Propagate signal so it ends up scrolling the window
-        Inhibit(false)
+        Propagation::Proceed
     });
 
     // Configure GtkEntry filechoosers for saving:

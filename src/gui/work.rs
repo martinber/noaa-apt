@@ -9,8 +9,8 @@ use std::path::PathBuf;
 
 use chrono::offset::TimeZone;
 use chrono::prelude::*;
-use gio::prelude::*;
 use gtk::prelude::*;
+use glib::ControlFlow;
 use log::error;
 
 use super::misc;
@@ -136,13 +136,13 @@ pub fn decode() {
                     }
                 }
             });
-            Continue(false)
+            ControlFlow::Break
         });
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
             misc::set_progress(progress, &description);
-            Continue(false)
+            ControlFlow::Break
         });
     };
 
@@ -243,13 +243,13 @@ pub fn process() {
                     }
                 }
             });
-            Continue(false)
+            ControlFlow::Break
         });
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
             misc::set_progress(progress, &description);
-            Continue(false)
+            ControlFlow::Break
         });
     };
 
@@ -566,13 +566,13 @@ pub fn resample() {
                     }
                 }
             });
-            Continue(false)
+            ControlFlow::Break
         });
     };
     let progress_callback = |progress, description: String| {
         glib::idle_add(move || {
             misc::set_progress(progress, &description);
-            Continue(false)
+            ControlFlow::Break
         });
     };
 

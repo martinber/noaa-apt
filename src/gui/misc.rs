@@ -1,8 +1,8 @@
 //! Some helper functions for GUI code.
 
 use gdk_pixbuf::InterpType::Bilinear;
-use gio::prelude::*;
 use gtk::prelude::*;
+use glib::ControlFlow;
 use log::error;
 
 use super::state::{borrow_state_mut, borrow_widgets};
@@ -57,7 +57,7 @@ pub fn check_updates_and_show(version: &'static str) {
                     );
                 }
             }
-            Continue(false)
+            ControlFlow::Break
         });
     };
 
