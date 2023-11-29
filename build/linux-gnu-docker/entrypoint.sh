@@ -67,7 +67,7 @@ if [[ "$RELEASE" == "ALL" || "$RELEASE" == "X86_64_NOGUI" ]]; then
     cp ./target/x86_64-unknown-linux-gnu/release/noaa-apt "$X86_64_NOGUI_PACKAGE_FOLDER/"
     cp -r "./test" "$X86_64_NOGUI_PACKAGE_FOLDER/"
     cp -r "./res" "$X86_64_NOGUI_PACKAGE_FOLDER/"
-    cp -r "./build/run-noaa-apt.sh" "$X86_64_GUI_PACKAGE_FOLDER/"
+    cp -r "./build/run-noaa-apt.sh" "$X86_64_NOGUI_PACKAGE_FOLDER/"
     rm -r "$X86_64_NOGUI_PACKAGE_FOLDER/test/results" || true
 
     pushd "$X86_64_NOGUI_PACKAGE_FOLDER/"
@@ -111,7 +111,7 @@ if [[ "$RELEASE" == "ALL" || "$RELEASE" == "ARMV7_GUI" ]]; then
     cp ./target/armv7-unknown-linux-gnueabihf/release/noaa-apt "$ARMV7_GUI_PACKAGE_FOLDER/"
     cp -r "./test" "$ARMV7_GUI_PACKAGE_FOLDER/"
     cp -r "./res" "$ARMV7_GUI_PACKAGE_FOLDER/"
-    cp -r "./build/run-noaa-apt.sh" "$X86_64_GUI_PACKAGE_FOLDER/"
+    cp -r "./build/run-noaa-apt.sh" "$ARMV7_GUI_PACKAGE_FOLDER/"
     rm -r "$ARMV7_GUI_PACKAGE_FOLDER/test/results" || true
 
     pushd "$ARMV7_GUI_PACKAGE_FOLDER/"
@@ -150,7 +150,8 @@ if [[ "$RELEASE" == "ALL" || "$RELEASE" == "AARCH64_GUI" ]]; then
 
     unset NOAA_APT_RES_DIR
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc-8
-    export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar-8
+    export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-ar-8
+    export AR=aarch64-linux-gnu-gcc-ar-8
     export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-8
     export CC=aarch64-linux-gnu-gcc-8
     export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++-8
@@ -164,7 +165,7 @@ if [[ "$RELEASE" == "ALL" || "$RELEASE" == "AARCH64_GUI" ]]; then
     cp ./target/aarch64-unknown-linux-gnu/release/noaa-apt "$AARCH64_GUI_PACKAGE_FOLDER/"
     cp -r "./test" "$AARCH64_GUI_PACKAGE_FOLDER/"
     cp -r "./res" "$AARCH64_GUI_PACKAGE_FOLDER/"
-    cp -r "./build/run-noaa-apt.sh" "$X86_64_GUI_PACKAGE_FOLDER/"
+    cp -r "./build/run-noaa-apt.sh" "$AARCH64_GUI_PACKAGE_FOLDER/"
     rm -r "$AARCH64_GUI_PACKAGE_FOLDER/test/results" || true
 
     pushd "$AARCH64_GUI_PACKAGE_FOLDER/"
@@ -180,7 +181,8 @@ if [[ "$RELEASE" == "ALL" || "$RELEASE" == "AARCH64_NOGUI" ]]; then
 
     unset NOAA_APT_RES_DIR
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc-8
-    export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar-8
+    export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-ar-8
+    export AR=aarch64-linux-gnu-gcc-ar-8
     export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc-8
     export CC=aarch64-linux-gnu-gcc-8
     export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++-8
