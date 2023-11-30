@@ -1,0 +1,56 @@
+.TH NOAA-APT 1
+.SH NAME
+noaa-apt - Image decoder for APT signals from NOAA satellites
+.SH SYNOPSIS
+noaa-apt [OPTIONS] [FILENAME]
+.SH DESCRIPTION
+Decode NOAA APT images from WAV files. Run without arguments to launch the GUI.
+
+For more documentation, see the website and see the help included in the program:
+.PP
+.nf
+.RS
+noaa-apt --help
+.RE
+.fi
+.PP
+.SH OPTIONS
+See the included help:
+.PP
+.nf
+.RS
+noaa-apt --help
+.RE
+.fi
+.PP
+.SH EXAMPLES
+To open the GUI version:
+.PP
+.nf
+.RS
+noaa-apt
+.RE
+.fi
+.PP
+
+To decode input.wav and save the result to output.png using the default settings:
+.PP
+.nf
+.RS
+noaa-apt input.wav -o output.png
+.RE
+.fi
+.PP
+.SH AUTHOR
+Written by Martin Bernardi
+.SH REPORTING BUGS
+Github <https://github.com/martinber/noaa-apt>
+.SH COPYRIGHT
+GNU General Public License v3.0
+Permissions of this strong copyleft license are conditioned on making
+available complete source code of licensed works and modifications,
+which include larger works using a licensed work, under the same
+license. Copyright and license notices must be preserved. Contributors
+provide an express grant of patent rights.
+.SH SEE ALSO
+Website: <https://noaa-apt.mbernardi.com.ar>
