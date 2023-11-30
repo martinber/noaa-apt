@@ -1,3 +1,14 @@
+noaa-apt (1.4.1-1) testing; urgency=medium
+
+  * Add a more descriptive error message when loading files with incorrect
+    lengths in the header.
+  * Added the run-noaa-apt.sh script to all builds for launching the program
+    using double-click.
+  * Added a simple manpage for the Debian package version.
+  * Updated dependencies.
+
+ -- Martin Bernardi <martin@mbernardi.com.ar>  Wed, 29 Nov 2023 21:55:33 -0300
+
 noaa-apt (1.4.0-1) testing; urgency=medium
 
   * New false color method based on palettes.

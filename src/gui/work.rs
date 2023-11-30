@@ -66,7 +66,7 @@ pub fn decode() {
                                 let local_time = time.with_timezone(&chrono::Local);
                                 // GTK counts months from 0 to 11. Years and days are fine
                                 widgets.p_calendar.select_month(
-                                    local_time.month0() as u32,
+                                    local_time.month0(),
                                     local_time.year() as u32,
                                 );
                                 widgets.p_calendar.select_day(local_time.day());
@@ -91,7 +91,7 @@ pub fn decode() {
                                 let local_time = time.with_timezone(&chrono::Local);
                                 // GTK counts months from 0 to 11. Years and days are fine
                                 widgets.p_calendar.select_month(
-                                    local_time.month0() as u32,
+                                    local_time.month0(),
                                     local_time.year() as u32,
                                 );
                                 widgets.p_calendar.select_day(local_time.day());

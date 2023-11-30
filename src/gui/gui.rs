@@ -582,7 +582,7 @@ fn build_system_menu(widgets: &Widgets) {
         {
             dialog.connect_activate_link(|dialog, url| {
                 misc::open_in_browser(dialog, url).expect("Failed to open link");
-                return gtk::Inhibit(true); // Override `show_uri_on_window`
+                return Propagation::Stop; // Override `show_uri_on_window`
             });
         }
 

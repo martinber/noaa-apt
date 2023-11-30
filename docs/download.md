@@ -29,7 +29,7 @@ After downloading and installing, visit [the Usage page](./usage.html).
     an "Install" button. Otherwise open a terminal and install it by running:
 
     ```
-    sudo apt install ~/Downloads/noaa-apt_1.4.0-1_amd64.deb
+    sudo apt install ~/Downloads/noaa-apt_1.4.1-1_amd64.deb
     ```
 
     To run, search for noaa-apt in your installed programs or run `noaa-apt` in
@@ -139,11 +139,11 @@ installed what you need:
 My builds use a statically linked libssl, so you don't need libssl unless you
 compiled noaa-apt yourself.
 
-[amd64_deb]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt_1.4.0-1_amd64.deb
-[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-x86_64-windows-gnu.zip
-[x86_64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-x86_64-linux-gnu.zip
-[x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-x86_64-linux-gnu-nogui.zip
-[armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-armv7-linux-gnueabihf.zip
-[armv7_linux_gnueabihf_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-armv7-linux-gnueabihf-nogui.zip
-[aarch64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-aarch64-linux-gnu.zip
-[aarch64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.0/noaa-apt-1.4.0-aarch64-linux-gnu-nogui.zip
+[amd64_deb]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt_1.4.1-1_amd64.deb
+[x86_64_windows_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-x86_64-windows-gnu.zip
+[x86_64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-x86_64-linux-gnu.zip
+[x86_64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-x86_64-linux-gnu-nogui.zip
+[armv7_linux_gnueabihf_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-armv7-linux-gnueabihf.zip
+[armv7_linux_gnueabihf_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-armv7-linux-gnueabihf-nogui.zip
+[aarch64_linux_gnu_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-aarch64-linux-gnu.zip
+[aarch64_linux_gnu_nogui_zip]: https://github.com/martinber/noaa-apt/releases/download/v1.4.1/noaa-apt-1.4.1-aarch64-linux-gnu-nogui.zip
