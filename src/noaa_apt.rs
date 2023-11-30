@@ -112,7 +112,19 @@ impl ToString for SatName {
 ///
 /// Returns the Signal and its sample rate.
 pub fn load(input_filename: &Path) -> err::Result<(Signal, Rate)> {
-    let (signal, input_spec) = wav::load_wav(input_filename)?;
+    let (signal, input_spec) = wav::load_wav(input_filename).map_err(
+        |err| {
+            if let err::Error::WavOpen(ref string) = err {
+                // The hound library sometimes cannot open files with incorrect sizes in the
+                // header, see https://github.com/ruuda/hound/issues/39
+                if string.contains("Failed to read enough bytes") {
+                    return err::Error::WavOpen("Wrong file length in WAV header, try opening and \
+                        saving the file in some audio editor like Audacity".to_string())
+                }
+            }
+            err
+        }
+    )?;
 
     Ok((signal, Rate::hz(input_spec.sample_rate)))
 }
