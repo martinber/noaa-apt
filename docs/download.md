@@ -108,9 +108,11 @@ After downloading and installing, visit [the Usage page](./usage.html).
 
     ```
     sh <(curl -L https://nixos.org/nix/install)
-    nix-env -iA nixos.noaa-apt
+    nix-env -iA nixpkgs.noaa-apt
     noaa-apt
     ```
+
+    If there is an error make sure your nix channels are up to date with `nix-channel --update`
 
 - [Otherwise compile it yourself following these instructions](./development.html#compilation).
 
